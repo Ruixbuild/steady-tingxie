@@ -1,4 +1,7 @@
 export type Level = "P1" | "P2" | "P3" | "P4" | "P5" | "P6";
+export type SectionKind = "words" | "pinyin" | "passage";
+export type ListStatus = "active" | "tested" | "archived";
+export type ListSource = "ocr" | "manual" | "share";
 
 export type Profile = {
   id: string;
@@ -27,6 +30,53 @@ export type Child = {
   created_at: string;
 };
 
+export type List = {
+  id: string;
+  child_id: string;
+  name: string;
+  test_date: string | null;
+  status: ListStatus;
+  best_pct: number | null;
+  bloomed: boolean;
+  predicted_at_test: number | null;
+  actual_score: number | null;
+  actual_total: number | null;
+  source: ListSource;
+  created_at: string;
+};
+
+export type Section = {
+  id: string;
+  list_id: string;
+  kind: SectionKind;
+  title: string | null;
+  pick_n: number | null;
+  ord: number;
+};
+
+export type Item = {
+  id: string;
+  section_id: string;
+  ord: number;
+  hanzi: string;
+  pinyin: string | null;
+  english: string | null;
+  ocr_confidence: number | null;
+};
+
+export type Mastery = {
+  child_id: string;
+  item_id: string;
+  level: number;
+  misses: number;
+  char_misses: Record<string, number>;
+  pinned: boolean;
+  prev_fail: boolean;
+  improved: boolean;
+  last_trace_svg: string | null;
+  last_seen: string | null;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -52,8 +102,56 @@ export type Database = {
         Update: { user_id?: string; event?: string };
         Relationships: [];
       };
+      lists: {
+        Row: List;
+        Insert: Partial<List> & { child_id: string; name: string };
+        Update: Partial<List>;
+        Relationships: [];
+      };
+      sections: {
+        Row: Section;
+        Insert: Partial<Section> & { list_id: string; kind: SectionKind };
+        Update: Partial<Section>;
+        Relationships: [];
+      };
+      items: {
+        Row: Item;
+        Insert: Partial<Item> & { section_id: string; ord: number; hanzi: string };
+        Update: Partial<Item>;
+        Relationships: [];
+      };
+      mastery: {
+        Row: Mastery;
+        Insert: Partial<Mastery> & { child_id: string; item_id: string };
+        Update: Partial<Mastery>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      create_list_tx: {
+        Args: {
+          child_id: string;
+          name: string;
+          test_date: string | null;
+          source: string | null;
+          sections_json: ManualSectionInput[];
+        };
+        Returns: string;
+      };
+    };
   };
+};
+
+export type ManualSectionInput = {
+  kind: SectionKind;
+  title?: string;
+  pick_n?: number;
+  ord?: number;
+  items: {
+    ord: number;
+    hanzi: string;
+    pinyin?: string;
+    english?: string;
+  }[];
 };

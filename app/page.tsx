@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import SettingsGear from "./SettingsGear";
@@ -42,13 +43,17 @@ export default async function ProfilePickerPage() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full max-w-2xl">
         {children.map((child) => (
-          <div key={child.id} className="card flex flex-col items-center gap-2 p-6">
+          <Link
+            key={child.id}
+            href={`/kid/${child.id}`}
+            className="card flex flex-col items-center gap-2 p-6"
+          >
             <span className="text-4xl">{child.emoji}</span>
             <span className="font-semibold">{child.name}</span>
             <span className="text-sm" style={{ color: "var(--mut)" }}>
               {child.level}
             </span>
-          </div>
+          </Link>
         ))}
       </div>
     </main>
