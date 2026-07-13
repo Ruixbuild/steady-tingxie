@@ -77,6 +77,33 @@ export type Mastery = {
   last_seen: string | null;
 };
 
+export type AttemptMode = "full" | "words" | "pinyin" | "passage" | "tricky" | "quickdrill";
+
+export type AttemptDetail = {
+  sections: {
+    words: { score: number; total: number };
+    pinyin: { score: number; total: number };
+    passage: { score: number; total: number };
+  };
+  flipped: { item_id: string; hanzi: string }[];
+  tricky_item_ids: string[];
+  best_pct_before: number | null;
+};
+
+export type Attempt = {
+  id: string;
+  child_id: string;
+  list_id: string;
+  mode: AttemptMode;
+  supervised: boolean;
+  score: number;
+  total: number;
+  guess_pct: number | null;
+  detail: AttemptDetail;
+  duration_s: number | null;
+  taken_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -126,6 +153,12 @@ export type Database = {
         Update: Partial<Mastery>;
         Relationships: [];
       };
+      attempts: {
+        Row: Attempt;
+        Insert: Partial<Attempt> & { child_id: string; list_id: string; mode: AttemptMode };
+        Update: Partial<Attempt>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -155,6 +188,25 @@ export type Database = {
           items_count: number;
         };
         Returns: undefined;
+      };
+      touch_daily_streak: {
+        Args: {
+          child_id: string;
+          summary?: string | null;
+        };
+        Returns: string;
+      };
+      record_test_attempt: {
+        Args: {
+          child_id: string;
+          list_id: string;
+          mode: string;
+          supervised: boolean;
+          guess_pct: number | null;
+          duration_s: number | null;
+          item_results: unknown;
+        };
+        Returns: string;
       };
     };
   };

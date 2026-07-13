@@ -99,6 +99,18 @@ h1, h2, h3, h4 {
   box-shadow: 0 2px 8px rgba(29, 42, 51, 0.05);
 }
 
+/* Chip — small status pill, e.g. per-section result badges */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  border-radius: 980px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--accent-soft);
+  color: var(--accent-d);
+}
+
 /* Toast */
 .toast {
   background: var(--go);

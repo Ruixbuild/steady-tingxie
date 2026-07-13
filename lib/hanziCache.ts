@@ -37,34 +37,35 @@ async function fetchCharData(char: string): Promise<CharacterJson> {
   return (await res.json()) as CharacterJson;
 }
 
+/** Cache-checked promise-based getter, shared by charDataLoader, prefetchChars, and getCharData. */
+async function loadCharData(char: string): Promise<CharacterJson> {
+  const cached = cacheGet(char);
+  if (cached) return cached;
+  const data = await fetchCharData(char);
+  cacheSet(char, data);
+  return data;
+}
+
 /** Matches hanzi-writer's CharDataLoaderFn signature. */
 export function charDataLoader(
   char: string,
   onLoad: (data: CharacterJson) => void,
   onError: (err?: unknown) => void
 ): void {
-  const cached = cacheGet(char);
-  if (cached) {
-    onLoad(cached);
-    return;
-  }
+  loadCharData(char).then(onLoad).catch(onError);
+}
 
-  fetchCharData(char)
-    .then((data) => {
-      cacheSet(char, data);
-      onLoad(data);
-    })
-    .catch(onError);
+/** Promise-based getter, e.g. for Test mode's own stroke-count pass/fail threshold. */
+export function getCharData(char: string): Promise<CharacterJson> {
+  return loadCharData(char);
 }
 
 /** Fire-and-forget warm-up, called on list hub mount. */
 export function prefetchChars(chars: string[]) {
   const unique = Array.from(new Set(chars.filter((c) => !cacheGet(c))));
   for (const char of unique) {
-    fetchCharData(char)
-      .then((data) => cacheSet(char, data))
-      .catch(() => {
-        // silent — the ladder will retry with friendly copy when actually needed
-      });
+    loadCharData(char).catch(() => {
+      // silent — the ladder/quiz will retry with friendly copy when actually needed
+    });
   }
 }

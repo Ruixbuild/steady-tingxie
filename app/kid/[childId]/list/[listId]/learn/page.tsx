@@ -1,17 +1,18 @@
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { SectionKind } from "@/lib/supabase/types";
-import LearnSession, { type LearnItem } from "./LearnSession";
+import LearnEntry from "./LearnEntry";
+import type { LearnItem } from "./LearnSession";
 
 export default async function LearnPage({
   params,
   searchParams,
 }: {
   params: Promise<{ childId: string; listId: string }>;
-  searchParams: Promise<{ items?: string }>;
+  searchParams: Promise<{ items?: string; fromTest?: string }>;
 }) {
   const { childId, listId } = await params;
-  const { items: itemsParam } = await searchParams;
+  const { items: itemsParam, fromTest } = await searchParams;
 
   const supabase = await createServerSupabaseClient();
   const {
@@ -74,10 +75,32 @@ export default async function LearnPage({
     learnItems = allItems.filter((it) => requestedIds.has(it.id));
   }
 
+  let traceItems: { hanzi: string; traceSvg: string }[] = [];
+  if (fromTest === "1" && learnItems.length > 0) {
+    const { data: masteryRows } = await supabase
+      .from("mastery")
+      .select("item_id, last_trace_svg")
+      .eq("child_id", childId)
+      .in(
+        "item_id",
+        learnItems.map((it) => it.id)
+      );
+    const svgByItem = new Map((masteryRows ?? []).map((m) => [m.item_id, m.last_trace_svg]));
+    traceItems = learnItems
+      .filter((it) => svgByItem.get(it.id))
+      .map((it) => ({ hanzi: it.hanzi, traceSvg: svgByItem.get(it.id) as string }));
+  }
+
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl">
-        <LearnSession childId={childId} listId={listId} items={learnItems} initialXp={child.xp} />
+        <LearnEntry
+          childId={childId}
+          listId={listId}
+          items={learnItems}
+          initialXp={child.xp}
+          traceItems={traceItems}
+        />
       </div>
     </main>
   );
