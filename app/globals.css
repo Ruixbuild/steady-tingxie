@@ -1,26 +1,110 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #FAFAF8;
+  --card: #fff;
+  --ink: #1D2A33;
+  --mut: #7B8794;
+  --line: #E8EDF1;
+  --accent: #2C82C9;
+  --accent-d: #1F639C;
+  --accent-soft: #E7F5FA;
+  --go: #C18552;
+  --go-d: #A96F42;
+  --ok: #4E9968;
+  --ok-soft: #EAF5EE;
+  --warn: #FDB913;
+  --warn-soft: #FFF6E0;
+  --miss: #D96B5B;
+  --miss-soft: #FCEFEC;
+  --r: 18px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: linear-gradient(180deg, #FAFAF8 0%, #F3F9FC 60%, #EAF4FA 100%) fixed;
+}
+
+body.test-mode {
+  background: linear-gradient(180deg, #FFFBF0, #FBF1DC) fixed;
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.022em;
+}
+
+.hanzi {
+  font-family: "Kaiti SC", "STKaiti", "KaiTi", serif;
+}
+
+/* Pill buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 28px;
+  border-radius: 980px;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--go);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(193, 133, 82, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--go-d);
+}
+
+.btn-secondary {
+  background: #fff;
+  color: var(--accent);
+  border: 1px solid var(--line);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+/* Cards */
+.card {
+  background: var(--card);
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 8px rgba(29, 42, 51, 0.05);
+}
+
+/* Toast */
+.toast {
+  background: var(--go);
+  color: #fff;
+  border-radius: 980px;
+  padding: 10px 22px;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(193, 133, 82, 0.3);
 }
