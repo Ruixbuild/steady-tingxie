@@ -222,5 +222,6 @@ export type ManualSectionInput = {
     hanzi: string;
     pinyin?: string;
     english?: string;
+    ocr_confidence?: number;
   }[];
 };

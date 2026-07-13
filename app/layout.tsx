@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Steady Ting Xie",
   description: "听写 revision for Singapore primary school Chinese.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

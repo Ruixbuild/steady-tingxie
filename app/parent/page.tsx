@@ -4,6 +4,7 @@ import type { SectionKind } from "@/lib/supabase/types";
 import { isTricky, passageQuizPositions, predictedPct } from "@/lib/testScoring";
 import { daysUntil } from "@/lib/dates";
 import ChildFocusCard, { type FocusData } from "./ChildFocusCard";
+import ParentTabs from "./ParentTabs";
 
 type SectionRaw = {
   kind: SectionKind;
@@ -172,6 +173,7 @@ export default async function ParentPage() {
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl flex flex-col gap-6">
         <h1 className="text-2xl font-semibold">Parent corner</h1>
+        <ParentTabs active="Focus" />
         {focusData.length === 0 && (
           <p style={{ color: "var(--mut)" }}>No children yet.</p>
         )}
