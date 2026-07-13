@@ -2,15 +2,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { SectionKind } from "@/lib/supabase/types";
+import { daysUntil } from "@/lib/dates";
 import ChildHomeHero from "./ChildHomeHero";
 
 function pickRandom<T>(arr: T[]): T | null {
   if (arr.length === 0) return null;
   return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function daysUntil(dateStr: string): number {
-  return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
 }
 
 function currentMondaySGT(): string {
