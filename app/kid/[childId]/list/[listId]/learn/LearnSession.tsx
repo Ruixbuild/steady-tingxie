@@ -1,0 +1,172 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import Confetti from "@/components/Confetti";
+import { speak } from "@/lib/tts";
+import CharLadder from "./CharLadder";
+import PinyinDrill from "./PinyinDrill";
+
+export type LearnItem = {
+  id: string;
+  hanzi: string;
+  pinyin: string | null;
+  kind: "words" | "pinyin";
+};
+
+export default function LearnSession({
+  childId,
+  listId,
+  items,
+  initialXp,
+}: {
+  childId: string;
+  listId: string;
+  items: LearnItem[];
+  initialXp: number;
+}) {
+  const router = useRouter();
+  const supabase = createClient();
+  const epochRef = useRef(0);
+  const xpRef = useRef(initialXp);
+
+  const [skipWatch, setSkipWatch] = useState(false);
+  const [queueIndex, setQueueIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [writtenSoFar, setWrittenSoFar] = useState(0);
+  const [lastTraceSvg, setLastTraceSvg] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [complete, setComplete] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  useEffect(() => {
+    // localStorage is only available client-side; this is the standard
+    // hydration-safe pattern for reading it once after mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSkipWatch(localStorage.getItem(`skipWatch:${childId}`) === "true");
+  }, [childId]);
+
+  function showToast(text: string) {
+    setToast(text);
+    setTimeout(() => setToast((t) => (t === text ? null : t)), 1900);
+  }
+
+  async function recordItemProgress(itemId: string, chars: number, svg: string | null) {
+    const { data: newXp } = await supabase.rpc("record_item_progress", {
+      child_id: childId,
+      item_id: itemId,
+      chars_written: chars,
+      trace_svg: svg,
+    });
+    if (typeof newXp === "number") {
+      const before = Math.floor(xpRef.current / 50);
+      const after = Math.floor(newXp / 50);
+      xpRef.current = newXp;
+      if (after > before) {
+        showToast(`⭐ Level up! You're a Writer Lv ${after + 1}!`);
+      }
+    }
+  }
+
+  const currentItem = items[queueIndex];
+
+  function advanceToNextItem() {
+    setCharIndex(0);
+    setWrittenSoFar(0);
+    setLastTraceSvg(null);
+    if (queueIndex + 1 >= items.length) {
+      finishSet();
+    } else {
+      setQueueIndex((i) => i + 1);
+    }
+  }
+
+  async function handleCharDone(result: { written: boolean; traceSvg: string | null }) {
+    const chars = Array.from(currentItem.hanzi);
+    const nextWritten = writtenSoFar + (result.written ? 1 : 0);
+    const nextSvg = result.traceSvg ?? lastTraceSvg;
+
+    if (charIndex + 1 < chars.length) {
+      setWrittenSoFar(nextWritten);
+      setLastTraceSvg(nextSvg);
+      setCharIndex((i) => i + 1);
+      return;
+    }
+
+    await recordItemProgress(currentItem.id, nextWritten, nextSvg);
+    showToast(`${currentItem.hanzi} 🌸 leveled up!`);
+    advanceToNextItem();
+  }
+
+  async function handlePinyinDone() {
+    await recordItemProgress(currentItem.id, 0, null);
+    showToast(`${currentItem.hanzi} 🌸 leveled up!`);
+    advanceToNextItem();
+  }
+
+  async function finishSet() {
+    await supabase.rpc("record_set_complete", {
+      child_id: childId,
+      list_id: listId,
+      items_count: items.length,
+    });
+    setComplete(true);
+    setShowConfetti(true);
+    speak("太棒了");
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="card p-8 text-center" style={{ color: "var(--mut)" }}>
+        Nothing to practise here yet.
+      </div>
+    );
+  }
+
+  if (complete) {
+    return (
+      <div className="flex flex-col items-center gap-6 py-12">
+        {showConfetti && <Confetti onDone={() => setShowConfetti(false)} />}
+        <h2 className="text-2xl font-semibold">🎉 太棒了!</h2>
+        <p style={{ color: "var(--mut)" }}>{items.length} items practised</p>
+        <button type="button" className="btn btn-primary" onClick={() => router.push(`/kid/${childId}/list/${listId}`)}>
+          Back to hub
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold">
+          Item {queueIndex + 1} / {items.length}
+        </span>
+      </div>
+
+      {toast && (
+        <div className="toast" style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", zIndex: 70 }}>
+          {toast}
+        </div>
+      )}
+
+      {currentItem.kind === "words" ? (
+        <CharLadder
+          key={`${currentItem.id}-${charIndex}`}
+          char={Array.from(currentItem.hanzi)[charIndex]}
+          skipWatch={skipWatch}
+          epochRef={epochRef}
+          onDone={handleCharDone}
+        />
+      ) : (
+        <PinyinDrill
+          key={currentItem.id}
+          hanzi={currentItem.hanzi}
+          answer={currentItem.pinyin ?? ""}
+          onDone={handlePinyinDone}
+        />
+      )}
+    </div>
+  );
+}

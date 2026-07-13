@@ -139,6 +139,23 @@ export type Database = {
         };
         Returns: string;
       };
+      record_item_progress: {
+        Args: {
+          child_id: string;
+          item_id: string;
+          chars_written: number;
+          trace_svg?: string | null;
+        };
+        Returns: number;
+      };
+      record_set_complete: {
+        Args: {
+          child_id: string;
+          list_id: string;
+          items_count: number;
+        };
+        Returns: undefined;
+      };
     };
   };
 };
