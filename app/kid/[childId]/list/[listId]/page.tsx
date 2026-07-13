@@ -70,6 +70,12 @@ export default async function ListHubPage({
           <Link href={`/kid/${childId}/list/${listId}/test`} className="btn btn-secondary">
             Test
           </Link>
+          <Link href={`/kid/${childId}/list/${listId}/progress`} className="btn btn-secondary">
+            Progress
+          </Link>
+          <Link href={`/kid/${childId}/list/${listId}/reader`} className="btn btn-secondary">
+            Reader
+          </Link>
         </div>
       </div>
     </main>
