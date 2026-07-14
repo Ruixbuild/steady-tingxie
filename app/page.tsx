@@ -26,20 +26,15 @@ export default async function ProfilePickerPage() {
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <SettingsGear />
 
-      <div
-        className="flex items-center justify-center rounded-full mb-8"
-        style={{
-          width: 60,
-          height: 60,
-          background: "linear-gradient(135deg,#2C82C9,#5AA7DC)",
-          color: "#fff",
-          fontSize: "1.6rem",
-          boxShadow: "0 8px 24px rgba(44,130,201,.18)",
-        }}
-        aria-label="Steady Ting Xie"
-      >
-        听
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/icon-512.png"
+        alt="Steady Ting Xie"
+        width={60}
+        height={60}
+        className="rounded-full mb-8"
+        style={{ boxShadow: "0 8px 24px rgba(44,130,201,.18)" }}
+      />
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full max-w-2xl">
         {children.map((child) => (
