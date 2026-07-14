@@ -104,6 +104,15 @@ export type Attempt = {
   taken_at: string;
 };
 
+export type Session = {
+  id: string;
+  child_id: string;
+  size: number;
+  completed: boolean;
+  chars_written: number;
+  started_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -159,6 +168,12 @@ export type Database = {
         Update: Partial<Attempt>;
         Relationships: [];
       };
+      sessions: {
+        Row: Session;
+        Insert: Partial<Session> & { child_id: string; size: number };
+        Update: Partial<Session>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -186,6 +201,25 @@ export type Database = {
           child_id: string;
           list_id: string;
           items_count: number;
+          chars_written?: number;
+        };
+        Returns: undefined;
+      };
+      update_list_tx: {
+        Args: {
+          list_id: string;
+          name: string;
+          test_date: string | null;
+          sections_json: EditableSectionInput[];
+        };
+        Returns: undefined;
+      };
+      mark_list_tested: {
+        Args: {
+          list_id: string;
+          predicted_pct: number;
+          actual_score: number;
+          actual_total: number;
         };
         Returns: undefined;
       };
@@ -218,6 +252,22 @@ export type ManualSectionInput = {
   pick_n?: number;
   ord?: number;
   items: {
+    ord: number;
+    hanzi: string;
+    pinyin?: string;
+    english?: string;
+    ocr_confidence?: number;
+  }[];
+};
+
+export type EditableSectionInput = {
+  id?: string;
+  kind: SectionKind;
+  title?: string;
+  pick_n?: number;
+  ord?: number;
+  items: {
+    id?: string;
     ord: number;
     hanzi: string;
     pinyin?: string;

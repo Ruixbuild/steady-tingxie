@@ -106,10 +106,14 @@ export default function LearnSession({
   }
 
   async function finishSet() {
+    // xp gained this session / 2 == chars written this session, since
+    // record_item_progress credits +2 xp per char written.
+    const charsWrittenThisSession = Math.max(0, xpRef.current - initialXp) / 2;
     await supabase.rpc("record_set_complete", {
       child_id: childId,
       list_id: listId,
       items_count: items.length,
+      chars_written: charsWrittenThisSession,
     });
     setComplete(true);
     setShowConfetti(true);

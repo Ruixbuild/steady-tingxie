@@ -3,12 +3,16 @@ import Link from "next/link";
 const TABS = [
   { label: "Focus", href: "/parent", enabled: true },
   { label: "Upload", href: "/parent/upload", enabled: true },
-  { label: "Lists", href: "#", enabled: false },
-  { label: "Reports", href: "#", enabled: false },
-  { label: "Settings", href: "#", enabled: false },
+  { label: "Lists", href: "/parent/lists", enabled: true },
+  { label: "Reports", href: "/parent/reports", enabled: true },
+  { label: "Settings", href: "/parent/settings", enabled: true },
 ];
 
-export default function ParentTabs({ active }: { active: "Focus" | "Upload" }) {
+export default function ParentTabs({
+  active,
+}: {
+  active: "Focus" | "Upload" | "Lists" | "Reports" | "Settings";
+}) {
   return (
     <div className="flex flex-wrap gap-2 mb-6">
       {TABS.map((tab) =>
