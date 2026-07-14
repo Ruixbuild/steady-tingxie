@@ -24,6 +24,8 @@ export default function PeekModal({ char, onClose }: { char: string; onClose: ()
       height: 240,
       padding: 20,
       showOutline: false,
+      strokeAnimationSpeed: 0.9,
+      delayBetweenStrokes: 240,
       charDataLoader,
       strokeColor: "#1D2A33",
       highlightColor: "#2C82C9",

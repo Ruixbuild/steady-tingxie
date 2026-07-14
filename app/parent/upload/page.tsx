@@ -70,6 +70,9 @@ export default async function UploadPage({
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl">
+        <Link href="/" className="inline-block mb-1" style={{ color: "var(--accent)", fontWeight: 700 }}>
+          ← Exit parent corner
+        </Link>
         <div className="flex items-center justify-between mb-1">
           <h1 className="text-2xl font-semibold">Upload a sheet</h1>
           <Link href="/onboarding" className="btn btn-sm btn-secondary">

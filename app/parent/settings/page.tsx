@@ -25,6 +25,9 @@ export default async function SettingsPage() {
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl flex flex-col gap-6">
+        <Link href="/" className="inline-block" style={{ color: "var(--accent)", fontWeight: 700 }}>
+          ← Exit parent corner
+        </Link>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">⚙ Parent corner</h1>
           <Link href="/onboarding" className="btn btn-sm btn-secondary">

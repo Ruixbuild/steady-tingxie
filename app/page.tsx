@@ -49,11 +49,11 @@ export default async function ProfilePickerPage() {
               background: "#fff",
               border: "1.5px solid var(--line)",
               borderRadius: 24,
-              padding: "34px 20px",
+              padding: "10px 16px",
             }}
           >
-            <span style={{ fontSize: "4rem" }}>{child.emoji}</span>
-            <span style={{ fontSize: "1.5rem", fontWeight: 800, marginTop: 8 }}>{child.name}</span>
+            <span style={{ fontSize: "2rem" }}>{child.emoji}</span>
+            <span style={{ fontSize: "1.25rem", fontWeight: 800, marginTop: 2 }}>{child.name}</span>
             <span className="text-sm" style={{ color: "var(--mut)" }}>
               {child.level}
             </span>

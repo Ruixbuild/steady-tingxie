@@ -38,6 +38,15 @@ export default function LoginPage() {
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-12">
       <div className="card w-full max-w-sm p-8">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/icon-512.png"
+          alt="Steady Ting Xie"
+          width={112}
+          height={112}
+          className="rounded-full mx-auto mb-4 block"
+          style={{ boxShadow: "0 8px 24px rgba(44,130,201,.18)" }}
+        />
         <h1 className="text-2xl font-semibold text-center mb-1">
           Steady Ting Xie
         </h1>

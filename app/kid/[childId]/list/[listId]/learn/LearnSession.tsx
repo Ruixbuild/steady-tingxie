@@ -143,15 +143,42 @@ export default function LearnSession({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <span className="font-semibold">
-          Item {queueIndex + 1} / {items.length}
-        </span>
-      </div>
-
       {toast && (
         <div className="toast" style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", zIndex: 70 }}>
           {toast}
+        </div>
+      )}
+
+      <div className="text-center">
+        <p className="text-sm" style={{ color: "var(--mut)" }}>
+          Item {queueIndex + 1} of {items.length} · today&apos;s set
+        </p>
+        <h1 className="hanzi text-3xl mt-1">{currentItem.hanzi}</h1>
+      </div>
+
+      {currentItem.kind === "words" && (
+        <div className="flex gap-2 justify-center flex-wrap">
+          {Array.from(currentItem.hanzi).map((c, i) => {
+            const done = i < charIndex;
+            const on = i === charIndex;
+            return (
+              <span
+                key={i}
+                className="hanzi flex items-center justify-center"
+                style={{
+                  minWidth: 44,
+                  height: 44,
+                  fontSize: "1.3rem",
+                  borderRadius: 12,
+                  border: `1.5px solid ${on ? "var(--accent)" : done ? "var(--ok)" : "var(--line)"}`,
+                  background: on ? "var(--accent-soft)" : done ? "var(--ok-soft)" : "#fff",
+                  color: on ? "var(--accent-d)" : "var(--ink)",
+                }}
+              >
+                {c}
+              </span>
+            );
+          })}
         </div>
       )}
 
