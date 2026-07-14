@@ -295,8 +295,7 @@ export default function ListsTable({ lists }: { lists: ListRow[] }) {
                     />
                     <button
                       type="button"
-                      className="btn btn-primary"
-                      style={{ minHeight: 32, padding: "0 12px" }}
+                      className="btn btn-sm btn-primary"
                       onClick={() => saveEdit(row)}
                       disabled={busyId === row.id}
                     >
@@ -331,8 +330,7 @@ export default function ListsTable({ lists }: { lists: ListRow[] }) {
               {editingId !== row.id && (
                 <button
                   type="button"
-                  className="btn btn-secondary"
-                  style={{ minHeight: 36, padding: "0 14px" }}
+                  className="btn btn-sm btn-secondary"
                   onClick={() => startEdit(row)}
                 >
                   Rename / date
@@ -340,16 +338,14 @@ export default function ListsTable({ lists }: { lists: ListRow[] }) {
               )}
               <Link
                 href={`/kid/${row.childId}/list/${row.id}/edit`}
-                className="btn btn-secondary"
-                style={{ minHeight: 36, padding: "0 14px" }}
+                className="btn btn-sm btn-secondary"
               >
                 Reopen editor
               </Link>
               {row.status !== "archived" ? (
                 <button
                   type="button"
-                  className="btn btn-secondary"
-                  style={{ minHeight: 36, padding: "0 14px" }}
+                  className="btn btn-sm btn-secondary"
                   onClick={() => setStatus(row, "archived")}
                   disabled={busyId === row.id}
                 >
@@ -358,8 +354,7 @@ export default function ListsTable({ lists }: { lists: ListRow[] }) {
               ) : (
                 <button
                   type="button"
-                  className="btn btn-secondary"
-                  style={{ minHeight: 36, padding: "0 14px" }}
+                  className="btn btn-sm btn-secondary"
                   onClick={() => setStatus(row, "active")}
                   disabled={busyId === row.id}
                 >
@@ -369,8 +364,7 @@ export default function ListsTable({ lists }: { lists: ListRow[] }) {
               {row.status !== "tested" && (
                 <button
                   type="button"
-                  className="btn btn-secondary"
-                  style={{ minHeight: 36, padding: "0 14px" }}
+                  className="btn btn-sm btn-secondary"
                   onClick={() => markTested(row)}
                   disabled={busyId === row.id}
                 >
@@ -379,8 +373,8 @@ export default function ListsTable({ lists }: { lists: ListRow[] }) {
               )}
               <button
                 type="button"
-                className="btn btn-secondary"
-                style={{ minHeight: 36, padding: "0 14px", color: "var(--miss)" }}
+                className="btn btn-sm btn-secondary"
+                style={{ color: "var(--miss)" }}
                 onClick={() => deleteList(row)}
                 disabled={busyId === row.id}
               >
@@ -408,8 +402,7 @@ export default function ListsTable({ lists }: { lists: ListRow[] }) {
                 </select>
                 <button
                   type="button"
-                  className="btn btn-secondary"
-                  style={{ minHeight: 32, padding: "0 12px" }}
+                  className="btn btn-sm btn-secondary"
                   onClick={() => handleCarry(row)}
                   disabled={busyId === row.id}
                 >

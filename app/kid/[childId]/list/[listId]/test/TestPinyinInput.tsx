@@ -47,8 +47,7 @@ export default function TestPinyinInput({ hanzi, answer, onDone }: Props) {
       <button
         type="button"
         onClick={() => speak(hanzi)}
-        className="btn btn-secondary self-start"
-        style={{ minHeight: 40, padding: "0 16px" }}
+        className="btn btn-sm btn-secondary self-start"
       >
         🔊 Replay
       </button>

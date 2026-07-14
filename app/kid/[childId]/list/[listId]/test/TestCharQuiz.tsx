@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader, getCharData } from "@/lib/hanziCache";
 import { charMistakeThreshold } from "@/lib/testScoring";
+import RiceGrid from "@/components/RiceGrid";
 
 type Props = {
   char: string;
@@ -122,18 +123,22 @@ export default function TestCharQuiz({ char, hardMode, epochRef, onDone }: Props
       </div>
 
       <div
-        ref={containerRef}
         className="mx-auto"
         style={{
+          position: "relative",
           width: 280,
           height: 280,
           background: "#fff",
           borderRadius: 26,
           border: "1.5px solid #D5E6F0",
           boxShadow: "0 4px 16px rgba(44,130,201,.08)",
+          overflow: "hidden",
           touchAction: "none",
         }}
-      />
+      >
+        <RiceGrid />
+        <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
+      </div>
       <div style={{ minHeight: 56 }} aria-hidden />
     </div>
   );

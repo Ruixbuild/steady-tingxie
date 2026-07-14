@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader } from "@/lib/hanziCache";
 import { speak } from "@/lib/tts";
+import RiceGrid from "@/components/RiceGrid";
 
 export default function PeekModal({ char, onClose }: { char: string; onClose: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -43,34 +44,29 @@ export default function PeekModal({ char, onClose }: { char: string; onClose: ()
     >
       <div className="card p-6 flex flex-col gap-4 items-center">
         <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => speak(char)}
-            className="btn btn-secondary"
-            style={{ minHeight: 40, padding: "0 16px" }}
-          >
+          <button type="button" onClick={() => speak(char)} className="btn btn-sm btn-secondary">
             🔊 Replay
           </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="btn btn-secondary"
-            style={{ minHeight: 40, padding: "0 16px" }}
-          >
+          <button type="button" onClick={onClose} className="btn btn-sm btn-secondary">
             Close
           </button>
         </div>
 
         <div
-          ref={containerRef}
           style={{
+            position: "relative",
             width: 240,
             height: 240,
             background: "#fff",
             borderRadius: 26,
             border: "1.5px solid #D5E6F0",
+            overflow: "hidden",
           }}
-        />
+        >
+          <RiceGrid />
+          <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
+        </div>
+        <div style={{ minHeight: 56 }} aria-hidden />
       </div>
     </div>
   );

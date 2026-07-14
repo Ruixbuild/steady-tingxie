@@ -151,10 +151,8 @@ export default function NewListForm({ childId }: { childId: string }) {
                   key={kind}
                   type="button"
                   onClick={() => updateSection(sIdx, { kind, items: [emptyItem()] })}
-                  className="btn"
+                  className="btn btn-sm"
                   style={{
-                    minHeight: 40,
-                    padding: "0 16px",
                     background: section.kind === kind ? "var(--accent)" : "#fff",
                     color: section.kind === kind ? "#fff" : "var(--accent)",
                     border: `1px solid ${section.kind === kind ? "var(--accent)" : "var(--line)"}`,
@@ -258,8 +256,7 @@ export default function NewListForm({ childId }: { childId: string }) {
       <button
         type="button"
         onClick={addSection}
-        className="btn btn-secondary self-start"
-        style={{ minHeight: 40, padding: "0 20px" }}
+        className="btn btn-sm btn-secondary self-start"
       >
         + Add section
       </button>

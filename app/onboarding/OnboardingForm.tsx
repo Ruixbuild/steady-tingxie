@@ -47,10 +47,8 @@ export default function OnboardingForm() {
               type="button"
               key={l}
               onClick={() => setLevel(l)}
-              className="btn"
+              className="btn btn-sm"
               style={{
-                minHeight: 44,
-                padding: "0 20px",
                 background: level === l ? "var(--accent)" : "#fff",
                 color: level === l ? "#fff" : "var(--accent)",
                 border: `1px solid ${level === l ? "var(--accent)" : "var(--line)"}`,

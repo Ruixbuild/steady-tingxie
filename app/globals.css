@@ -91,6 +91,15 @@ h1, h2, h3, h4 {
   border-color: var(--accent);
 }
 
+/* Compact pill — same shape/weight/color rules as .btn, for dense
+   secondary controls (table row actions, inline toggles, tab bars)
+   where a full 52px primary CTA would be too large. */
+.btn-sm {
+  min-height: 40px;
+  padding: 0 18px;
+  font-size: 0.9rem;
+}
+
 /* Cards */
 .card {
   background: var(--card);

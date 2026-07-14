@@ -20,10 +20,8 @@ export default function ParentTabs({
           <Link
             key={tab.label}
             href={tab.href}
-            className="btn"
+            className="btn btn-sm"
             style={{
-              minHeight: 40,
-              padding: "0 20px",
               background: tab.label === active ? "var(--accent)" : "#fff",
               color: tab.label === active ? "#fff" : "var(--accent)",
               border: `1px solid ${tab.label === active ? "var(--accent)" : "var(--line)"}`,
@@ -34,10 +32,8 @@ export default function ParentTabs({
         ) : (
           <span
             key={tab.label}
-            className="btn"
+            className="btn btn-sm"
             style={{
-              minHeight: 40,
-              padding: "0 20px",
               background: "#fff",
               color: "var(--mut)",
               border: "1px solid var(--line)",

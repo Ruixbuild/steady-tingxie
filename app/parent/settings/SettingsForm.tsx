@@ -59,10 +59,8 @@ export default function SettingsForm({
           type="button"
           onClick={toggleDigest}
           disabled={savingKey === "digest"}
-          className="btn"
+          className="btn btn-sm"
           style={{
-            minHeight: 36,
-            padding: "0 16px",
             background: digest ? "var(--accent)" : "#fff",
             color: digest ? "#fff" : "var(--accent)",
             border: `1px solid ${digest ? "var(--accent)" : "var(--line)"}`,
@@ -89,10 +87,8 @@ export default function SettingsForm({
                   type="button"
                   onClick={() => toggleHardMode(c.id)}
                   disabled={savingKey === c.id}
-                  className="btn"
+                  className="btn btn-sm"
                   style={{
-                    minHeight: 32,
-                    padding: "0 14px",
                     background: c.hardMode ? "var(--accent)" : "#fff",
                     color: c.hardMode ? "#fff" : "var(--accent)",
                     border: `1px solid ${c.hardMode ? "var(--accent)" : "var(--line)"}`,

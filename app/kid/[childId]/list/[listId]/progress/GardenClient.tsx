@@ -77,7 +77,7 @@ export default function GardenClient({
                   style={{
                     width: 56,
                     height: 56,
-                    background: "#fff",
+                    background: "var(--card)",
                     border: tricky ? "2px solid var(--warn)" : "1px solid var(--line)",
                   }}
                   title={item.hanzi}

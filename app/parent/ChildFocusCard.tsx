@@ -110,8 +110,7 @@ export default function ChildFocusCard({ data }: { data: FocusData }) {
                   type="button"
                   disabled={pinned}
                   onClick={() => pinItems([item.itemId])}
-                  className="btn btn-secondary"
-                  style={{ minHeight: 36, padding: "0 14px" }}
+                  className="btn btn-sm btn-secondary"
                 >
                   {pinned ? "Pinned ✓" : "Send to practice"}
                 </button>

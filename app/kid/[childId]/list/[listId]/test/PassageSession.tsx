@@ -77,8 +77,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, epochRef, onDo
       <button
         type="button"
         onClick={() => speak(current.clause)}
-        className="btn btn-secondary self-start"
-        style={{ minHeight: 40, padding: "0 16px" }}
+        className="btn btn-sm btn-secondary self-start"
       >
         🔊 Replay clause
       </button>
