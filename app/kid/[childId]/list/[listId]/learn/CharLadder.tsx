@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader } from "@/lib/hanziCache";
+import { speak } from "@/lib/tts";
 import RiceGrid from "@/components/RiceGrid";
 
 type Stage = "watch" | "trace" | "copy";
@@ -136,7 +137,22 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
         </p>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-wrap">
+        {stage !== "watch" && (
+          <button
+            type="button"
+            onClick={() => {
+              setMistakeMessage(null);
+              setStage("watch");
+            }}
+            className="btn btn-sm btn-secondary"
+          >
+            ↺ Again
+          </button>
+        )}
+        <button type="button" onClick={() => speak(char)} className="btn btn-sm btn-secondary">
+          🔊 Say it
+        </button>
         {stage === "watch" && (
           <>
             <button type="button" onClick={() => setStage("trace")} className="btn btn-primary">

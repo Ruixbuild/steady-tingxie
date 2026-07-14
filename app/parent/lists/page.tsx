@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import ParentTabs from "../ParentTabs";
@@ -45,7 +46,12 @@ export default async function ListsPage() {
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-2xl flex flex-col gap-6">
-        <h1 className="text-2xl font-semibold">Parent corner</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">⚙ Parent corner</h1>
+          <Link href="/onboarding" className="btn btn-sm btn-secondary">
+            + Add child
+          </Link>
+        </div>
         <ParentTabs active="Lists" />
         {lists.length === 0 ? (
           <p style={{ color: "var(--mut)" }}>No lists yet.</p>

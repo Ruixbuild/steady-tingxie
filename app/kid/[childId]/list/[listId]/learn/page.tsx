@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { SectionKind } from "@/lib/supabase/types";
@@ -94,6 +95,13 @@ export default async function LearnPage({
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl">
+        <Link
+          href={`/kid/${childId}/list/${listId}`}
+          className="mb-4 inline-block"
+          style={{ color: "var(--accent)", fontWeight: 700 }}
+        >
+          ✕ Stop for now
+        </Link>
         <LearnEntry
           childId={childId}
           listId={listId}

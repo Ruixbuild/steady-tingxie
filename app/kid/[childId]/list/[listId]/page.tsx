@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { SectionKind } from "@/lib/supabase/types";
-import { passageQuizPositions, predictedPct } from "@/lib/testScoring";
 
 const KIND_LABEL: Record<SectionKind, string> = {
   words: "词语",
@@ -12,7 +11,7 @@ const KIND_LABEL: Record<SectionKind, string> = {
 
 type SectionRaw = {
   kind: SectionKind;
-  items: { id: string; hanzi: string }[] | null;
+  items: { id: string }[] | null;
 };
 
 export default async function ListHubPage({
@@ -43,56 +42,10 @@ export default async function ListHubPage({
 
   const { data: sectionsRaw } = await supabase
     .from("sections")
-    .select("kind, items(id, hanzi)")
+    .select("kind, items(id)")
     .eq("list_id", listId)
     .order("ord");
   const sections = sectionsRaw as unknown as SectionRaw[];
-
-  const nonPassageItemIds: string[] = [];
-  for (const s of sections ?? []) {
-    if (s.kind === "passage") continue;
-    for (const it of s.items ?? []) nonPassageItemIds.push(it.id);
-  }
-
-  const { data: masteryRows } =
-    nonPassageItemIds.length > 0
-      ? await supabase
-          .from("mastery")
-          .select("item_id, level")
-          .eq("child_id", childId)
-          .in("item_id", nonPassageItemIds)
-      : { data: [] };
-  const masteryByItem = new Map((masteryRows ?? []).map((m) => [m.item_id, m.level]));
-
-  const nonPassageLevels: number[] = [];
-  const passageCharMissed: boolean[] = [];
-  for (const s of sections ?? []) {
-    if (s.kind === "passage") {
-      for (const it of s.items ?? []) {
-        const { data: passMastery } = await supabase
-          .from("mastery")
-          .select("char_misses")
-          .eq("child_id", childId)
-          .eq("item_id", it.id)
-          .maybeSingle();
-        const misses = (passMastery?.char_misses ?? {}) as Record<string, number>;
-        for (const pos of passageQuizPositions(it.hanzi)) {
-          passageCharMissed.push((misses[String(pos)] ?? 0) > 0);
-        }
-      }
-    } else {
-      for (const it of s.items ?? []) {
-        nonPassageLevels.push(masteryByItem.get(it.id) ?? 0);
-      }
-    }
-  }
-
-  const predicted =
-    nonPassageLevels.length > 0 || passageCharMissed.length > 0
-      ? predictedPct({ nonPassageLevels, passageCharMissed })
-      : null;
-  const toLearnCount = nonPassageLevels.filter((l) => l < 2).length;
-  const bloomedCount = nonPassageLevels.filter((l) => l === 3).length;
 
   const sectionsSummary =
     sections && sections.length > 0
@@ -104,6 +57,13 @@ export default async function ListHubPage({
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl">
+        <Link
+          href={`/kid/${childId}`}
+          className="mb-4 inline-block"
+          style={{ color: "var(--accent)", fontWeight: 700 }}
+        >
+          ← Back
+        </Link>
         <h1 className="text-2xl font-semibold mb-1">{list.name}</h1>
         <p className="mb-6" style={{ color: "var(--mut)" }}>
           {list.test_date ? `Test on ${list.test_date}` : "No test date set"} · {list.status}
@@ -122,9 +82,7 @@ export default async function ListHubPage({
           >
             <span className="text-3xl">📖</span>
             <span className="font-semibold text-lg">Learn</span>
-            <span className="text-sm opacity-80">
-              {toLearnCount > 0 ? `${toLearnCount} to practise` : "All practised!"}
-            </span>
+            <span className="text-sm opacity-80">watch · trace · copy</span>
           </Link>
 
           <Link
@@ -134,9 +92,7 @@ export default async function ListHubPage({
           >
             <span className="text-3xl">✏️</span>
             <span className="font-semibold text-lg">Test</span>
-            <span className="text-sm opacity-80">
-              {predicted !== null ? `On track for ~${predicted}%` : "Ready when you are"}
-            </span>
+            <span className="text-sm opacity-80">like the real thing</span>
           </Link>
 
           <Link
@@ -144,11 +100,9 @@ export default async function ListHubPage({
             className="rounded-[18px] p-5 flex flex-col gap-1"
             style={{ background: "var(--ok-soft)", color: "#3E7A4E" }}
           >
-            <span className="text-3xl">🌳</span>
+            <span className="text-3xl">⭐</span>
             <span className="font-semibold text-lg">Progress</span>
-            <span className="text-sm opacity-80">
-              {nonPassageLevels.length > 0 ? `${bloomedCount}/${nonPassageLevels.length} in full bloom` : "Nothing planted yet"}
-            </span>
+            <span className="text-sm opacity-80">my word garden</span>
           </Link>
         </div>
 

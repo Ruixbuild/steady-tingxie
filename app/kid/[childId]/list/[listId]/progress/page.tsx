@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { SectionKind } from "@/lib/supabase/types";
@@ -70,6 +71,13 @@ export default async function ProgressPage({
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl">
+        <Link
+          href={`/kid/${childId}/list/${listId}`}
+          className="mb-4 inline-block"
+          style={{ color: "var(--accent)", fontWeight: 700 }}
+        >
+          ← Back
+        </Link>
         <h1 className="text-2xl font-semibold mb-6">{list.name}</h1>
         <GardenClient
           listId={listId}

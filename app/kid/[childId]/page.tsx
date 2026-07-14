@@ -113,6 +113,13 @@ export default async function ChildHomePage({
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl">
+        <Link
+          href="/"
+          className="mb-4 inline-block"
+          style={{ color: "var(--accent)", fontWeight: 700 }}
+        >
+          ← Switch profile
+        </Link>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <span className="text-4xl">{child.emoji}</span>
@@ -150,13 +157,12 @@ export default async function ChildHomePage({
           />
         </div>
 
-        <Link href={`/kid/${childId}/new-list`} className="btn btn-primary mb-6 inline-flex">
-          + New list
-        </Link>
-
+        <h2 className="text-lg font-semibold mb-3">My lists</h2>
         <div className="flex flex-col gap-3">
           {(!lists || lists.length === 0) && (
-            <p style={{ color: "var(--mut)" }}>No lists yet — create one to get started.</p>
+            <p style={{ color: "var(--mut)" }}>
+              No lists yet — ask a grown-up to add one in the parent corner ⚙
+            </p>
           )}
           {lists?.map((list) => (
             <Link

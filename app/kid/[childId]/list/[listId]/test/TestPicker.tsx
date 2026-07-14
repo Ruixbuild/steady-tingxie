@@ -16,6 +16,13 @@ export default function TestPicker({ childId, listId, listName, predicted, count
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl flex flex-col gap-4">
+        <Link
+          href={`/kid/${childId}/list/${listId}`}
+          className="inline-block"
+          style={{ color: "var(--accent)", fontWeight: 700 }}
+        >
+          ← Back
+        </Link>
         <h1 className="text-2xl font-semibold">{listName}</h1>
 
         <Link href={`${base}?mode=full${sup}`} className="card p-5 flex flex-col gap-1">

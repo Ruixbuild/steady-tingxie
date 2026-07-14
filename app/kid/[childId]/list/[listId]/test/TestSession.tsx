@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { speak } from "@/lib/tts";
@@ -142,26 +143,46 @@ export default function TestSession({
 
   if (items.length === 0) {
     return (
-      <div className="card p-8 text-center" style={{ color: "var(--mut)" }}>
-        Nothing to test here yet.
-      </div>
+      <main className="flex flex-1 flex-col items-center px-6 py-12">
+        <div className="w-full max-w-xl">
+          <Link
+            href={`/kid/${childId}/list/${listId}`}
+            className="mb-4 inline-block"
+            style={{ color: "var(--accent)", fontWeight: 700 }}
+          >
+            ✕ End test
+          </Link>
+          <div className="card p-8 text-center" style={{ color: "var(--mut)" }}>
+            Nothing to test here yet.
+          </div>
+        </div>
+      </main>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div
-        className="rounded-2xl px-5 py-3 font-semibold text-center"
-        style={{ background: "var(--warn-soft)", color: "#8A6412" }}
-      >
-        {supervised
-          ? "👨‍👩‍👧 Practised together — doesn't count toward mastery"
-          : "✏️ Test time — no hints, just try your best!"}
-      </div>
+    <main className="flex flex-1 flex-col items-center px-6 py-12">
+      <div className="w-full max-w-xl flex flex-col gap-6">
+        <Link
+          href={`/kid/${childId}/list/${listId}`}
+          className="inline-block"
+          style={{ color: "var(--accent)", fontWeight: 700 }}
+        >
+          ✕ End test
+        </Link>
 
-      <p className="text-sm" style={{ color: "var(--mut)" }}>
-        Item {queueIndex + 1} / {items.length}
-      </p>
+        <div
+          className="rounded-2xl px-5 py-3 font-semibold text-center"
+          style={{ background: "var(--warn-soft)", color: "#8A6412" }}
+        >
+          {supervised
+            ? "👨‍👩‍👧 Practised together — doesn't count toward mastery"
+            : "✏️ Test time — no hints, just try your best!"}
+        </div>
+
+        <p className="text-sm" style={{ color: "var(--mut)" }}>
+          Item {queueIndex + 1} / {items.length}
+        </p>
 
       {submitting ? (
         <p style={{ color: "var(--mut)" }}>Saving…</p>
@@ -207,6 +228,7 @@ export default function TestSession({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </main>
   );
 }

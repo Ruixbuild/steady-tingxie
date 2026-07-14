@@ -408,11 +408,7 @@ export default function ListsTable({ lists }: { lists: ListRow[] }) {
                 >
                   Carry →
                 </button>
-                <Link
-                  href={`/kid/${row.childId}/new-list`}
-                  className="text-sm"
-                  style={{ color: "var(--accent)" }}
-                >
+                <Link href="/parent/upload" className="text-sm" style={{ color: "var(--accent)" }}>
                   or create a new list
                 </Link>
               </div>

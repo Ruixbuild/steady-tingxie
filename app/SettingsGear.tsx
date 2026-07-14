@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const HOLD_MS = 1200;
@@ -8,14 +8,17 @@ const HOLD_MS = 1200;
 export default function SettingsGear() {
   const router = useRouter();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [holding, setHolding] = useState(false);
 
   const start = useCallback(() => {
+    setHolding(true);
     timerRef.current = setTimeout(() => {
       router.push("/parent");
     }, HOLD_MS);
   }, [router]);
 
   const cancel = useCallback(() => {
+    setHolding(false);
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -30,18 +33,22 @@ export default function SettingsGear() {
       onPointerUp={cancel}
       onPointerLeave={cancel}
       onPointerCancel={cancel}
-      className="fixed top-5 right-5 flex items-center justify-center rounded-full"
-      style={{
-        width: 44,
-        height: 44,
-        background: "#fff",
-        border: "1px solid var(--line)",
-        color: "var(--mut)",
-        fontSize: "1.2rem",
-        boxShadow: "0 2px 8px rgba(29,42,51,.05)",
-      }}
+      className="btn btn-secondary"
+      style={{ position: "relative", overflow: "hidden" }}
     >
-      ⚙
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: holding ? "100%" : "0%",
+          background: "rgba(159,184,200,.4)",
+          transition: holding ? `width ${HOLD_MS}ms linear` : "none",
+        }}
+      />
+      <span style={{ position: "relative" }}>⚙ Parents — press &amp; hold</span>
     </button>
   );
 }

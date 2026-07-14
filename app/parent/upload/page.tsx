@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { suggestNextListName } from "@/lib/chineseNumerals";
@@ -69,7 +70,12 @@ export default async function UploadPage({
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl">
-        <h1 className="text-2xl font-semibold mb-1">Upload a sheet</h1>
+        <div className="flex items-center justify-between mb-1">
+          <h1 className="text-2xl font-semibold">Upload a sheet</h1>
+          <Link href="/onboarding" className="btn btn-sm btn-secondary">
+            + Add child
+          </Link>
+        </div>
         <ParentTabs active="Upload" />
         <UploadFlow
           childOptions={childOptions}
