@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PeekModal from "./reader/PeekModal";
 
 const STAGE_EMOJI = ["🌱", "🌿", "🌸", "🌳"] as const;
-const PER_CHAR_MS = 2600;
 
 export type HubSection = {
   kind: "words" | "pinyin";
@@ -15,24 +14,20 @@ export default function HubWordList({ sections }: { sections: HubSection[] }) {
   const [peekQueue, setPeekQueue] = useState<string[] | null>(null);
   const [peekIndex, setPeekIndex] = useState(0);
 
-  useEffect(() => {
-    if (!peekQueue) return;
-    const timer = setTimeout(() => {
-      if (peekIndex + 1 < peekQueue.length) {
-        setPeekIndex((i) => i + 1);
-      } else {
-        setPeekQueue(null);
-        setPeekIndex(0);
-      }
-    }, PER_CHAR_MS);
-    return () => clearTimeout(timer);
-  }, [peekQueue, peekIndex]);
-
   return (
     <div className="flex flex-col gap-4 mb-6">
       {peekQueue && (
         <PeekModal
+          key={peekIndex}
           char={peekQueue[peekIndex]}
+          onLoopComplete={
+            peekIndex + 1 < peekQueue.length
+              ? () => setPeekIndex((i) => i + 1)
+              : () => {
+                  setPeekQueue(null);
+                  setPeekIndex(0);
+                }
+          }
           onClose={() => {
             setPeekQueue(null);
             setPeekIndex(0);

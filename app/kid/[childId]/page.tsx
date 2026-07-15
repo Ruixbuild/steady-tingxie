@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { SectionKind } from "@/lib/supabase/types";
 import { daysUntil } from "@/lib/dates";
 import ChildHomeHero from "./ChildHomeHero";
+import ListSelector from "./ListSelector";
 
 function pickRandom<T>(arr: T[]): T | null {
   if (arr.length === 0) return null;
@@ -20,10 +21,13 @@ function currentMondaySGT(): string {
 
 export default async function ChildHomePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ childId: string }>;
+  searchParams: Promise<{ list?: string }>;
 }) {
   const { childId } = await params;
+  const { list: requestedListId } = await searchParams;
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -56,9 +60,10 @@ export default async function ChildHomePage({
     .select("id, name, test_date")
     .eq("child_id", childId)
     .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(1);
-  const activeListRow = activeListsRaw?.[0] ?? null;
+    .order("created_at", { ascending: false });
+  const activeLists = activeListsRaw ?? [];
+  const activeListRow =
+    activeLists.find((l) => l.id === requestedListId) ?? activeLists[0] ?? null;
 
   let pinnedIds: string[] = [];
   let queueIds: string[] = [];
@@ -139,6 +144,14 @@ export default async function ChildHomePage({
         <p className="mb-6 text-sm" style={{ color: "var(--mut)" }}>
           You&apos;ve written {effortChars} characters this week!
         </p>
+
+        {activeListRow && (
+          <ListSelector
+            childId={childId}
+            lists={activeLists}
+            selectedId={activeListRow.id}
+          />
+        )}
 
         <div className="mb-8">
           <ChildHomeHero

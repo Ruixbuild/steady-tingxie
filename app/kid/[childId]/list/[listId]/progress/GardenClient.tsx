@@ -82,14 +82,13 @@ export default function GardenClient({
               return (
                 <div
                   key={item.id}
-                  className="flex flex-col items-center gap-1 rounded-2xl p-3"
+                  className="inline-flex items-center gap-2 rounded-2xl px-3 py-2"
                   style={{
-                    width: 96,
                     background: "var(--card)",
                     border: tricky ? "2px solid var(--warn)" : "1.5px solid var(--line)",
                   }}
                 >
-                  <span className="text-2xl">{emoji}</span>
+                  <span className="text-xl">{emoji}</span>
                   <span className="hanzi text-lg">{item.hanzi}</span>
                   <span className="text-xs" style={{ color: "var(--mut)" }}>
                     {LEVEL_LABEL[item.level] ?? "New"}

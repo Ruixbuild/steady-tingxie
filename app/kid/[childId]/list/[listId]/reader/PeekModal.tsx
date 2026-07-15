@@ -6,7 +6,18 @@ import { charDataLoader } from "@/lib/hanziCache";
 import { speak } from "@/lib/tts";
 import RiceGrid from "@/components/RiceGrid";
 
-export default function PeekModal({ char, onClose }: { char: string; onClose: () => void }) {
+export default function PeekModal({
+  char,
+  onClose,
+  onLoopComplete,
+}: {
+  char: string;
+  onClose: () => void;
+  /** Fired once the very first full stroke demo finishes — used by callers
+   * that step through multiple characters in sequence, so they advance on
+   * real completion rather than a fixed timer. */
+  onLoopComplete?: () => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const writerRef = useRef<HanziWriter | null>(null);
 
@@ -18,10 +29,12 @@ export default function PeekModal({ char, onClose }: { char: string; onClose: ()
     const el = containerRef.current;
     if (!el) return;
     el.innerHTML = "";
+    let cancelled = false;
+    let loopTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const writer = HanziWriter.create(el, char, {
-      width: 240,
-      height: 240,
+      width: 220,
+      height: 220,
       padding: 20,
       showOutline: false,
       strokeAnimationSpeed: 0.9,
@@ -30,13 +43,34 @@ export default function PeekModal({ char, onClose }: { char: string; onClose: ()
       strokeColor: "#1D2A33",
       highlightColor: "#2C82C9",
     });
-    writer.loopCharacterAnimation();
     writerRef.current = writer;
 
+    const loop = (first: boolean) => {
+      if (cancelled) return;
+      writer.animateCharacter({
+        onComplete: () => {
+          if (cancelled) return;
+          if (first && onLoopComplete) {
+            onLoopComplete();
+            return; // caller will unmount/advance us
+          }
+          loopTimeout = setTimeout(() => {
+            if (cancelled) return;
+            writer.hideCharacter();
+            loop(false);
+          }, 1200);
+        },
+      });
+    };
+    loop(true);
+
     return () => {
+      cancelled = true;
+      if (loopTimeout) clearTimeout(loopTimeout);
       writer.pauseAnimation();
       writerRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [char]);
 
   return (
@@ -57,8 +91,8 @@ export default function PeekModal({ char, onClose }: { char: string; onClose: ()
         <div
           style={{
             position: "relative",
-            width: 240,
-            height: 240,
+            width: 220,
+            height: 220,
             background: "#fff",
             borderRadius: 26,
             border: "1.5px solid #D5E6F0",

@@ -56,8 +56,8 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
       });
 
     const writer = HanziWriter.create(el, char, {
-      width: 280,
-      height: 280,
+      width: 260,
+      height: 260,
       padding: 20,
       showOutline: false,
       showCharacter: false,
@@ -142,8 +142,8 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
         className="mx-auto"
         style={{
           position: "relative",
-          width: 280,
-          height: 280,
+          width: 260,
+          height: 260,
           background: "#fff",
           borderRadius: 26,
           border: "1.5px solid #D5E6F0",

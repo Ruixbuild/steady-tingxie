@@ -59,8 +59,8 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
 
     const myEpoch = epochRef.current;
     const writer = HanziWriter.create(el, char, {
-      width: 280,
-      height: 280,
+      width: 260,
+      height: 260,
       padding: 20,
       showOutline: stage === "trace",
       strokeAnimationSpeed: 0.9,
@@ -78,6 +78,7 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
     });
 
     if (stage === "watch") {
+      speak(char);
       const loop = (first: boolean) => {
         if (epochRef.current !== myEpoch) return;
         writer.animateCharacter({
@@ -209,6 +210,24 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
         </button>
       </div>
 
+      <div
+        className="mx-auto"
+        style={{
+          position: "relative",
+          width: 260,
+          height: 260,
+          background: "#fff",
+          borderRadius: 26,
+          border: "1.5px solid #D5E6F0",
+          boxShadow: "0 4px 16px rgba(44,130,201,.08)",
+          overflow: "hidden",
+          touchAction: "none",
+        }}
+      >
+        <RiceGrid />
+        <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
+      </div>
+
       <div className="flex gap-2 justify-center">
         {STAGE_ORDER.map((s, i) => {
           const stageIdx = STAGE_ORDER.indexOf(stage);
@@ -231,24 +250,6 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
             </span>
           );
         })}
-      </div>
-
-      <div
-        className="mx-auto"
-        style={{
-          position: "relative",
-          width: 280,
-          height: 280,
-          background: "#fff",
-          borderRadius: 26,
-          border: "1.5px solid #D5E6F0",
-          boxShadow: "0 4px 16px rgba(44,130,201,.08)",
-          overflow: "hidden",
-          touchAction: "none",
-        }}
-      >
-        <RiceGrid />
-        <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
       </div>
       <div style={{ minHeight: 56 }} aria-hidden />
     </div>
