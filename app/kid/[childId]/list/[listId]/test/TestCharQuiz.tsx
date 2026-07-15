@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader, getCharData } from "@/lib/hanziCache";
 import { charMistakeThreshold } from "@/lib/testScoring";
+import { speak } from "@/lib/tts";
 import RiceGrid from "@/components/RiceGrid";
 
 type Props = {
@@ -32,6 +33,7 @@ export default function TestCharQuiz({ char, hardMode, epochRef, onDone }: Props
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDone(false);
     setLoadError(false);
+    speak(char);
   }, [char]);
 
   useEffect(() => {
@@ -113,12 +115,15 @@ export default function TestCharQuiz({ char, hardMode, epochRef, onDone }: Props
       </p>
 
       <div className="flex gap-3">
+        <button type="button" onClick={() => speak(char)} className="btn btn-secondary">
+          🔊 Hear it again
+        </button>
         <button
           type="button"
           onClick={() => onDone({ passed: false })}
           className="btn btn-secondary"
         >
-          ✋ Skip
+          ✋ Skip this one
         </button>
       </div>
 

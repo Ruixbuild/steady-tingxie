@@ -62,7 +62,7 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
       width: 280,
       height: 280,
       padding: 20,
-      showOutline: stage !== "watch",
+      showOutline: stage === "trace",
       strokeAnimationSpeed: 0.9,
       delayBetweenStrokes: 260,
       charDataLoader,

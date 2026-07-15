@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { SectionKind } from "@/lib/supabase/types";
+import HubWordList, { type HubSection } from "./HubWordList";
 
 const KIND_LABEL: Record<SectionKind, string> = {
   words: "词语",
@@ -11,7 +12,7 @@ const KIND_LABEL: Record<SectionKind, string> = {
 
 type SectionRaw = {
   kind: SectionKind;
-  items: { id: string }[] | null;
+  items: { id: string; hanzi: string }[] | null;
 };
 
 export default async function ListHubPage({
@@ -42,7 +43,7 @@ export default async function ListHubPage({
 
   const { data: sectionsRaw } = await supabase
     .from("sections")
-    .select("kind, items(id)")
+    .select("kind, items(id, hanzi)")
     .eq("list_id", listId)
     .order("ord");
   const sections = sectionsRaw as unknown as SectionRaw[];
@@ -53,6 +54,26 @@ export default async function ListHubPage({
           .map((s) => `${KIND_LABEL[s.kind]} ${(s.items ?? []).length}`)
           .join(" · ")
       : "No sections yet";
+
+  const nonPassage = (sections ?? []).filter((s) => s.kind !== "passage");
+  const allItemIds = nonPassage.flatMap((s) => (s.items ?? []).map((it) => it.id));
+  const { data: masteryRows } =
+    allItemIds.length > 0
+      ? await supabase
+          .from("mastery")
+          .select("item_id, level")
+          .eq("child_id", childId)
+          .in("item_id", allItemIds)
+      : { data: [] };
+  const levelByItem = new Map((masteryRows ?? []).map((m) => [m.item_id, m.level]));
+  const hubSections: HubSection[] = nonPassage.map((s) => ({
+    kind: s.kind as "words" | "pinyin",
+    items: (s.items ?? []).map((it) => ({
+      id: it.id,
+      hanzi: it.hanzi,
+      level: levelByItem.get(it.id) ?? 0,
+    })),
+  }));
 
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
@@ -105,6 +126,8 @@ export default async function ListHubPage({
             <span className="text-sm opacity-80">my word garden</span>
           </Link>
         </div>
+
+        {hubSections.length > 0 && <HubWordList sections={hubSections} />}
 
         <Link href={`/kid/${childId}/list/${listId}/reader`} className="btn btn-secondary">
           📚 Reader
