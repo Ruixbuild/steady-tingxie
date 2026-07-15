@@ -79,7 +79,12 @@ export default function TestCharQuiz({ char, hardMode, epochRef, onDone }: Props
         const strokes = strokesRef.current ?? 10;
         const threshold = charMistakeThreshold(strokes, hardMode);
         setDone(true);
-        onDone({ passed: totalMistakes <= threshold });
+        // Let the finished character sit on screen for a moment before the
+        // parent advances the queue and unmounts this canvas.
+        setTimeout(() => {
+          if (epochRef.current !== myEpoch) return;
+          onDone({ passed: totalMistakes <= threshold });
+        }, 700);
       },
     });
 

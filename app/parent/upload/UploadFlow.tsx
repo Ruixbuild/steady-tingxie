@@ -270,6 +270,13 @@ export default function UploadFlow({
   if (stage === "review") {
     return (
       <div className="flex flex-col gap-6">
+        <div>
+          <h3 className="font-semibold mb-1">2 · Enter / review the words</h3>
+          <p className="text-sm" style={{ color: "var(--mut)" }}>
+            Kinds: <b>words</b> = write hanzi · <b>pinyin</b> = write pinyin · <b>passage</b> = one
+            row, full sentence with punctuation.
+          </p>
+        </div>
         <ReviewTable sections={sections} onChange={setSections} />
         <button type="button" onClick={proceedToAssign} className="btn btn-primary self-start">
           Assign →
