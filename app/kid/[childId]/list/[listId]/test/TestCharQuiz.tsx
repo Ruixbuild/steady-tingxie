@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader, getCharData } from "@/lib/hanziCache";
 import { charMistakeThreshold } from "@/lib/testScoring";
-import { speak } from "@/lib/tts";
+import { speak, speakSequence } from "@/lib/tts";
 import RiceGrid from "@/components/RiceGrid";
 
 type Props = {
   char: string;
+  announceWord?: string;
   hardMode: boolean;
   epochRef: { current: number };
   onDone: (result: { passed: boolean }) => void;
@@ -20,7 +21,7 @@ type Props = {
 // threshold. Epoch-guarded the same way as Learn's CharLadder even though
 // there's only one stage here — the hazard (a stale onComplete firing after
 // Skip or the 10-min-cap exit) is the same regardless of stage count.
-export default function TestCharQuiz({ char, hardMode, epochRef, onDone }: Props) {
+export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, onDone }: Props) {
   const [done, setDone] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -33,8 +34,9 @@ export default function TestCharQuiz({ char, hardMode, epochRef, onDone }: Props
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDone(false);
     setLoadError(false);
-    speak(char);
-  }, [char]);
+    if (announceWord) speakSequence([announceWord, char]);
+    else speak(char);
+  }, [char, announceWord]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -120,7 +122,11 @@ export default function TestCharQuiz({ char, hardMode, epochRef, onDone }: Props
       </p>
 
       <div className="flex gap-3">
-        <button type="button" onClick={() => speak(char)} className="btn btn-secondary">
+        <button
+          type="button"
+          onClick={() => (announceWord ? speakSequence([announceWord, char]) : speak(char))}
+          className="btn btn-secondary"
+        >
           🔊 Hear it again
         </button>
         <button

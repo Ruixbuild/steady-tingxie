@@ -114,21 +114,21 @@ export default function ReviewTable({
                 <input
                   value={item.hanzi}
                   onChange={(e) => updateItem(sIdx, iIdx, { hanzi: e.target.value })}
-                  placeholder="hanzi"
+                  placeholder="汉字"
                   className="hanzi rounded-full border px-3 py-2 outline-none text-sm w-28"
                   style={{ borderColor: "var(--line)", color: "var(--ink)" }}
                 />
                 <input
                   value={item.pinyin}
                   onChange={(e) => updateItem(sIdx, iIdx, { pinyin: e.target.value })}
-                  placeholder="pinyin"
+                  placeholder="pin1 yin1 or pīn yīn"
                   className="rounded-full border px-3 py-2 outline-none text-sm w-28"
                   style={{ borderColor: "var(--line)", color: "var(--ink)" }}
                 />
                 <input
                   value={item.english}
                   onChange={(e) => updateItem(sIdx, iIdx, { english: e.target.value })}
-                  placeholder="english (optional)"
+                  placeholder="meaning (optional)"
                   className="rounded-full border px-3 py-2 outline-none text-sm flex-1"
                   style={{ borderColor: "var(--line)", color: "var(--ink)" }}
                 />

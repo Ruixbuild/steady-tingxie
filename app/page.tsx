@@ -28,8 +28,8 @@ export default async function ProfilePickerPage() {
       <img
         src="/icon-512.png"
         alt="Steady Ting Xie"
-        width={60}
-        height={60}
+        width={150}
+        height={150}
         className="rounded-full mb-2"
         style={{ boxShadow: "0 8px 24px rgba(44,130,201,.18)" }}
       />

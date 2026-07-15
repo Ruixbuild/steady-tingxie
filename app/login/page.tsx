@@ -42,8 +42,8 @@ export default function LoginPage() {
         <img
           src="/icon-512.png"
           alt="Steady Ting Xie"
-          width={112}
-          height={112}
+          width={280}
+          height={280}
           className="rounded-full mx-auto mb-4 block"
           style={{ boxShadow: "0 8px 24px rgba(44,130,201,.18)" }}
         />

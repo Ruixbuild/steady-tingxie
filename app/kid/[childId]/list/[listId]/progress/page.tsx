@@ -78,8 +78,12 @@ export default async function ProgressPage({
         >
           ← Back
         </Link>
-        <h1 className="text-2xl font-semibold mb-6">{list.name}</h1>
+        <h1 className="text-2xl font-semibold mb-1">⭐ My word garden</h1>
+        <p className="text-sm mb-6" style={{ color: "var(--mut)" }}>
+          🌱 new → 🌿 learning → 🌸 almost → 🌳 mastered · tests grow words to 🌳
+        </p>
         <GardenClient
+          childId={childId}
           listId={listId}
           bloomed={list.bloomed}
           hardMode={child.hard_mode}

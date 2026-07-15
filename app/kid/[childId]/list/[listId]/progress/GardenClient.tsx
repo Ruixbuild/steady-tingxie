@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { isTricky } from "@/lib/testScoring";
 import Confetti from "@/components/Confetti";
@@ -9,13 +10,16 @@ type GardenItem = { id: string; hanzi: string; level: number; misses: number };
 type GardenSection = { kind: "words" | "pinyin"; title: string | null; items: GardenItem[] };
 
 const STAGE_EMOJI = ["🌱", "🌿", "🌸"] as const;
+const LEVEL_LABEL = ["New", "Learning", "Almost", "Mastered"] as const;
 
 export default function GardenClient({
+  childId,
   listId,
   bloomed,
   hardMode,
   sections,
 }: {
+  childId: string;
   listId: string;
   bloomed: boolean;
   hardMode: boolean;
@@ -28,6 +32,11 @@ export default function GardenClient({
   const total = allItems.length;
   const bloomedCount = allItems.filter((it) => it.level === 3).length;
   const fullBloom = total > 0 && bloomedCount === total;
+
+  const trickyIds = sections
+    .flatMap((s) => s.items.map((it) => ({ ...it, kind: s.kind })))
+    .filter((it) => isTricky(it.kind, it.level, it.misses))
+    .map((it) => it.id);
 
   useEffect(() => {
     if (fullBloom && !bloomed && !flippedRef.current) {
@@ -42,7 +51,7 @@ export default function GardenClient({
     <div className="flex flex-col gap-6">
       {showConfetti && <Confetti onDone={() => setShowConfetti(false)} />}
 
-      <div>
+      <div className="card p-5">
         <p className="font-semibold mb-2">
           {hardMode ? "🌲" : "🌳"} {bloomedCount}/{total} in full bloom
         </p>
@@ -63,9 +72,9 @@ export default function GardenClient({
       {sections.map((section, sIdx) => (
         <div key={sIdx}>
           <p className="text-sm mb-2" style={{ color: "var(--mut)" }}>
-            {section.kind === "words" ? "词语" : "拼音"}
+            {section.kind === "words" ? "写字 / 词语" : "拼音"}
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {section.items.map((item) => {
               const tricky = isTricky(section.kind, item.level, item.misses);
               const emoji =
@@ -73,22 +82,41 @@ export default function GardenClient({
               return (
                 <div
                   key={item.id}
-                  className="hanzi flex items-center justify-center text-2xl rounded-2xl"
+                  className="flex flex-col items-center gap-1 rounded-2xl p-3"
                   style={{
-                    width: 56,
-                    height: 56,
+                    width: 96,
                     background: "var(--card)",
-                    border: tricky ? "2px solid var(--warn)" : "1px solid var(--line)",
+                    border: tricky ? "2px solid var(--warn)" : "1.5px solid var(--line)",
                   }}
-                  title={item.hanzi}
                 >
-                  {emoji}
+                  <span className="text-2xl">{emoji}</span>
+                  <span className="hanzi text-lg">{item.hanzi}</span>
+                  <span className="text-xs" style={{ color: "var(--mut)" }}>
+                    {LEVEL_LABEL[item.level] ?? "New"}
+                  </span>
                 </div>
               );
             })}
           </div>
         </div>
       ))}
+
+      {trickyIds.length > 0 && (
+        <div className="flex flex-wrap gap-3 justify-center mt-2">
+          <Link
+            href={`/kid/${childId}/list/${listId}/learn?items=${trickyIds.join(",")}`}
+            className="btn btn-primary"
+          >
+            📖 Practise my tricky words
+          </Link>
+          <Link
+            href={`/kid/${childId}/list/${listId}/test?mode=tricky`}
+            className="btn btn-secondary"
+          >
+            ✏️ Test my tricky words
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
