@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export type FocusData = {
@@ -22,9 +23,24 @@ const LIGHT_COLOR = { green: "var(--ok)", orange: "var(--warn)", red: "var(--mis
 const KIND_LABEL = { words: "词语", pinyin: "拼音" };
 
 export default function ChildFocusCard({ data }: { data: FocusData }) {
+  const router = useRouter();
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [showCheerPrompt, setShowCheerPrompt] = useState(false);
   const [cheerText, setCheerText] = useState("加油! 💪");
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (
+      !window.confirm(
+        `Delete ${data.childName}'s profile? This permanently removes their lists and all progress.`
+      )
+    )
+      return;
+    setDeleting(true);
+    const supabase = createClient();
+    await supabase.from("children").delete().eq("id", data.childId);
+    router.refresh();
+  }
 
   async function pinItems(itemIds: string[]) {
     if (itemIds.length === 0) return;
@@ -51,7 +67,18 @@ export default function ChildFocusCard({ data }: { data: FocusData }) {
   if (!data.activeList) {
     return (
       <div className="card p-5">
-        <p className="font-semibold">{data.childName}</p>
+        <div className="flex items-center justify-between">
+          <p className="font-semibold">{data.childName}</p>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="btn btn-sm btn-secondary"
+            style={{ color: "var(--miss)" }}
+          >
+            🗑 Delete
+          </button>
+        </div>
         <p style={{ color: "var(--mut)" }}>No active list yet.</p>
       </div>
     );
@@ -60,7 +87,18 @@ export default function ChildFocusCard({ data }: { data: FocusData }) {
   return (
     <div className="card p-5 flex flex-col gap-4">
       <div>
-        <p className="font-semibold">{data.childName}</p>
+        <div className="flex items-center justify-between">
+          <p className="font-semibold">{data.childName}</p>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="btn btn-sm btn-secondary"
+            style={{ color: "var(--miss)" }}
+          >
+            🗑 Delete
+          </button>
+        </div>
         <p style={{ color: "var(--mut)" }}>
           On track for ~{data.predicted}% · {data.activeList.name}
           {data.daysToTest !== null ? ` · ${data.daysToTest}d to test` : ""}
