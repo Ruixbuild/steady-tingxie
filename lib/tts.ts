@@ -8,12 +8,20 @@ let currentUtterance: SpeechSynthesisUtterance | null = null;
 
 export function speak(text: string, lang = "zh-CN", rate = 1) {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
+  synth.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = lang;
   utterance.rate = rate;
   currentUtterance = utterance;
-  window.speechSynthesis.speak(utterance);
+  // Chrome can silently drop a speak() issued in the same tick as cancel()
+  // (the cancellation hasn't actually finished yet) — deferring one tick
+  // and nudging resume() (Chrome also auto-pauses the queue after ~15s
+  // idle) makes this reliable instead of intermittently silent.
+  setTimeout(() => {
+    synth.resume();
+    synth.speak(utterance);
+  }, 0);
 }
 
 /** Speaks each string in order, only starting the next once the previous
@@ -21,7 +29,8 @@ export function speak(text: string, lang = "zh-CN", rate = 1) {
  * specific character being tested. */
 export function speakSequence(texts: string[], lang = "zh-CN", rate = 1) {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
+  synth.cancel();
   const [first, ...rest] = texts;
   if (first === undefined) return;
   const utterance = new SpeechSynthesisUtterance(first);
@@ -31,5 +40,8 @@ export function speakSequence(texts: string[], lang = "zh-CN", rate = 1) {
     utterance.onend = () => speakSequence(rest, lang, rate);
   }
   currentUtterance = utterance;
-  window.speechSynthesis.speak(utterance);
+  setTimeout(() => {
+    synth.resume();
+    synth.speak(utterance);
+  }, 0);
 }

@@ -12,29 +12,13 @@ function atLeastP3(level: Level) {
 type ChildOption = { id: string; name: string; level: Level; hardMode: boolean };
 
 export default function SettingsForm({
-  digestEmail,
   childOptions,
 }: {
-  digestEmail: boolean;
   childOptions: ChildOption[];
 }) {
   const supabase = createClient();
-  const [digest, setDigest] = useState(digestEmail);
   const [children, setChildren] = useState(childOptions);
   const [savingKey, setSavingKey] = useState<string | null>(null);
-
-  async function toggleDigest() {
-    const next = !digest;
-    setDigest(next);
-    setSavingKey("digest");
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from("profiles").update({ digest_email: next }).eq("id", user.id);
-    }
-    setSavingKey(null);
-  }
 
   async function toggleHardMode(childId: string) {
     const child = children.find((c) => c.id === childId);
@@ -52,22 +36,20 @@ export default function SettingsForm({
         <div>
           <p className="font-semibold">Weekly email digest</p>
           <p className="text-sm" style={{ color: "var(--mut)" }}>
-            A short Sunday-evening summary of each child&apos;s progress.
+            A short Sunday-evening summary of each child&apos;s progress. Coming soon.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={toggleDigest}
-          disabled={savingKey === "digest"}
+        <span
           className="btn btn-sm"
           style={{
-            background: digest ? "var(--accent)" : "#fff",
-            color: digest ? "#fff" : "var(--accent)",
-            border: `1px solid ${digest ? "var(--accent)" : "var(--line)"}`,
+            background: "#fff",
+            color: "var(--mut)",
+            border: "1px solid var(--line)",
+            cursor: "default",
           }}
         >
-          {digest ? "On" : "Off"}
-        </button>
+          Off
+        </span>
       </div>
 
       {children.filter((c) => atLeastP3(c.level)).length > 0 && (

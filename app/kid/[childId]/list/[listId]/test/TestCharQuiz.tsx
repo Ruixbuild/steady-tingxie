@@ -6,6 +6,7 @@ import { charDataLoader, getCharData } from "@/lib/hanziCache";
 import { speak, speakSequence } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
+import FreehandPad from "@/components/FreehandPad";
 
 type Props = {
   char: string;
@@ -42,19 +43,7 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
   useEffect(() => {
     if (isPunctuation) {
       strokesRef.current = 1;
-      const myEpoch = epochRef.current;
-      const t = setTimeout(() => {
-        if (epochRef.current !== myEpoch) return;
-        setDone(true);
-        setTimeout(() => {
-          if (epochRef.current !== myEpoch) return;
-          onDone({ strokes: 1, totalMistakes: 0 });
-        }, 700);
-      }, 600);
-      return () => {
-        epochRef.current += 1;
-        clearTimeout(t);
-      };
+      return;
     }
 
     const el = containerRef.current;
@@ -135,7 +124,7 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm" style={{ color: "var(--mut)" }}>
-        {done ? "Done ✔ — next one…" : isPunctuation ? "Listen for the pause…" : "Write it from memory"}
+        {done ? "Done ✔ — next one…" : isPunctuation ? "Write it, then tap Done" : "Write it from memory"}
       </p>
 
       <div className="flex gap-3">
@@ -146,6 +135,18 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
         >
           🔊 Hear it again
         </button>
+        {isPunctuation && !done && (
+          <button
+            type="button"
+            onClick={() => {
+              setDone(true);
+              setTimeout(() => onDone({ strokes: 1, totalMistakes: 0 }), 500);
+            }}
+            className="btn btn-primary"
+          >
+            ✓ Done
+          </button>
+        )}
         <button
           type="button"
           onClick={() => onDone({ strokes: strokesRef.current ?? 10, totalMistakes: 999 })}
@@ -170,9 +171,7 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
         }}
       >
         {isPunctuation ? (
-          <div className="hanzi flex items-center justify-center" style={{ position: "absolute", inset: 0, fontSize: "5rem", color: "var(--ink)" }}>
-            {char}
-          </div>
+          <FreehandPad size={260} />
         ) : (
           <>
             <RiceGrid />

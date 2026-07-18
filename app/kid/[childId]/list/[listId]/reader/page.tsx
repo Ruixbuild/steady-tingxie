@@ -74,7 +74,8 @@ export default async function ReaderPage({
         >
           ← Back
         </Link>
-        <h1 className="text-2xl font-semibold mb-6">{list.name}</h1>
+        <h1 className="text-2xl font-semibold mb-1">🖋 Dictation</h1>
+        <p className="mb-6" style={{ color: "var(--mut)" }}>{list.name}</p>
         <ReaderView hanzi={passageItem.hanzi} charMisses={mastery?.char_misses ?? {}} />
       </div>
     </main>

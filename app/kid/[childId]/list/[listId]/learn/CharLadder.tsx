@@ -6,6 +6,7 @@ import { charDataLoader } from "@/lib/hanziCache";
 import { speak } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
+import FreehandPad from "@/components/FreehandPad";
 
 type Stage = "watch" | "trace" | "copy";
 
@@ -57,8 +58,7 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
 
     if (isPunctuation) {
       speak(char);
-      setMessage("✓ Punctuation — no strokes to write here.");
-      setStageComplete(true);
+      setMessage("✏ Give it a try — no strokes are graded for punctuation.");
       return;
     }
 
@@ -234,9 +234,18 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
         }}
       >
         {isPunctuation ? (
-          <div className="hanzi flex items-center justify-center" style={{ position: "absolute", inset: 0, fontSize: "5rem", color: "var(--ink)" }}>
-            {char}
-          </div>
+          <>
+            <div
+              className="hanzi flex items-center justify-center"
+              style={{ position: "absolute", inset: 0, fontSize: "5rem", color: "var(--line)", opacity: 0.6 }}
+              aria-hidden
+            >
+              {char}
+            </div>
+            <div style={{ position: "absolute", inset: 0 }}>
+              <FreehandPad size={260} onFirstStroke={() => setStageComplete(true)} />
+            </div>
+          </>
         ) : (
           <>
             <RiceGrid />

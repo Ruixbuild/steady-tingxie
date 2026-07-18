@@ -11,12 +11,6 @@ export default async function SettingsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, digest_email")
-    .eq("id", user.id)
-    .maybeSingle();
-
   const { data: children } = await supabase
     .from("children")
     .select("id, name, level, hard_mode")
@@ -36,7 +30,6 @@ export default async function SettingsPage() {
         </div>
         <ParentTabs active="Settings" />
         <SettingsForm
-          digestEmail={profile?.digest_email ?? false}
           childOptions={(children ?? []).map((c) => ({
             id: c.id,
             name: c.name,
