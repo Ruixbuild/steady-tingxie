@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { digitsToMarks } from "@/lib/pinyin";
 
-const TONE_MARKS = ["ˉ", "ˊ", "ˇ", "ˋ", "·"] as const;
+const TONE_MARKS = ["ˉ", "ˊ", "ˇ", "ˋ"] as const;
 
 type Props = {
   onChange: (value: string) => void;
@@ -30,9 +30,9 @@ export default function PinyinToneInput({ onChange, onEnter, disabled }: Props) 
     setPending(letters);
   }
 
-  function confirmWithTone(tone: 1 | 2 | 3 | 4 | 5) {
+  function confirmWithTone(tone: 1 | 2 | 3 | 4) {
     if (!pending) return;
-    const syllable = tone === 5 ? pending : digitsToMarks(`${pending}${tone}`);
+    const syllable = digitsToMarks(`${pending}${tone}`);
     setConfirmed((c) => [...c, syllable]);
     setPending("");
     setAwaitingTone(false);
@@ -73,8 +73,8 @@ export default function PinyinToneInput({ onChange, onEnter, disabled }: Props) 
             key={i}
             type="button"
             onClick={() => removeChip(i)}
-            className="rounded-full px-3 py-1 text-sm"
-            style={{ background: "var(--accent-soft)", color: "var(--accent-d)", fontWeight: 700 }}
+            className="rounded-full px-3 py-1"
+            style={{ background: "var(--accent-soft)", color: "var(--accent-d)", fontWeight: 700, fontSize: "1.3rem" }}
             title="Tap to remove"
           >
             {word} ✕
@@ -111,14 +111,14 @@ export default function PinyinToneInput({ onChange, onEnter, disabled }: Props) 
             Tone for &quot;{pending}&quot;:
           </span>
           {TONE_MARKS.map((mark, i) => {
-            const tone = (i + 1) as 1 | 2 | 3 | 4 | 5;
+            const tone = (i + 1) as 1 | 2 | 3 | 4;
             return (
               <button
                 key={tone}
                 type="button"
                 onClick={() => confirmWithTone(tone)}
                 className="btn btn-sm btn-secondary"
-                style={{ fontSize: "1.2rem", minWidth: 44 }}
+                style={{ fontSize: "2rem", minWidth: 56, minHeight: 56 }}
               >
                 {mark}
               </button>

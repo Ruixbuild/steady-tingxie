@@ -19,10 +19,10 @@ export default function PinyinDrill({ hanzi, answer, onDone }: Props) {
     const result = verdict(value, answer);
     if (result === "exact") {
       setMessage({ text: "✓ Perfect pinyin!", ok: true });
-      setTimeout(onDone, 900);
+      setTimeout(onDone, 1600);
     } else if (result === "tones-wrong") {
       setMessage({ text: `Letters right — check the tones! It's ${answer}`, ok: true });
-      setTimeout(onDone, 1400);
+      setTimeout(onDone, 2400);
     } else {
       setMessage({ text: "Not quite — listen again and try 💪", ok: false });
     }
@@ -44,7 +44,7 @@ export default function PinyinDrill({ hanzi, answer, onDone }: Props) {
       <PinyinToneInput onChange={setValue} onEnter={check} />
 
       {message && (
-        <p className="text-sm" style={{ color: message.ok ? "var(--ok)" : "var(--miss)" }}>
+        <p className="text-lg font-semibold" style={{ color: message.ok ? "var(--ok)" : "var(--miss)" }}>
           {message.text}
         </p>
       )}

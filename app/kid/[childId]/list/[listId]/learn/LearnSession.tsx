@@ -106,6 +106,10 @@ export default function LearnSession({
     advanceToNextItem();
   }
 
+  function handleSkipItem() {
+    advanceToNextItem();
+  }
+
   async function finishSet() {
     // xp gained this session / 2 == chars written this session, since
     // record_item_progress credits +2 xp per char written.
@@ -156,6 +160,14 @@ export default function LearnSession({
         </p>
         <h1 className="hanzi text-3xl mt-1">{currentItem.hanzi}</h1>
       </div>
+
+      <button
+        type="button"
+        onClick={handleSkipItem}
+        className="btn btn-sm btn-secondary self-center"
+      >
+        ⏭ Skip this word
+      </button>
 
       {currentItem.kind === "words" && (
         <div className="flex gap-2 justify-center flex-wrap">

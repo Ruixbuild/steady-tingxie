@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader, getCharData } from "@/lib/hanziCache";
 import { speak, speakSequence } from "@/lib/tts";
+import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 
 type Props = {
@@ -21,6 +22,7 @@ type Props = {
 // there's only one stage here — the hazard (a stale onComplete firing after
 // Skip or the 10-min-cap exit) is the same regardless of stage count.
 export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, onDone }: Props) {
+  const isPunctuation = isPunctuationChar(char);
   const [done, setDone] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -33,11 +35,28 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDone(false);
     setLoadError(false);
-    if (announceWord) speakSequence([announceWord, char]);
+    if (announceWord) speakSequence([announceWord, char], "zh-CN", 0.75);
     else speak(char);
   }, [char, announceWord]);
 
   useEffect(() => {
+    if (isPunctuation) {
+      strokesRef.current = 1;
+      const myEpoch = epochRef.current;
+      const t = setTimeout(() => {
+        if (epochRef.current !== myEpoch) return;
+        setDone(true);
+        setTimeout(() => {
+          if (epochRef.current !== myEpoch) return;
+          onDone({ strokes: 1, totalMistakes: 0 });
+        }, 700);
+      }, 600);
+      return () => {
+        epochRef.current += 1;
+        clearTimeout(t);
+      };
+    }
+
     const el = containerRef.current;
     if (!el) return;
     el.innerHTML = "";
@@ -93,7 +112,7 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
       writer.cancelQuiz();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [char, retryKey]);
+  }, [char, retryKey, isPunctuation]);
 
   if (loadError) {
     return (
@@ -116,13 +135,13 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm" style={{ color: "var(--mut)" }}>
-        {done ? "Done ✔ — next one…" : "Write it from memory"}
+        {done ? "Done ✔ — next one…" : isPunctuation ? "Listen for the pause…" : "Write it from memory"}
       </p>
 
       <div className="flex gap-3">
         <button
           type="button"
-          onClick={() => (announceWord ? speakSequence([announceWord, char]) : speak(char))}
+          onClick={() => (announceWord ? speakSequence([announceWord, char], "zh-CN", 0.75) : speak(char))}
           className="btn btn-secondary"
         >
           🔊 Hear it again
@@ -150,8 +169,16 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
           touchAction: "none",
         }}
       >
-        <RiceGrid />
-        <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
+        {isPunctuation ? (
+          <div className="hanzi flex items-center justify-center" style={{ position: "absolute", inset: 0, fontSize: "5rem", color: "var(--ink)" }}>
+            {char}
+          </div>
+        ) : (
+          <>
+            <RiceGrid />
+            <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
+          </>
+        )}
       </div>
       <div style={{ minHeight: 56 }} aria-hidden />
     </div>

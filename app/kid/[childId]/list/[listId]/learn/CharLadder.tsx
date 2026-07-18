@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader } from "@/lib/hanziCache";
 import { speak } from "@/lib/tts";
+import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 
 type Stage = "watch" | "trace" | "copy";
@@ -19,7 +20,7 @@ const STAGE_ORDER: Stage[] = ["watch", "trace", "copy"];
 const STAGE_LABEL: Record<Stage, string> = {
   watch: "👀 Watch",
   trace: "✍ Trace",
-  copy: "✏ Copy",
+  copy: "✏ Write",
 };
 const DEFAULT_MESSAGE: Record<Stage, string> = {
   watch: "👀 Watch how it's written…",
@@ -28,6 +29,7 @@ const DEFAULT_MESSAGE: Record<Stage, string> = {
 };
 
 export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props) {
+  const isPunctuation = isPunctuationChar(char);
   const [stage, setStage] = useState<Stage>(skipWatch ? "trace" : "watch");
   const [message, setMessage] = useState(DEFAULT_MESSAGE[skipWatch ? "trace" : "watch"]);
   const [stageComplete, setStageComplete] = useState(false);
@@ -52,6 +54,13 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMessage(DEFAULT_MESSAGE[stage]);
     setStageComplete(false);
+
+    if (isPunctuation) {
+      speak(char);
+      setMessage("✓ Punctuation — no strokes to write here.");
+      setStageComplete(true);
+      return;
+    }
 
     const el = containerRef.current;
     if (!el) return;
@@ -141,7 +150,7 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
       else writer.cancelQuiz();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [char, stage, retryKey]);
+  }, [char, stage, retryKey, isPunctuation]);
 
   function handleAgain() {
     setRetryKey((k) => k + 1);
@@ -197,7 +206,7 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
         </button>
         {stage === "watch" && (
           <button type="button" onClick={handleKnowIt} className="btn btn-sm btn-secondary">
-            I know this one ⤼
+            Go to write ⤼
           </button>
         )}
         <button
@@ -224,8 +233,16 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
           touchAction: "none",
         }}
       >
-        <RiceGrid />
-        <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
+        {isPunctuation ? (
+          <div className="hanzi flex items-center justify-center" style={{ position: "absolute", inset: 0, fontSize: "5rem", color: "var(--ink)" }}>
+            {char}
+          </div>
+        ) : (
+          <>
+            <RiceGrid />
+            <div ref={containerRef} style={{ position: "absolute", inset: 0 }} />
+          </>
+        )}
       </div>
 
       <div className="flex gap-2 justify-center">

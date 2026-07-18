@@ -52,7 +52,7 @@ function LoginPageContent() {
           Steady Ting Xie
         </h1>
         <p className="text-center mb-6" style={{ color: "var(--mut)" }}>
-          {"听写"} revision for your child
+          Master the right strokes, step by step with your child.
         </p>
 
         {status === "sent" ? (
@@ -91,13 +91,6 @@ function LoginPageContent() {
         <Suspense fallback={null}>
           <LoginError />
         </Suspense>
-
-        <p
-          className="text-xs text-center mt-6"
-          style={{ color: "var(--mut)" }}
-        >
-          Master the right strokes, step by step. Steady {"听写"}.
-        </p>
       </div>
     </main>
   );

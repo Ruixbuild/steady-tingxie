@@ -46,7 +46,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, epochRef, onDo
     if (!current) return;
     if (lastClauseRef.current !== current.clause) {
       lastClauseRef.current = current.clause;
-      speak(current.clause);
+      speak(current.clause, "zh-CN", 0.75);
     }
   }, [current]);
 
@@ -71,7 +71,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, epochRef, onDo
     <div className="flex flex-col gap-4">
       <button
         type="button"
-        onClick={() => speak(current.clause)}
+        onClick={() => speak(current.clause, "zh-CN", 0.75)}
         className="btn btn-sm btn-secondary self-start"
       >
         🔊 Replay clause
