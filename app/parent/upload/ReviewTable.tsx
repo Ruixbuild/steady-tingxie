@@ -12,14 +12,13 @@ export type ItemDraft = {
 export type SectionDraft = {
   kind: SectionKind;
   title: string;
-  pickN: string;
   items: ItemDraft[];
 };
 
-const KIND_LABEL: Record<SectionKind, string> = {
-  words: "words",
-  pinyin: "pinyin",
-  passage: "passage",
+export const KIND_LABEL: Record<SectionKind, string> = {
+  words: "words 词语",
+  pinyin: "pinyin 拼音",
+  passage: "dictation 默写",
 };
 
 export default function ReviewTable({
@@ -64,7 +63,7 @@ export default function ReviewTable({
     if (targetIdx >= 0) {
       next = next.map((s, i) => (i === targetIdx ? { ...s, items: [...s.items, item] } : s));
     } else {
-      next = [...next, { kind: newKind, title: "", pickN: "", items: [item] }];
+      next = [...next, { kind: newKind, title: KIND_LABEL[newKind], items: [item] }];
     }
     onChange(next);
   }
@@ -82,22 +81,10 @@ export default function ReviewTable({
             <input
               value={section.title}
               onChange={(e) => updateSectionField(sIdx, { title: e.target.value })}
-              placeholder={`${KIND_LABEL[section.kind]} section title (optional)`}
+              placeholder={KIND_LABEL[section.kind]}
               className="rounded-full border px-4 py-2 outline-none text-sm"
               style={{ borderColor: "var(--line)", color: "var(--ink)" }}
             />
-
-            {section.kind === "pinyin" && (
-              <input
-                value={section.pickN}
-                onChange={(e) => updateSectionField(sIdx, { pickN: e.target.value })}
-                placeholder="pick_n (optional)"
-                type="number"
-                min={1}
-                className="rounded-full border px-4 py-2 outline-none text-sm w-48"
-                style={{ borderColor: "var(--line)", color: "var(--ink)" }}
-              />
-            )}
 
             {order.map(({ item, iIdx }) => (
               <div key={iIdx} className="flex gap-2 items-center">
@@ -107,9 +94,9 @@ export default function ReviewTable({
                   className="rounded-full border px-2 py-2 outline-none text-xs"
                   style={{ borderColor: "var(--line)", color: "var(--ink)" }}
                 >
-                  <option value="words">words</option>
-                  <option value="pinyin">pinyin</option>
-                  <option value="passage">passage</option>
+                  <option value="words">words 词语</option>
+                  <option value="pinyin">pinyin 拼音</option>
+                  <option value="passage">dictation 默写</option>
                 </select>
                 <input
                   value={item.hanzi}
@@ -118,20 +105,15 @@ export default function ReviewTable({
                   className="hanzi rounded-full border px-3 py-2 outline-none text-sm w-28"
                   style={{ borderColor: "var(--line)", color: "var(--ink)" }}
                 />
-                <input
-                  value={item.pinyin}
-                  onChange={(e) => updateItem(sIdx, iIdx, { pinyin: e.target.value })}
-                  placeholder="pin1 yin1 or pīn yīn"
-                  className="rounded-full border px-3 py-2 outline-none text-sm w-28"
-                  style={{ borderColor: "var(--line)", color: "var(--ink)" }}
-                />
-                <input
-                  value={item.english}
-                  onChange={(e) => updateItem(sIdx, iIdx, { english: e.target.value })}
-                  placeholder="meaning (optional)"
-                  className="rounded-full border px-3 py-2 outline-none text-sm flex-1"
-                  style={{ borderColor: "var(--line)", color: "var(--ink)" }}
-                />
+                {section.kind === "pinyin" && (
+                  <input
+                    value={item.pinyin}
+                    onChange={(e) => updateItem(sIdx, iIdx, { pinyin: e.target.value })}
+                    placeholder="pin1 yin1 or pīn yīn"
+                    className="rounded-full border px-3 py-2 outline-none text-sm w-28"
+                    style={{ borderColor: "var(--line)", color: "var(--ink)" }}
+                  />
+                )}
                 {item.confidence < 0.8 && (
                   <span className="chip" style={{ background: "var(--warn-soft)", color: "#8A6412" }}>
                     check

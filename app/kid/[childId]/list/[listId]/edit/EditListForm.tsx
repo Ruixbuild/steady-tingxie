@@ -10,7 +10,6 @@ export type EditableSectionDraft = {
   id?: string;
   kind: SectionKind;
   title: string;
-  pickN: string;
   items: ItemDraft[];
 };
 
@@ -18,7 +17,6 @@ const emptyItem = (): ItemDraft => ({ hanzi: "", pinyin: "", english: "" });
 const emptySection = (kind: SectionKind = "words"): EditableSectionDraft => ({
   kind,
   title: "",
-  pickN: "",
   items: [emptyItem()],
 });
 
@@ -92,7 +90,6 @@ export default function EditListForm({
       id: s.id,
       kind: s.kind,
       title: s.title || undefined,
-      pick_n: s.kind === "pinyin" && s.pickN ? Number(s.pickN) : undefined,
       ord: sIdx,
       items: s.items
         .filter((it) => it.hanzi.trim())
@@ -196,18 +193,6 @@ export default function EditListForm({
             className="rounded-full border px-4 py-2 outline-none text-sm"
             style={{ borderColor: "var(--line)", color: "var(--ink)" }}
           />
-
-          {section.kind === "pinyin" && (
-            <input
-              placeholder="pick_n (optional — random subset count)"
-              type="number"
-              min={1}
-              value={section.pickN}
-              onChange={(e) => updateSection(sIdx, { pickN: e.target.value })}
-              className="rounded-full border px-4 py-2 outline-none text-sm"
-              style={{ borderColor: "var(--line)", color: "var(--ink)" }}
-            />
-          )}
 
           {section.kind === "passage" ? (
             <textarea

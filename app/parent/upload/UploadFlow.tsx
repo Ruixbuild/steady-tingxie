@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { downscaleImage } from "@/lib/imageDownscale";
 import type { OcrResult } from "@/lib/ocrSchema";
 import type { SectionKind } from "@/lib/supabase/types";
-import ReviewTable, { type ItemDraft, type SectionDraft } from "./ReviewTable";
+import ReviewTable, { KIND_LABEL, type ItemDraft, type SectionDraft } from "./ReviewTable";
 
 export type ChildOption = {
   id: string;
@@ -37,8 +37,7 @@ function mergeSections(prev: SectionDraft[], incoming: OcrResult["sections"]): S
     } else {
       next.push({
         kind: section.kind,
-        title: section.title ?? "",
-        pickN: section.pickN != null ? String(section.pickN) : "",
+        title: section.title || KIND_LABEL[section.kind],
         items,
       });
     }
@@ -142,7 +141,7 @@ export default function UploadFlow({
 
   function startManual() {
     setSource("manual");
-    setSections([{ kind: "words" as SectionKind, title: "", pickN: "", items: [emptyItem()] }]);
+    setSections([{ kind: "words" as SectionKind, title: KIND_LABEL.words, items: [emptyItem()] }]);
     setStage("review");
   }
 
@@ -168,7 +167,6 @@ export default function UploadFlow({
       .map((s, sIdx) => ({
         kind: s.kind,
         title: s.title || undefined,
-        pick_n: s.kind === "pinyin" && s.pickN ? Number(s.pickN) : undefined,
         ord: sIdx,
         items: s.items
           .filter((it) => it.hanzi.trim())

@@ -50,7 +50,6 @@ export type Section = {
   list_id: string;
   kind: SectionKind;
   title: string | null;
-  pick_n: number | null;
   ord: number;
 };
 
@@ -249,7 +248,6 @@ export type Database = {
 export type ManualSectionInput = {
   kind: SectionKind;
   title?: string;
-  pick_n?: number;
   ord?: number;
   items: {
     ord: number;
@@ -264,7 +262,6 @@ export type EditableSectionInput = {
   id?: string;
   kind: SectionKind;
   title?: string;
-  pick_n?: number;
   ord?: number;
   items: {
     id?: string;

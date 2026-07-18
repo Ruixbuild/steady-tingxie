@@ -7,7 +7,6 @@ type SectionRaw = {
   id: string;
   kind: SectionKind;
   title: string | null;
-  pick_n: number | null;
   items: { id: string; hanzi: string; pinyin: string | null; english: string | null }[] | null;
 };
 
@@ -33,7 +32,7 @@ export default async function EditListPage({
 
   const { data: sectionsRaw } = await supabase
     .from("sections")
-    .select("id, kind, title, pick_n, ord, items(id, hanzi, pinyin, english)")
+    .select("id, kind, title, ord, items(id, hanzi, pinyin, english)")
     .eq("list_id", listId)
     .order("ord");
   const sections = sectionsRaw as unknown as SectionRaw[];
@@ -42,7 +41,6 @@ export default async function EditListPage({
     id: s.id,
     kind: s.kind,
     title: s.title ?? "",
-    pickN: s.pick_n != null ? String(s.pick_n) : "",
     items: (s.items ?? []).map((it) => ({
       id: it.id,
       hanzi: it.hanzi,

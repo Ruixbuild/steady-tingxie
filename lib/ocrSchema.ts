@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // Verbatim system prompt per handoff spec §5.
 export const OCR_PROMPT = `Extract this Singapore primary-school 听写 sheet. Return ONLY JSON:
-{"listName":str?,"sections":[{"kind":"words"|"pinyin"|"passage","title":str,"pickN":int?,
+{"listName":str?,"sections":[{"kind":"words"|"pinyin"|"passage","title":str,
 "items":[{"hanzi":str,"pinyin":str?,"english":str?,"confidence":0-1}]}]}
 words = child writes hanzi. pinyin = child writes PINYIN (pinyin is the answer; keep tone marks).
 passage = ONE item, hanzi = full text with punctuation. confidence<0.8 when blurred/handwritten.`;
@@ -20,7 +20,6 @@ export const GEMINI_RESPONSE_SCHEMA = {
         properties: {
           kind: { type: "string", enum: ["words", "pinyin", "passage"] },
           title: { type: "string" },
-          pickN: { type: "integer" },
           items: {
             type: "array",
             items: {
@@ -56,7 +55,6 @@ const itemSchema = z.object({
 const sectionSchema = z.object({
   kind: z.enum(["words", "pinyin", "passage"]),
   title: z.string().optional(),
-  pickN: z.number().int().optional(),
   items: z.array(itemSchema).transform((arr) => arr.slice(0, 40)),
 });
 
