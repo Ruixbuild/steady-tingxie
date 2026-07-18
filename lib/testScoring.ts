@@ -11,12 +11,6 @@ export function passageQuizPositions(hanzi: string): number[] {
   return positions;
 }
 
-/** Char pass threshold: hanzi-writer quiz totalMistakes must be <= this to pass. */
-export function charMistakeThreshold(strokes: number, hardMode: boolean): number {
-  const base = Math.max(2, Math.ceil(strokes * 0.4));
-  return hardMode ? Math.ceil(base * 0.25) : base;
-}
-
 export const MASTERY_WEIGHT = [0.15, 0.45, 0.75, 0.97] as const;
 
 export function predictedPct(input: {

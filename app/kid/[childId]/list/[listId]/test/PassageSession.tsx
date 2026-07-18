@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import TestCharQuiz from "./TestCharQuiz";
 import { speak } from "@/lib/tts";
 import { PASSAGE_PUNCTUATION } from "@/lib/testScoring";
+import type { ItemResult } from "@/lib/testTypes";
 
 type QuizChar = { globalIndex: number; char: string; clause: string };
 
@@ -12,12 +13,7 @@ type Props = {
   hanzi: string;
   hardMode: boolean;
   epochRef: { current: number };
-  onDone: (result: {
-    item_id: string;
-    kind: "passage";
-    totalChars: number;
-    missedPositions: number[];
-  }) => void;
+  onDone: (result: Extract<ItemResult, { kind: "passage" }>) => void;
 };
 
 // Blind: clauses are only ever spoken via TTS, never shown as text.
@@ -41,7 +37,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, epochRef, onDo
   }, [hanzi]);
 
   const [qIndex, setQIndex] = useState(0);
-  const missedRef = useRef<number[]>([]);
+  const charsRef = useRef<{ globalIndex: number; strokes: number; totalMistakes: number }[]>([]);
   const lastClauseRef = useRef<string | null>(null);
 
   const current = quizChars[qIndex];
@@ -54,9 +50,9 @@ export default function PassageSession({ itemId, hanzi, hardMode, epochRef, onDo
     }
   }, [current]);
 
-  function handleCharDone(result: { passed: boolean }) {
-    if (!result.passed && current) {
-      missedRef.current.push(current.globalIndex);
+  function handleCharDone(result: { strokes: number; totalMistakes: number }) {
+    if (current) {
+      charsRef.current.push({ globalIndex: current.globalIndex, ...result });
     }
     if (qIndex + 1 < quizChars.length) {
       setQIndex((i) => i + 1);
@@ -64,8 +60,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, epochRef, onDo
       onDone({
         item_id: itemId,
         kind: "passage",
-        totalChars: quizChars.length,
-        missedPositions: missedRef.current,
+        chars: charsRef.current,
       });
     }
   }

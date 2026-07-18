@@ -111,11 +111,16 @@ async function sendDigestEmail(to: string, lines: string[]): Promise<void> {
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  // Fail closed: if CRON_SECRET isn't configured, this endpoint must not
+  // run rather than silently serving every parent's children/mastery data
+  // to an unauthenticated caller.
+  if (!cronSecret) {
+    console.error("[digest] CRON_SECRET is not set — refusing to run");
+    return NextResponse.json({ error: "not configured" }, { status: 500 });
+  }
+  const auth = request.headers.get("authorization");
+  if (auth !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const admin = createAdminSupabaseClient();

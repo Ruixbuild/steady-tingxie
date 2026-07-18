@@ -1,6 +1,13 @@
 -- M4: atomic test-attempt recording, per handoff spec §7.3/§9.
+-- M10: pass/fail for 'words' and 'passage' items is now decided here from
+-- raw {strokes, totalMistakes} pairs the client reports, instead of trusting
+-- a client-computed boolean — keeps the actual grading threshold server-side.
 -- Requires touch_daily_streak.sql to already be applied.
 -- Run this once in the Supabase SQL Editor.
+-- Drops the old 7-arg signature first — otherwise it coexists as an
+-- ambiguous overload alongside the new 8-arg (hard_mode) one below.
+drop function if exists record_test_attempt(uuid, uuid, text, boolean, int, int, jsonb);
+
 create or replace function record_test_attempt(
   child_id uuid,
   list_id uuid,
@@ -8,7 +15,8 @@ create or replace function record_test_attempt(
   supervised boolean,
   guess_pct int,
   duration_s int,
-  item_results jsonb
+  item_results jsonb,
+  hard_mode boolean default false
 ) returns uuid -- new attempt id
 language plpgsql
 security invoker
@@ -36,6 +44,12 @@ declare
   v_pct int;
   v_best_before int;
   v_parent_id uuid;
+  v_char jsonb;
+  v_strokes int;
+  v_total_mistakes int;
+  v_base int;
+  v_threshold int;
+  v_char_passed boolean;
 begin
   select best_pct into v_best_before from lists where id = record_test_attempt.list_id;
 
@@ -44,9 +58,21 @@ begin
     v_item_id := (v_item->>'item_id')::uuid;
 
     if v_kind = 'passage' then
-      v_total_chars := coalesce((v_item->>'totalChars')::int, 0);
-      v_missed := coalesce(v_item->'missedPositions', '[]'::jsonb);
-      v_missed_count := jsonb_array_length(v_missed);
+      v_total_chars := jsonb_array_length(coalesce(v_item->'chars', '[]'::jsonb));
+      v_missed := '[]'::jsonb;
+      v_missed_count := 0;
+
+      for v_char in select * from jsonb_array_elements(coalesce(v_item->'chars', '[]'::jsonb)) loop
+        v_strokes := coalesce((v_char->>'strokes')::int, 10);
+        v_total_mistakes := coalesce((v_char->>'totalMistakes')::int, 999);
+        v_base := greatest(2, ceil(v_strokes * 0.4));
+        v_threshold := case when record_test_attempt.hard_mode then ceil(v_base * 0.25) else v_base end;
+        v_char_passed := v_total_mistakes <= v_threshold;
+        if not v_char_passed then
+          v_missed := v_missed || to_jsonb((v_char->>'globalIndex')::int);
+          v_missed_count := v_missed_count + 1;
+        end if;
+      end loop;
 
       v_score := v_score + (v_total_chars - v_missed_count);
       v_total := v_total + v_total_chars;
@@ -69,18 +95,60 @@ begin
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
       end if;
 
-    else -- 'words' | 'pinyin'
+    elsif v_kind = 'words' then
+      v_passed := true;
+      for v_char in select * from jsonb_array_elements(coalesce(v_item->'chars', '[]'::jsonb)) loop
+        v_strokes := coalesce((v_char->>'strokes')::int, 10);
+        v_total_mistakes := coalesce((v_char->>'totalMistakes')::int, 999);
+        v_base := greatest(2, ceil(v_strokes * 0.4));
+        v_threshold := case when record_test_attempt.hard_mode then ceil(v_base * 0.25) else v_base end;
+        if v_total_mistakes > v_threshold then
+          v_passed := false;
+        end if;
+      end loop;
+
+      v_total := v_total + 1;
+      if v_passed then v_score := v_score + 1; end if;
+      v_words_total := v_words_total + 1;
+      if v_passed then v_words_score := v_words_score + 1; end if;
+
+      if not record_test_attempt.supervised then
+        select m.prev_fail into v_prev_fail from mastery m
+          where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
+
+        if v_passed then
+          update mastery m set
+            level = 3,
+            improved = case when v_prev_fail then true else m.improved end,
+            prev_fail = false,
+            last_seen = now()
+          where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
+
+          if v_prev_fail then
+            select hanzi into v_hanzi from items where id = v_item_id;
+            v_flipped := v_flipped || jsonb_build_object('item_id', v_item_id, 'hanzi', v_hanzi);
+          end if;
+        else
+          update mastery m set
+            level = greatest(1, m.level - 1),
+            misses = m.misses + 1,
+            prev_fail = true,
+            improved = false,
+            last_seen = now()
+          where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
+
+          v_tricky_ids := v_tricky_ids || to_jsonb(v_item_id::text);
+        end if;
+      elsif not v_passed then
+        v_tricky_ids := v_tricky_ids || to_jsonb(v_item_id::text);
+      end if;
+
+    else -- 'pinyin'
       v_passed := coalesce((v_item->>'passed')::boolean, false);
       v_total := v_total + 1;
       if v_passed then v_score := v_score + 1; end if;
-
-      if v_kind = 'words' then
-        v_words_total := v_words_total + 1;
-        if v_passed then v_words_score := v_words_score + 1; end if;
-      else
-        v_pinyin_total := v_pinyin_total + 1;
-        if v_passed then v_pinyin_score := v_pinyin_score + 1; end if;
-      end if;
+      v_pinyin_total := v_pinyin_total + 1;
+      if v_passed then v_pinyin_score := v_pinyin_score + 1; end if;
 
       if not record_test_attempt.supervised then
         select m.prev_fail into v_prev_fail from mastery m
@@ -149,4 +217,4 @@ begin
 end;
 $$;
 
-grant execute on function record_test_attempt(uuid, uuid, text, boolean, int, int, jsonb) to authenticated;
+grant execute on function record_test_attempt(uuid, uuid, text, boolean, int, int, jsonb, boolean) to authenticated;

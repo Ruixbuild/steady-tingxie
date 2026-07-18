@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { speak } from "@/lib/tts";
 import { strokeChars } from "@/lib/hanzi";
 import type { AttemptMode } from "@/lib/supabase/types";
-import type { ItemResult } from "@/lib/testTypes";
+import type { CharMistakes, ItemResult } from "@/lib/testTypes";
 import TestCharQuiz from "./TestCharQuiz";
 import TestPinyinInput from "./TestPinyinInput";
 import PassageSession from "./PassageSession";
@@ -47,7 +47,7 @@ export default function TestSession({
   const resultsRef = useRef<ItemResult[]>([]);
   const sessionStartRef = useRef(now());
   const capThresholdRef = useRef(CAP_MS);
-  const wordCharResultsRef = useRef<boolean[]>([]);
+  const wordCharResultsRef = useRef<CharMistakes[]>([]);
   const spokenItemRef = useRef<string | null>(null);
 
   const [queueIndex, setQueueIndex] = useState(0);
@@ -90,6 +90,7 @@ export default function TestSession({
       guess_pct: guessPct,
       duration_s: durationS,
       item_results: itemResults,
+      hard_mode: hardMode,
     });
     if (error) {
       setSubmitting(false);
@@ -108,17 +109,20 @@ export default function TestSession({
     }
   }
 
-  function handleWordCharDone(result: { passed: boolean }) {
+  function handleWordCharDone(result: CharMistakes) {
     const chars = strokeChars(currentItem.hanzi);
-    wordCharResultsRef.current.push(result.passed);
+    wordCharResultsRef.current.push(result);
 
     if (charIndex + 1 < chars.length) {
       setCharIndex((i) => i + 1);
       return;
     }
 
-    const passed = wordCharResultsRef.current.every(Boolean);
-    resultsRef.current.push({ item_id: currentItem.id, kind: "words", passed });
+    resultsRef.current.push({
+      item_id: currentItem.id,
+      kind: "words",
+      chars: wordCharResultsRef.current,
+    });
     advance();
   }
 

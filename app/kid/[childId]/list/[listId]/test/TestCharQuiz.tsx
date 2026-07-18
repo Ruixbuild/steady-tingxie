@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader, getCharData } from "@/lib/hanziCache";
-import { charMistakeThreshold } from "@/lib/testScoring";
 import { speak, speakSequence } from "@/lib/tts";
 import RiceGrid from "@/components/RiceGrid";
 
@@ -12,13 +11,13 @@ type Props = {
   announceWord?: string;
   hardMode: boolean;
   epochRef: { current: number };
-  onDone: (result: { passed: boolean }) => void;
+  onDone: (result: { strokes: number; totalMistakes: number }) => void;
 };
 
-// Blind test-mode quiz for one char: no outline, no per-attempt verdict text,
-// pass/fail is computed here (not trusted from hanzi-writer's own notion of
-// "complete") by comparing totalMistakes against the spec's stroke-count
-// threshold. Epoch-guarded the same way as Learn's CharLadder even though
+// Blind test-mode quiz for one char: no outline, no per-attempt verdict text.
+// Reports the raw stroke count and mistake count only — the pass/fail
+// threshold is applied server-side in record_test_attempt, not trusted from
+// the client. Epoch-guarded the same way as Learn's CharLadder even though
 // there's only one stage here — the hazard (a stale onComplete firing after
 // Skip or the 10-min-cap exit) is the same regardless of stage count.
 export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, onDone }: Props) {
@@ -79,13 +78,12 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
       onComplete: ({ totalMistakes }) => {
         if (epochRef.current !== myEpoch) return;
         const strokes = strokesRef.current ?? 10;
-        const threshold = charMistakeThreshold(strokes, hardMode);
         setDone(true);
         // Let the finished character sit on screen for a moment before the
         // parent advances the queue and unmounts this canvas.
         setTimeout(() => {
           if (epochRef.current !== myEpoch) return;
-          onDone({ passed: totalMistakes <= threshold });
+          onDone({ strokes, totalMistakes });
         }, 700);
       },
     });
@@ -131,7 +129,7 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
         </button>
         <button
           type="button"
-          onClick={() => onDone({ passed: false })}
+          onClick={() => onDone({ strokes: strokesRef.current ?? 10, totalMistakes: 999 })}
           className="btn btn-secondary"
         >
           ✋ Skip this one
