@@ -166,7 +166,7 @@ export default function LearnSession({
         onClick={handleSkipItem}
         className="btn btn-sm btn-secondary self-center"
       >
-        ⏭ Skip this word
+        ✓ I know this
       </button>
 
       {currentItem.kind === "words" && (

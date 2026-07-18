@@ -113,6 +113,18 @@ export function liveRender(input: string): string {
     .join("");
 }
 
+/** Full possibly-multi-syllable string in any input form (digits, tone
+ * marks, or a mix) to tone-mark form for display — e.g. showing a
+ * correction as "nǐ hǎo" rather than "ni3 hao3". */
+export function toMarks(input: string): string {
+  return input
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((syl) => digitsToMarks(toBaseDigit(syl)))
+    .join(" ");
+}
+
 export type PinyinVerdict = "exact" | "tones-wrong" | "wrong";
 
 export function verdict(input: string, answer: string): PinyinVerdict {

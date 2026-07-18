@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { verdict } from "@/lib/pinyin";
+import { toMarks, verdict } from "@/lib/pinyin";
 import { speak } from "@/lib/tts";
 import PinyinToneInput from "../PinyinToneInput";
 
@@ -19,10 +19,8 @@ export default function PinyinDrill({ hanzi, answer, onDone }: Props) {
     const result = verdict(value, answer);
     if (result === "exact") {
       setMessage({ text: "✓ Perfect pinyin!", ok: true });
-      setTimeout(onDone, 1600);
     } else if (result === "tones-wrong") {
-      setMessage({ text: `Letters right — check the tones! It's ${answer}`, ok: true });
-      setTimeout(onDone, 2400);
+      setMessage({ text: `Letters right — check the tones! It's ${toMarks(answer)}`, ok: true });
     } else {
       setMessage({ text: "Not quite — listen again and try 💪", ok: false });
     }
@@ -49,9 +47,16 @@ export default function PinyinDrill({ hanzi, answer, onDone }: Props) {
         </p>
       )}
 
-      <button type="button" onClick={check} className="btn btn-primary">
-        Check
-      </button>
+      <div className="flex gap-3">
+        <button type="button" onClick={check} className="btn btn-primary">
+          Check
+        </button>
+        {message?.ok && (
+          <button type="button" onClick={onDone} className="btn btn-primary">
+            Next →
+          </button>
+        )}
+      </div>
     </div>
   );
 }

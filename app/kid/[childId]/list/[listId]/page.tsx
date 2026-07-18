@@ -55,7 +55,6 @@ export default async function ListHubPage({
           .join(" · ")
       : "No sections yet";
 
-  const hasDictation = (sections ?? []).some((s) => s.kind === "passage");
   const nonPassage = (sections ?? []).filter((s) => s.kind !== "passage");
   const allItemIds = nonPassage.flatMap((s) => (s.items ?? []).map((it) => it.id));
   const { data: masteryRows } =
@@ -131,7 +130,7 @@ export default async function ListHubPage({
         {hubSections.length > 0 && <HubWordList sections={hubSections} />}
 
         <Link href={`/kid/${childId}/list/${listId}/reader`} className="btn btn-secondary">
-          {hasDictation ? "🖋 Dictation" : "📚 Reader"}
+          🖋 Dictation 默写
         </Link>
       </div>
     </main>

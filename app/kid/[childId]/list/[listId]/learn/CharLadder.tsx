@@ -204,11 +204,6 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
         <button type="button" onClick={() => speak(char)} className="btn btn-sm btn-secondary">
           🔊 Say it
         </button>
-        {stage === "watch" && (
-          <button type="button" onClick={handleKnowIt} className="btn btn-sm btn-secondary">
-            Go to write ⤼
-          </button>
-        )}
         <button
           type="button"
           onClick={handleNext}
@@ -217,6 +212,11 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
         >
           Next →
         </button>
+        {stage === "watch" && (
+          <button type="button" onClick={handleKnowIt} className="btn btn-sm btn-secondary">
+            Skip to Write ⤼
+          </button>
+        )}
       </div>
 
       <div

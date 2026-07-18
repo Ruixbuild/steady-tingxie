@@ -26,7 +26,7 @@ export default function ReaderView({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex gap-3 flex-wrap">
-        <button type="button" onClick={() => speak(hanzi, "zh-CN", 0.6)} className="btn btn-sm btn-secondary">
+        <button type="button" onClick={() => speak(hanzi, "zh-CN", 0.45)} className="btn btn-sm btn-secondary">
           🐢 Play whole sentence slowly
         </button>
         <button
