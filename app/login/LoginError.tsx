@@ -1,18 +1,11 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export default function LoginError() {
   const searchParams = useSearchParams();
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const err = searchParams.get("error");
-    if (err) {
-      setError(decodeURIComponent(err));
-    }
-  }, [searchParams]);
+  const err = searchParams.get("error");
+  const error = err ? decodeURIComponent(err) : "";
 
   if (!error) return null;
 

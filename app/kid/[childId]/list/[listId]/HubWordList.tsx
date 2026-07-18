@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { strokeChars } from "@/lib/hanzi";
 import PeekModal from "./reader/PeekModal";
 
 const STAGE_EMOJI = ["🌱", "🌿", "🌸", "🌳"] as const;
@@ -45,7 +46,9 @@ export default function HubWordList({ sections }: { sections: HubSection[] }) {
                 key={it.id}
                 type="button"
                 onClick={() => {
-                  setPeekQueue(Array.from(it.hanzi));
+                  const chars = strokeChars(it.hanzi);
+                  if (chars.length === 0) return;
+                  setPeekQueue(chars);
                   setPeekIndex(0);
                 }}
                 className="hanzi flex items-center gap-1 rounded-2xl px-3 py-2 text-lg"

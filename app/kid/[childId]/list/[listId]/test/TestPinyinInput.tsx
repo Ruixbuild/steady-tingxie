@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { digitsToMarks, verdict } from "@/lib/pinyin";
+import { verdict } from "@/lib/pinyin";
 import { speak } from "@/lib/tts";
+import PinyinToneInput from "../PinyinToneInput";
 
 type Props = {
   hanzi: string;
@@ -17,7 +18,6 @@ type Props = {
 export default function TestPinyinInput({ hanzi, answer, onDone }: Props) {
   const [value, setValue] = useState("");
   const [done, setDone] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const spokenRef = useRef(false);
 
   useEffect(() => {
@@ -26,16 +26,6 @@ export default function TestPinyinInput({ hanzi, answer, onDone }: Props) {
       speak(hanzi);
     }
   }, [hanzi]);
-
-  function liveTransform(raw: string) {
-    const words = raw.split(" ");
-    words[words.length - 1] = digitsToMarks(words[words.length - 1] ?? "");
-    return words.join(" ");
-  }
-
-  useEffect(() => {
-    inputRef.current?.setSelectionRange(value.length, value.length);
-  }, [value]);
 
   function submit() {
     setDone(true);
@@ -56,24 +46,7 @@ export default function TestPinyinInput({ hanzi, answer, onDone }: Props) {
         ✋ Skip
       </button>
 
-      <input
-        ref={inputRef}
-        value={value}
-        onChange={(e) => setValue(liveTransform(e.target.value))}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            submit();
-          }
-        }}
-        placeholder="type pinyin"
-        className="rounded-full border px-5 py-3 outline-none"
-        style={{ borderColor: "var(--line)", color: "var(--ink)" }}
-        autoComplete="off"
-        autoCapitalize="off"
-        spellCheck={false}
-        disabled={done}
-      />
+      <PinyinToneInput onChange={setValue} onEnter={submit} disabled={done} />
 
       {done && (
         <p className="text-sm" style={{ color: "var(--mut)" }}>

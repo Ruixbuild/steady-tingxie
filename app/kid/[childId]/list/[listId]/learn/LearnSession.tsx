@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Confetti from "@/components/Confetti";
 import { speak } from "@/lib/tts";
+import { strokeChars } from "@/lib/hanzi";
 import CharLadder from "./CharLadder";
 import PinyinDrill from "./PinyinDrill";
 
@@ -83,7 +84,7 @@ export default function LearnSession({
   }
 
   async function handleCharDone(result: { written: boolean; traceSvg: string | null }) {
-    const chars = Array.from(currentItem.hanzi);
+    const chars = strokeChars(currentItem.hanzi);
     const nextWritten = writtenSoFar + (result.written ? 1 : 0);
     const nextSvg = result.traceSvg ?? lastTraceSvg;
 
@@ -158,7 +159,7 @@ export default function LearnSession({
 
       {currentItem.kind === "words" && (
         <div className="flex gap-2 justify-center flex-wrap">
-          {Array.from(currentItem.hanzi).map((c, i) => {
+          {strokeChars(currentItem.hanzi).map((c, i) => {
             const done = i < charIndex;
             const on = i === charIndex;
             return (
@@ -185,7 +186,7 @@ export default function LearnSession({
       {currentItem.kind === "words" ? (
         <CharLadder
           key={`${currentItem.id}-${charIndex}`}
-          char={Array.from(currentItem.hanzi)[charIndex]}
+          char={strokeChars(currentItem.hanzi)[charIndex]}
           skipWatch={skipWatch}
           epochRef={epochRef}
           onDone={handleCharDone}

@@ -96,8 +96,7 @@ function LoginPageContent() {
           className="text-xs text-center mt-6"
           style={{ color: "var(--mut)" }}
         >
-          Your child&apos;s name and progress are stored securely to power
-          their revision — never shared.
+          Master the right strokes, step by step. Steady {"听写"}.
         </p>
       </div>
     </main>

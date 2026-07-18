@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { speak } from "@/lib/tts";
+import { strokeChars } from "@/lib/hanzi";
 import type { AttemptMode } from "@/lib/supabase/types";
 import type { ItemResult } from "@/lib/testTypes";
 import TestCharQuiz from "./TestCharQuiz";
@@ -108,7 +109,7 @@ export default function TestSession({
   }
 
   function handleWordCharDone(result: { passed: boolean }) {
-    const chars = Array.from(currentItem.hanzi);
+    const chars = strokeChars(currentItem.hanzi);
     wordCharResultsRef.current.push(result.passed);
 
     if (charIndex + 1 < chars.length) {
@@ -187,14 +188,37 @@ export default function TestSession({
       {submitting ? (
         <p style={{ color: "var(--mut)" }}>Saving…</p>
       ) : currentItem.kind === "words" ? (
-        <TestCharQuiz
-          key={`${currentItem.id}-${charIndex}`}
-          char={Array.from(currentItem.hanzi)[charIndex]}
-          announceWord={charIndex === 0 ? currentItem.hanzi : undefined}
-          hardMode={hardMode}
-          epochRef={epochRef}
-          onDone={handleWordCharDone}
-        />
+        <>
+          {strokeChars(currentItem.hanzi).length > 1 && (
+            <div className="flex gap-2 justify-center flex-wrap">
+              {strokeChars(currentItem.hanzi).map((c, i) => (
+                <span
+                  key={i}
+                  className="hanzi flex items-center justify-center"
+                  style={{
+                    minWidth: 44,
+                    height: 44,
+                    fontSize: "1.3rem",
+                    borderRadius: 12,
+                    border: `1.5px solid ${i < charIndex ? "var(--ok)" : "var(--line)"}`,
+                    background: i < charIndex ? "var(--ok-soft)" : "#fff",
+                    color: "var(--ink)",
+                  }}
+                >
+                  {i < charIndex ? c : ""}
+                </span>
+              ))}
+            </div>
+          )}
+          <TestCharQuiz
+            key={`${currentItem.id}-${charIndex}`}
+            char={strokeChars(currentItem.hanzi)[charIndex]}
+            announceWord={charIndex === 0 ? currentItem.hanzi : undefined}
+            hardMode={hardMode}
+            epochRef={epochRef}
+            onDone={handleWordCharDone}
+          />
+        </>
       ) : currentItem.kind === "pinyin" ? (
         <TestPinyinInput
           key={currentItem.id}
