@@ -18,7 +18,13 @@ export async function GET(request: Request) {
         `${origin}${needsOnboarding ? "/onboarding" : "/"}`
       );
     }
+
+    if (error) {
+      return NextResponse.redirect(
+        `${origin}/login?error=${encodeURIComponent(error.message)}`
+      );
+    }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth`);
+  return NextResponse.redirect(`${origin}/login?error=Invalid+link`);
 }
