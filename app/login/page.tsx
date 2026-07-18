@@ -1,24 +1,15 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useState, type FormEvent, useEffect } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import LoginError from "./LoginError";
 
-export default function LoginPage() {
-  const searchParams = useSearchParams();
+function LoginPageContent() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle"
   );
   const [errorMessage, setErrorMessage] = useState("");
-
-  useEffect(() => {
-    const error = searchParams.get("error");
-    if (error) {
-      setStatus("error");
-      setErrorMessage(decodeURIComponent(error));
-    }
-  }, [searchParams]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -97,6 +88,10 @@ export default function LoginPage() {
           </form>
         )}
 
+        <Suspense fallback={null}>
+          <LoginError />
+        </Suspense>
+
         <p
           className="text-xs text-center mt-6"
           style={{ color: "var(--mut)" }}
@@ -107,4 +102,8 @@ export default function LoginPage() {
       </div>
     </main>
   );
+}
+
+export default function LoginPage() {
+  return <LoginPageContent />;
 }
