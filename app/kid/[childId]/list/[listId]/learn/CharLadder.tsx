@@ -162,6 +162,13 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
 
   function handleNext() {
     if (!stageComplete) return;
+    // Punctuation has no real strokes to grade — one write is enough to
+    // move on, rather than repeating the same freehand write three times
+    // through watch/trace/write.
+    if (isPunctuation) {
+      onDone({ written: true, traceSvg: null });
+      return;
+    }
     const idx = STAGE_ORDER.indexOf(stage);
     if (idx < STAGE_ORDER.length - 1) {
       setStage(STAGE_ORDER[idx + 1]);
@@ -212,7 +219,7 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
         >
           Next →
         </button>
-        {stage === "watch" && (
+        {stage === "watch" && !isPunctuation && (
           <button type="button" onClick={handleKnowIt} className="btn btn-sm btn-secondary">
             Skip to Write ⤼
           </button>
@@ -258,29 +265,50 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
         )}
       </div>
 
-      <div className="flex gap-2 justify-center">
-        {STAGE_ORDER.map((s, i) => {
-          const stageIdx = STAGE_ORDER.indexOf(stage);
-          const done = i < stageIdx;
-          const on = s === stage;
-          return (
-            <span
-              key={s}
-              className="text-sm"
-              style={{
-                padding: "8px 16px",
-                borderRadius: 999,
-                fontWeight: 700,
-                border: `1.5px solid ${on ? "var(--accent)" : done ? "var(--ok)" : "var(--line)"}`,
-                background: on ? "var(--accent)" : done ? "var(--ok-soft)" : "#fff",
-                color: on ? "#fff" : done ? "#1D6E47" : "var(--mut)",
-              }}
-            >
-              {STAGE_LABEL[s]}
-            </span>
-          );
-        })}
-      </div>
+      {!isPunctuation && (
+        <div className="flex items-center justify-center" aria-hidden>
+          {STAGE_ORDER.map((s, i) => {
+            const stageIdx = STAGE_ORDER.indexOf(stage);
+            const done = i < stageIdx;
+            const on = s === stage;
+            const dotColor = on ? "var(--accent)" : done ? "var(--ok)" : "var(--line)";
+            return (
+              <div key={s} className="flex items-center">
+                <div className="flex flex-col items-center gap-1" style={{ width: 64 }}>
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: dotColor,
+                    }}
+                  />
+                  <span
+                    className="text-xs"
+                    style={{
+                      fontWeight: on ? 700 : 500,
+                      color: on ? "var(--accent)" : done ? "#1D6E47" : "var(--mut)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {STAGE_LABEL[s]}
+                  </span>
+                </div>
+                {i < STAGE_ORDER.length - 1 && (
+                  <div
+                    style={{
+                      width: 24,
+                      height: 2,
+                      marginBottom: 16,
+                      background: done ? "var(--ok)" : "var(--line)",
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
       <div style={{ minHeight: 56 }} aria-hidden />
     </div>
   );

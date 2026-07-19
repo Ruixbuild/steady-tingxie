@@ -45,3 +45,35 @@ export function speakSequence(texts: string[], lang = "zh-CN", rate = 1) {
     synth.speak(utterance);
   }, 0);
 }
+
+/** Speaks each string one at a time with a deliberate silent gap between
+ * them — e.g. reading a full passage slowly with a beat between characters
+ * so a child can follow along, rather than one continuous utterance where
+ * the browser controls (or skips) prosody pauses. */
+export function speakSequencePaused(
+  texts: string[],
+  lang = "zh-CN",
+  rate = 1,
+  pauseMs = 350
+) {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  const synth = window.speechSynthesis;
+  synth.cancel();
+
+  function playAt(i: number) {
+    if (i >= texts.length) return;
+    const utterance = new SpeechSynthesisUtterance(texts[i]);
+    utterance.lang = lang;
+    utterance.rate = rate;
+    utterance.onend = () => {
+      setTimeout(() => playAt(i + 1), pauseMs);
+    };
+    currentUtterance = utterance;
+    synth.speak(utterance);
+  }
+
+  setTimeout(() => {
+    synth.resume();
+    playAt(0);
+  }, 0);
+}

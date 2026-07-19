@@ -7,7 +7,7 @@ import HubWordList, { type HubSection } from "./HubWordList";
 const KIND_LABEL: Record<SectionKind, string> = {
   words: "词语",
   pinyin: "拼音",
-  passage: "段落",
+  passage: "默写",
 };
 
 type SectionRaw = {
@@ -90,11 +90,6 @@ export default async function ListHubPage({
           {list.test_date ? `Test on ${list.test_date}` : "No test date set"} · {list.status}
         </p>
 
-        <div className="card p-5 mb-6">
-          <p className="font-semibold mb-1">Sections</p>
-          <p style={{ color: "var(--mut)" }}>{sectionsSummary}</p>
-        </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <Link
             href={`/kid/${childId}/list/${listId}/learn`}
@@ -103,7 +98,7 @@ export default async function ListHubPage({
           >
             <span className="text-3xl">📖</span>
             <span className="font-semibold text-lg">Learn</span>
-            <span className="text-sm opacity-80">watch · trace · copy</span>
+            <span className="text-sm opacity-80">watch. trace. write</span>
           </Link>
 
           <Link
@@ -127,11 +122,22 @@ export default async function ListHubPage({
           </Link>
         </div>
 
-        {hubSections.length > 0 && <HubWordList sections={hubSections} />}
-
-        <Link href={`/kid/${childId}/list/${listId}/reader`} className="btn btn-secondary">
-          🖋 Dictation 默写
+        <Link
+          href={`/kid/${childId}/list/${listId}/reader`}
+          className="rounded-[18px] p-5 flex flex-col gap-1 mb-6"
+          style={{ background: "var(--accent-soft)", color: "var(--accent-d)" }}
+        >
+          <span className="text-3xl">🖋</span>
+          <span className="font-semibold text-lg">Dictation 默写</span>
+          <span className="text-sm opacity-80">Read</span>
         </Link>
+
+        <div className="card p-5 mb-6">
+          <p className="font-semibold mb-1">Sections</p>
+          <p style={{ color: "var(--mut)" }}>{sectionsSummary}</p>
+        </div>
+
+        {hubSections.length > 0 && <HubWordList sections={hubSections} />}
       </div>
     </main>
   );
