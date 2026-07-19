@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader } from "@/lib/hanziCache";
-import { speakChar } from "@/lib/tts";
+import { speakChar, speakSequence } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
@@ -12,6 +12,10 @@ type Stage = "watch" | "trace" | "copy";
 
 type Props = {
   char: string;
+  /** The full word/phrase this char belongs to — passed only for the
+   * phrase's first char, so the whole phrase is read once, then this char
+   * alone, mirroring Test's announceWord behavior. */
+  announceWord?: string;
   skipWatch: boolean;
   epochRef: { current: number };
   onDone: (result: { written: boolean; traceSvg: string | null }) => void;
@@ -29,8 +33,13 @@ const DEFAULT_MESSAGE: Record<Stage, string> = {
   copy: "✏ Now from memory — you can do it!",
 };
 
-export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props) {
+export default function CharLadder({ char, announceWord, skipWatch, epochRef, onDone }: Props) {
   const isPunctuation = isPunctuationChar(char);
+
+  function announce() {
+    if (announceWord) speakSequence([announceWord, char], "zh-CN", 0.75);
+    else speakChar(char);
+  }
   const [stage, setStage] = useState<Stage>(skipWatch ? "trace" : "watch");
   const [message, setMessage] = useState(DEFAULT_MESSAGE[skipWatch ? "trace" : "watch"]);
   const [stageComplete, setStageComplete] = useState(false);
@@ -57,7 +66,7 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
     setStageComplete(false);
 
     if (isPunctuation) {
-      speakChar(char);
+      announce();
       setMessage("✏ Give it a try — no strokes are graded for punctuation.");
       return;
     }
@@ -87,7 +96,7 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
     });
 
     if (stage === "watch") {
-      speakChar(char);
+      announce();
       const loop = (first: boolean) => {
         if (epochRef.current !== myEpoch) return;
         writer.animateCharacter({
@@ -208,7 +217,7 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
         <button type="button" onClick={handleAgain} className="btn btn-sm btn-secondary">
           ↺ Again
         </button>
-        <button type="button" onClick={() => speakChar(char)} className="btn btn-sm btn-secondary">
+        <button type="button" onClick={announce} className="btn btn-sm btn-secondary">
           🔊 Say it
         </button>
         <button

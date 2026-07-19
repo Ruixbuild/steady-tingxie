@@ -12,12 +12,12 @@ type Props = {
 };
 
 // Blind: the hanzi is spoken via TTS, never shown as text — child must
-// recall it purely from sound. No exact/tones-wrong/wrong reveal here
-// (that's Learn's job); Test only reports pass/fail, silently, per §7.3's
-// "no mid-test verdicts" rule.
+// recall it purely from sound. Shows a pass/fail verdict with the correct
+// answer after each submit, then advances.
 export default function TestPinyinInput({ hanzi, answer, onDone }: Props) {
   const [value, setValue] = useState("");
   const [done, setDone] = useState(false);
+  const [passed, setPassed] = useState(false);
   const spokenRef = useRef(false);
 
   useEffect(() => {
@@ -27,9 +27,14 @@ export default function TestPinyinInput({ hanzi, answer, onDone }: Props) {
     }
   }, [hanzi]);
 
-  function submit() {
+  function finish(result: boolean) {
+    setPassed(result);
     setDone(true);
-    onDone({ passed: verdict(value, answer) === "exact" });
+    setTimeout(() => onDone({ passed: result }), 1200);
+  }
+
+  function submit() {
+    finish(verdict(value, answer) === "exact");
   }
 
   return (
@@ -42,15 +47,15 @@ export default function TestPinyinInput({ hanzi, answer, onDone }: Props) {
         🔊 Replay
       </button>
 
-      <button type="button" onClick={() => onDone({ passed: false })} className="btn btn-secondary self-start">
+      <button type="button" onClick={() => finish(false)} disabled={done} className="btn btn-secondary self-start">
         ✋ Skip
       </button>
 
       <PinyinToneInput onChange={setValue} onEnter={submit} disabled={done} />
 
       {done && (
-        <p className="text-sm" style={{ color: "var(--mut)" }}>
-          Done ✔ — next one…
+        <p className="text-sm font-semibold" style={{ color: passed ? "#3E7A4E" : "#8A6412" }}>
+          {passed ? "✓ Correct!" : `✗ Answer: ${answer}`}
         </p>
       )}
 

@@ -15,6 +15,9 @@ type Props = {
    * "Hear it again" manually. Used by PassageSession's "first 2 words"
    * reveal mode, where later characters shouldn't get an automatic hint. */
   silent?: boolean;
+  /** Hides the "Hear it again" replay button — used by PassageSession's
+   * "first 2 words" mode, which supplies its own replay control instead. */
+  hideReplayButton?: boolean;
   hardMode: boolean;
   epochRef: { current: number };
   onDone: (result: { strokes: number; totalMistakes: number }) => void;
@@ -26,7 +29,7 @@ type Props = {
 // the client. Epoch-guarded the same way as Learn's CharLadder even though
 // there's only one stage here — the hazard (a stale onComplete firing after
 // Skip or the 10-min-cap exit) is the same regardless of stage count.
-export default function TestCharQuiz({ char, announceWord, silent, hardMode, epochRef, onDone }: Props) {
+export default function TestCharQuiz({ char, announceWord, silent, hideReplayButton, hardMode, epochRef, onDone }: Props) {
   const isPunctuation = isPunctuationChar(char);
   const [done, setDone] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -133,13 +136,15 @@ export default function TestCharQuiz({ char, announceWord, silent, hardMode, epo
       </p>
 
       <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={() => (announceWord ? speakSequence([announceWord, char], "zh-CN", 0.75) : speak(char))}
-          className="btn btn-secondary"
-        >
-          🔊 Hear it again
-        </button>
+        {!hideReplayButton && (
+          <button
+            type="button"
+            onClick={() => (announceWord ? speakSequence([announceWord, char], "zh-CN", 0.75) : speak(char))}
+            className="btn btn-secondary"
+          >
+            🔊 Hear it again
+          </button>
+        )}
         {isPunctuation && !done && (
           <button
             type="button"

@@ -199,6 +199,7 @@ export default function LearnSession({
         <CharLadder
           key={`${currentItem.id}-${charIndex}`}
           char={strokeChars(currentItem.hanzi)[charIndex]}
+          announceWord={charIndex === 0 && strokeChars(currentItem.hanzi).length > 1 ? currentItem.hanzi : undefined}
           skipWatch={skipWatch}
           epochRef={epochRef}
           onDone={handleCharDone}
