@@ -243,7 +243,11 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
               {char}
             </div>
             <div style={{ position: "absolute", inset: 0 }}>
-              <FreehandPad size={260} onFirstStroke={() => setStageComplete(true)} />
+              <FreehandPad
+                key={`${stage}-${retryKey}`}
+                size={260}
+                onFirstStroke={() => setStageComplete(true)}
+              />
             </div>
           </>
         ) : (
