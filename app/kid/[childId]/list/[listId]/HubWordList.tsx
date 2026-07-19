@@ -1,8 +1,14 @@
 const STAGE_EMOJI = ["🌱", "🌿", "🌸", "🌳"] as const;
 
 export type HubSection = {
-  kind: "words" | "pinyin";
+  kind: "words" | "pinyin" | "passage";
   items: { id: string; hanzi: string; level: number }[];
+};
+
+const KIND_HEADER: Record<HubSection["kind"], string> = {
+  words: "✍ 写字 / 词语",
+  pinyin: "🔤 拼音",
+  passage: "🖋 默写",
 };
 
 export default function HubWordList({ sections }: { sections: HubSection[] }) {
@@ -11,7 +17,7 @@ export default function HubWordList({ sections }: { sections: HubSection[] }) {
       {sections.map((s, i) => (
         <div key={i}>
           <p className="text-sm mb-2" style={{ color: "var(--mut)" }}>
-            {s.kind === "words" ? "✍ 写字 / 词语" : "🔤 拼音"}
+            {KIND_HEADER[s.kind]}
           </p>
           <div className="flex flex-wrap gap-2">
             {s.items.map((it) => (

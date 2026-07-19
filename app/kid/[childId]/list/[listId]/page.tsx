@@ -55,8 +55,7 @@ export default async function ListHubPage({
           .join(" · ")
       : "No sections yet";
 
-  const nonPassage = (sections ?? []).filter((s) => s.kind !== "passage");
-  const allItemIds = nonPassage.flatMap((s) => (s.items ?? []).map((it) => it.id));
+  const allItemIds = (sections ?? []).flatMap((s) => (s.items ?? []).map((it) => it.id));
   const { data: masteryRows } =
     allItemIds.length > 0
       ? await supabase
@@ -66,8 +65,8 @@ export default async function ListHubPage({
           .in("item_id", allItemIds)
       : { data: [] };
   const levelByItem = new Map((masteryRows ?? []).map((m) => [m.item_id, m.level]));
-  const hubSections: HubSection[] = nonPassage.map((s) => ({
-    kind: s.kind as "words" | "pinyin",
+  const hubSections: HubSection[] = (sections ?? []).map((s) => ({
+    kind: s.kind as "words" | "pinyin" | "passage",
     items: (s.items ?? []).map((it) => ({
       id: it.id,
       hanzi: it.hanzi,
@@ -121,16 +120,6 @@ export default async function ListHubPage({
             <span className="text-sm opacity-80">my word garden</span>
           </Link>
         </div>
-
-        <Link
-          href={`/kid/${childId}/list/${listId}/reader`}
-          className="rounded-[18px] p-5 flex flex-col gap-1 mb-6"
-          style={{ background: "var(--accent-soft)", color: "var(--accent-d)" }}
-        >
-          <span className="text-3xl">🖋</span>
-          <span className="font-semibold text-lg">Dictation 默写</span>
-          <span className="text-sm opacity-80">Read</span>
-        </Link>
 
         <div className="card p-5 mb-6">
           <p className="font-semibold mb-1">Sections</p>
