@@ -33,6 +33,7 @@ export default function TestSession({
   hardMode,
   guessPct,
   items,
+  passageReveal,
 }: {
   childId: string;
   listId: string;
@@ -41,6 +42,7 @@ export default function TestSession({
   hardMode: boolean;
   guessPct: number;
   items: TestItem[];
+  passageReveal: "full" | "first2";
 }) {
   const router = useRouter();
   const epochRef = useRef(0);
@@ -236,6 +238,7 @@ export default function TestSession({
           itemId={currentItem.id}
           hanzi={currentItem.hanzi}
           hardMode={hardMode}
+          reveal={passageReveal}
           epochRef={epochRef}
           onDone={handlePassageDone}
         />

@@ -24,6 +24,16 @@ export function speak(text: string, lang = "zh-CN", rate = 1) {
   }, 0);
 }
 
+/** Speaks a single character with a trailing silent beat. A lone syllable's
+ * tail otherwise gets clipped — the speech engine treats the utterance as
+ * "done" the instant the audible sound ends and cuts it abruptly, with no
+ * room for the natural decay a longer phrase gets for free. The trailing
+ * comma is a silent pause to the TTS engine (never spoken aloud), just
+ * padding to speak past. */
+export function speakChar(char: string, lang = "zh-CN", rate = 1) {
+  speak(`${char}，`, lang, rate);
+}
+
 /** Speaks each string in order, only starting the next once the previous
  * utterance finishes — e.g. announcing a whole test word before the
  * specific character being tested. */

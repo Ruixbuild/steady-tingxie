@@ -40,9 +40,17 @@ export default function TestPicker({ childId, listId, listName, predicted, count
           </Link>
         )}
         {counts.passage > 0 && (
-          <Link href={`${base}?mode=passage${sup}`} className="card p-5">
-            段落
-          </Link>
+          <div className="card p-5 flex flex-col gap-3">
+            <span className="font-semibold">默写</span>
+            <div className="flex flex-col gap-2">
+              <Link href={`${base}?mode=passage&reveal=full${sup}`} className="btn btn-secondary">
+                Read full sentence
+              </Link>
+              <Link href={`${base}?mode=passage&reveal=first2${sup}`} className="btn btn-secondary">
+                Read first 2 words
+              </Link>
+            </div>
+          </div>
         )}
         {counts.tricky > 0 && (
           <Link href={`${base}?mode=tricky${sup}`} className="card p-5">

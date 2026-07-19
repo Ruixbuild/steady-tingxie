@@ -11,6 +11,10 @@ import FreehandPad from "@/components/FreehandPad";
 type Props = {
   char: string;
   announceWord?: string;
+  /** Skip the automatic on-mount pronunciation — the child can still tap
+   * "Hear it again" manually. Used by PassageSession's "first 2 words"
+   * reveal mode, where later characters shouldn't get an automatic hint. */
+  silent?: boolean;
   hardMode: boolean;
   epochRef: { current: number };
   onDone: (result: { strokes: number; totalMistakes: number }) => void;
@@ -22,7 +26,7 @@ type Props = {
 // the client. Epoch-guarded the same way as Learn's CharLadder even though
 // there's only one stage here — the hazard (a stale onComplete firing after
 // Skip or the 10-min-cap exit) is the same regardless of stage count.
-export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, onDone }: Props) {
+export default function TestCharQuiz({ char, announceWord, silent, hardMode, epochRef, onDone }: Props) {
   const isPunctuation = isPunctuationChar(char);
   const [done, setDone] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -36,9 +40,10 @@ export default function TestCharQuiz({ char, announceWord, hardMode, epochRef, o
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDone(false);
     setLoadError(false);
+    if (silent) return;
     if (announceWord) speakSequence([announceWord, char], "zh-CN", 0.75);
     else speak(char);
-  }, [char, announceWord]);
+  }, [char, announceWord, silent]);
 
   useEffect(() => {
     if (isPunctuation) {

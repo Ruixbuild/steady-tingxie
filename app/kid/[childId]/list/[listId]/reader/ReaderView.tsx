@@ -31,14 +31,14 @@ export default function ReaderView({
           onClick={() => speakSequencePaused(chars, "zh-CN", 0.5, 350)}
           className="btn btn-sm btn-secondary"
         >
-          🐢 Read whole sentences
+          🐢 Read full sentence
         </button>
         <button
           type="button"
           onClick={() => speakSequence(chars.slice(0, 2), "zh-CN", 0.6)}
           className="btn btn-sm btn-secondary"
         >
-          🔊 Read first 2 characters
+          🔊 Read first 2 words
         </button>
       </div>
 

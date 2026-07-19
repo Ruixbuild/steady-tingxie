@@ -15,10 +15,11 @@ export default async function TestPage({
   searchParams,
 }: {
   params: Promise<{ childId: string; listId: string }>;
-  searchParams: Promise<{ mode?: string; supervised?: string }>;
+  searchParams: Promise<{ mode?: string; supervised?: string; reveal?: string }>;
 }) {
   const { childId, listId } = await params;
-  const { mode, supervised } = await searchParams;
+  const { mode, supervised, reveal } = await searchParams;
+  const passageReveal = reveal === "first2" ? "first2" : "full";
 
   const supabase = await createServerSupabaseClient();
   const {
@@ -148,6 +149,7 @@ export default async function TestPage({
       hardMode={child.hard_mode}
       guessPct={predicted}
       items={testItems}
+      passageReveal={passageReveal}
     />
   );
 }

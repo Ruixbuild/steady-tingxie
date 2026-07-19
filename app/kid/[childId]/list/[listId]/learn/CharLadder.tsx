@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader } from "@/lib/hanziCache";
-import { speak } from "@/lib/tts";
+import { speakChar } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
@@ -57,7 +57,7 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
     setStageComplete(false);
 
     if (isPunctuation) {
-      speak(char);
+      speakChar(char);
       setMessage("✏ Give it a try — no strokes are graded for punctuation.");
       return;
     }
@@ -87,7 +87,7 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
     });
 
     if (stage === "watch") {
-      speak(char);
+      speakChar(char);
       const loop = (first: boolean) => {
         if (epochRef.current !== myEpoch) return;
         writer.animateCharacter({
@@ -208,7 +208,7 @@ export default function CharLadder({ char, skipWatch, epochRef, onDone }: Props)
         <button type="button" onClick={handleAgain} className="btn btn-sm btn-secondary">
           ↺ Again
         </button>
-        <button type="button" onClick={() => speak(char)} className="btn btn-sm btn-secondary">
+        <button type="button" onClick={() => speakChar(char)} className="btn btn-sm btn-secondary">
           🔊 Say it
         </button>
         <button
