@@ -74,7 +74,7 @@ export default function PinyinToneInput({ onChange, onEnter, disabled }: Props) 
             type="button"
             onClick={() => removeChip(i)}
             className="rounded-full px-3 py-1"
-            style={{ background: "var(--accent-soft)", color: "var(--accent-d)", fontWeight: 700, fontSize: "1.3rem" }}
+            style={{ background: "var(--accent-soft)", color: "var(--accent-d)", fontWeight: 700, fontSize: "2rem" }}
             title="Tap to remove"
           >
             {word} ✕

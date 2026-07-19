@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import TestCharQuiz from "./TestCharQuiz";
-import { speakSequencePaused, speakSequence } from "@/lib/tts";
+import { speak, speakSequence } from "@/lib/tts";
 import type { ItemResult } from "@/lib/testTypes";
 
 type QuizChar = { globalIndex: number; char: string };
@@ -11,10 +11,11 @@ type Props = {
   itemId: string;
   hanzi: string;
   hardMode: boolean;
-  /** "full" offers a replay-the-whole-sentence button and speaks each char
-   * as it's quizzed. "first2" offers a replay-first-2-words button only,
-   * with every character quiz silent — a harder, closer-to-blind variant.
-   * Neither mode auto-plays on entry; playback is always child-initiated. */
+  /** "full" offers a replay-the-whole-sentence button plus a manual
+   * "Hear it again" per character. "first2" offers only a replay-first-2
+   * button, with no per-character replay — a harder, closer-to-blind
+   * variant. Neither mode auto-plays on entry or per character; playback
+   * is always child-initiated. */
   reveal: "full" | "first2";
   epochRef: { current: number };
   onDone: (result: Extract<ItemResult, { kind: "passage" }>) => void;
@@ -59,7 +60,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, reveal, epochR
         {reveal === "full" ? (
           <button
             type="button"
-            onClick={() => speakSequencePaused(Array.from(hanzi), "zh-CN", 0.6, 300)}
+            onClick={() => speak(hanzi, "zh-CN", 0.6)}
             className="btn btn-sm btn-secondary"
           >
             🐢 Read full sentence
@@ -102,7 +103,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, reveal, epochR
       <TestCharQuiz
         key={current.globalIndex}
         char={current.char}
-        silent={reveal === "first2"}
+        silent
         hideReplayButton={reveal === "first2"}
         hardMode={hardMode}
         epochRef={epochRef}

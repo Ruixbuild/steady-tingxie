@@ -54,6 +54,7 @@ export default function TestSession({
 
   const [queueIndex, setQueueIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
+  const [wordItemDone, setWordItemDone] = useState(false);
   const [showCapModal, setShowCapModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -104,6 +105,7 @@ export default function TestSession({
   function advance() {
     wordCharResultsRef.current = [];
     setCharIndex(0);
+    setWordItemDone(false);
     if (queueIndex + 1 >= items.length) {
       submitAttempt(resultsRef.current);
     } else {
@@ -125,7 +127,8 @@ export default function TestSession({
       kind: "words",
       chars: wordCharResultsRef.current,
     });
-    advance();
+    // Pause here instead of auto-advancing — the child confirms with Next.
+    setWordItemDone(true);
   }
 
   function handlePinyinDone(result: { passed: boolean }) {
@@ -197,33 +200,47 @@ export default function TestSession({
         <>
           {strokeChars(currentItem.hanzi).length > 1 && (
             <div className="flex gap-2 justify-center flex-wrap">
-              {strokeChars(currentItem.hanzi).map((c, i) => (
-                <span
-                  key={i}
-                  className="hanzi flex items-center justify-center"
-                  style={{
-                    minWidth: 44,
-                    height: 44,
-                    fontSize: "1.3rem",
-                    borderRadius: 12,
-                    border: `1.5px solid ${i < charIndex ? "var(--ok)" : "var(--line)"}`,
-                    background: i < charIndex ? "var(--ok-soft)" : "#fff",
-                    color: "var(--ink)",
-                  }}
-                >
-                  {i < charIndex ? c : ""}
-                </span>
-              ))}
+              {strokeChars(currentItem.hanzi).map((c, i) => {
+                const done = wordItemDone || i < charIndex;
+                return (
+                  <span
+                    key={i}
+                    className="hanzi flex items-center justify-center"
+                    style={{
+                      minWidth: 44,
+                      height: 44,
+                      fontSize: "1.3rem",
+                      borderRadius: 12,
+                      border: `1.5px solid ${done ? "var(--ok)" : "var(--line)"}`,
+                      background: done ? "var(--ok-soft)" : "#fff",
+                      color: "var(--ink)",
+                    }}
+                  >
+                    {done ? c : ""}
+                  </span>
+                );
+              })}
             </div>
           )}
-          <TestCharQuiz
-            key={`${currentItem.id}-${charIndex}`}
-            char={strokeChars(currentItem.hanzi)[charIndex]}
-            announceWord={charIndex === 0 ? currentItem.hanzi : undefined}
-            hardMode={hardMode}
-            epochRef={epochRef}
-            onDone={handleWordCharDone}
-          />
+          {wordItemDone ? (
+            <div className="flex flex-col items-center gap-4 py-6">
+              <p className="text-sm" style={{ color: "var(--mut)" }}>
+                Done ✔ — {currentItem.hanzi}
+              </p>
+              <button type="button" className="btn btn-primary" onClick={advance}>
+                Next →
+              </button>
+            </div>
+          ) : (
+            <TestCharQuiz
+              key={`${currentItem.id}-${charIndex}`}
+              char={strokeChars(currentItem.hanzi)[charIndex]}
+              announceWord={charIndex === 0 ? currentItem.hanzi : undefined}
+              hardMode={hardMode}
+              epochRef={epochRef}
+              onDone={handleWordCharDone}
+            />
+          )}
         </>
       ) : currentItem.kind === "pinyin" ? (
         <TestPinyinInput

@@ -39,22 +39,23 @@ export default function TestPinyinInput({ hanzi, answer, onDone }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <button
-        type="button"
-        onClick={() => speak(hanzi)}
-        className="btn btn-sm btn-secondary self-start"
-      >
-        🔊 Replay
-      </button>
-
-      <button type="button" onClick={() => finish(false)} disabled={done} className="btn btn-secondary self-start">
-        ✋ Skip
-      </button>
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => speak(hanzi)}
+          className="btn btn-sm btn-secondary"
+        >
+          🔊 Replay
+        </button>
+        <button type="button" onClick={() => finish(false)} disabled={done} className="btn btn-sm btn-secondary">
+          ✋ Skip
+        </button>
+      </div>
 
       <PinyinToneInput onChange={setValue} onEnter={submit} disabled={done} />
 
       {done && (
-        <p className="text-sm font-semibold" style={{ color: passed ? "#3E7A4E" : "#8A6412" }}>
+        <p className="font-semibold" style={{ fontSize: "1.6rem", color: passed ? "#3E7A4E" : "#8A6412" }}>
           {passed ? "✓ Correct!" : `✗ Answer: ${answer}`}
         </p>
       )}
