@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { speak } from "@/lib/tts";
+import { speak, PHRASE_RATE } from "@/lib/tts";
 import { strokeChars } from "@/lib/hanzi";
 import type { AttemptMode } from "@/lib/supabase/types";
 import type { CharMistakes, ItemResult } from "@/lib/testTypes";
@@ -77,7 +77,7 @@ export default function TestSession({
   useEffect(() => {
     if (currentItem?.kind === "words" && spokenItemRef.current !== currentItem.id) {
       spokenItemRef.current = currentItem.id;
-      speak(currentItem.hanzi);
+      speak(currentItem.hanzi, "zh-CN", PHRASE_RATE);
     }
   }, [currentItem]);
 

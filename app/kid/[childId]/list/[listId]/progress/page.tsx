@@ -45,8 +45,7 @@ export default async function ProgressPage({
     .order("ord");
   const sections = sectionsRaw as unknown as SectionRaw[];
 
-  const nonPassage = (sections ?? []).filter((s) => s.kind !== "passage");
-  const allItemIds = nonPassage.flatMap((s) => (s.items ?? []).map((it) => it.id));
+  const allItemIds = (sections ?? []).flatMap((s) => (s.items ?? []).map((it) => it.id));
 
   const { data: masteryRows } =
     allItemIds.length > 0
@@ -59,8 +58,8 @@ export default async function ProgressPage({
 
   const masteryByItem = new Map((masteryRows ?? []).map((m) => [m.item_id, m]));
 
-  const gardenSections = nonPassage.map((s) => ({
-    kind: s.kind as "words" | "pinyin",
+  const gardenSections = (sections ?? []).map((s) => ({
+    kind: s.kind as "words" | "pinyin" | "passage",
     title: s.title,
     items: (s.items ?? []).map((it) => {
       const m = masteryByItem.get(it.id);

@@ -4,12 +4,11 @@ type Props = {
   childId: string;
   listId: string;
   listName: string;
-  predicted: number;
   counts: { words: number; pinyin: number; passage: number; tricky: number };
   supervised: boolean;
 };
 
-export default function TestPicker({ childId, listId, listName, predicted, counts, supervised }: Props) {
+export default function TestPicker({ childId, listId, listName, counts, supervised }: Props) {
   const base = `/kid/${childId}/list/${listId}/test`;
   const sup = supervised ? "&supervised=true" : "";
 
@@ -26,7 +25,7 @@ export default function TestPicker({ childId, listId, listName, predicted, count
         <h1 className="text-2xl font-semibold">{listName}</h1>
 
         <Link href={`${base}?mode=full${sup}`} className="card p-5 flex flex-col gap-1">
-          <span className="font-semibold">🏫 Full test — the app guesses ~{predicted}%. Beat it!</span>
+          <span className="font-semibold">🏫 Full test</span>
         </Link>
 
         {counts.words > 0 && (

@@ -26,6 +26,11 @@ function padTrailing(text: string): string {
   return `${text}，`;
 }
 
+/** The one place that controls how fast a phrase/sentence (as opposed to a
+ * single character) is read aloud, across Learn, Test, and Dictation.
+ * Tune this single value to change the pace everywhere at once. */
+export const PHRASE_RATE = 0.45;
+
 export function speak(text: string, lang = "zh-CN", rate = 1) {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   const synth = window.speechSynthesis;

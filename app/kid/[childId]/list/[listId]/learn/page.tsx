@@ -58,8 +58,7 @@ export default async function LearnPage({
 
   let allItems: LearnItem[] = [];
   for (const section of sections ?? []) {
-    if (section.kind === "passage") continue;
-    const kind = section.kind as "words" | "pinyin";
+    const kind = section.kind as "words" | "pinyin" | "passage";
     const sectionItems = (section.items ?? [])
       .slice()
       .sort((a, b) => a.ord - b.ord)

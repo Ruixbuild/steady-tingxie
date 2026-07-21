@@ -7,7 +7,13 @@ import { isTricky } from "@/lib/testScoring";
 import Confetti from "@/components/Confetti";
 
 type GardenItem = { id: string; hanzi: string; level: number; misses: number };
-type GardenSection = { kind: "words" | "pinyin"; title: string | null; items: GardenItem[] };
+type GardenSection = { kind: "words" | "pinyin" | "passage"; title: string | null; items: GardenItem[] };
+
+const KIND_LABEL: Record<GardenSection["kind"], string> = {
+  words: "写字 / 词语",
+  pinyin: "拼音",
+  passage: "默写",
+};
 
 const STAGE_EMOJI = ["🌱", "🌿", "🌸"] as const;
 const LEVEL_LABEL = ["New", "Learning", "Almost", "Mastered"] as const;
@@ -72,7 +78,7 @@ export default function GardenClient({
       {sections.map((section, sIdx) => (
         <div key={sIdx}>
           <p className="text-sm mb-2" style={{ color: "var(--mut)" }}>
-            {section.kind === "words" ? "写字 / 词语" : "拼音"}
+            {KIND_LABEL[section.kind]}
           </p>
           <div className="flex flex-wrap gap-3">
             {section.items.map((item) => {

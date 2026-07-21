@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import TestCharQuiz from "./TestCharQuiz";
-import { speak, speakSequence } from "@/lib/tts";
+import { speak, speakSequence, PHRASE_RATE } from "@/lib/tts";
 import type { ItemResult } from "@/lib/testTypes";
 
 type QuizChar = { globalIndex: number; char: string };
@@ -60,7 +60,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, reveal, epochR
         {reveal === "full" ? (
           <button
             type="button"
-            onClick={() => speak(hanzi, "zh-CN", 0.6)}
+            onClick={() => speak(hanzi, "zh-CN", PHRASE_RATE)}
             className="btn btn-sm btn-secondary"
           >
             🐢 Read full sentence
@@ -68,7 +68,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, reveal, epochR
         ) : (
           <button
             type="button"
-            onClick={() => speakSequence(quizChars.slice(0, 2).map((c) => c.char), "zh-CN", 0.6)}
+            onClick={() => speakSequence(quizChars.slice(0, 2).map((c) => c.char), "zh-CN", PHRASE_RATE)}
             className="btn btn-sm btn-secondary"
           >
             🔊 Read first 2 words

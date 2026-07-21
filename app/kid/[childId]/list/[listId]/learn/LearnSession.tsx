@@ -13,7 +13,7 @@ export type LearnItem = {
   id: string;
   hanzi: string;
   pinyin: string | null;
-  kind: "words" | "pinyin";
+  kind: "words" | "pinyin" | "passage";
 };
 
 export default function LearnSession({
@@ -169,7 +169,7 @@ export default function LearnSession({
         ✓ I know this
       </button>
 
-      {currentItem.kind === "words" && (
+      {currentItem.kind !== "pinyin" && (
         <div className="flex gap-2 justify-center flex-wrap">
           {strokeChars(currentItem.hanzi).map((c, i) => {
             const done = i < charIndex;
@@ -195,7 +195,7 @@ export default function LearnSession({
         </div>
       )}
 
-      {currentItem.kind === "words" ? (
+      {currentItem.kind !== "pinyin" ? (
         <CharLadder
           key={`${currentItem.id}-${charIndex}`}
           char={strokeChars(currentItem.hanzi)[charIndex]}

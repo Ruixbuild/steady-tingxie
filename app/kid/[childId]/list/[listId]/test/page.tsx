@@ -108,7 +108,6 @@ export default async function TestPage({
         childId={childId}
         listId={listId}
         listName={list.name}
-        predicted={predicted}
         counts={counts}
         supervised={supervised === "true"}
       />
