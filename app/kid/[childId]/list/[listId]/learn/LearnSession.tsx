@@ -174,9 +174,11 @@ export default function LearnSession({
           {strokeChars(currentItem.hanzi).map((c, i) => {
             const done = i < charIndex;
             const on = i === charIndex;
+            const clickable = currentItem.kind === "passage" && i !== charIndex;
             return (
               <span
                 key={i}
+                onClick={clickable ? () => setCharIndex(i) : undefined}
                 className="hanzi flex items-center justify-center"
                 style={{
                   minWidth: 44,
@@ -186,6 +188,7 @@ export default function LearnSession({
                   border: `1.5px solid ${on ? "var(--accent)" : done ? "var(--ok)" : "var(--line)"}`,
                   background: on ? "var(--accent-soft)" : done ? "var(--ok-soft)" : "#fff",
                   color: on ? "var(--accent-d)" : "var(--ink)",
+                  cursor: clickable ? "pointer" : undefined,
                 }}
               >
                 {c}
