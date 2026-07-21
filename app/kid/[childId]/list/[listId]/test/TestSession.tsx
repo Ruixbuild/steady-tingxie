@@ -115,7 +115,9 @@ export default function TestSession({
       // repeating. Surface it instead so the child/parent can retry.
       setSubmitting(false);
       setSubmitError(true);
-      setSubmitErrorDetail(error.message ?? String(error));
+      setSubmitErrorDetail(
+        [error.message, error.details, error.hint, error.code].filter(Boolean).join(" | ")
+      );
       return;
     }
     router.push(`/kid/${childId}/list/${listId}/results/${attemptId}`);
