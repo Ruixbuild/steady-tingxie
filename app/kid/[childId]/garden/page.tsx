@@ -13,7 +13,7 @@ type GrowthRow = {
   id: string;
   item_id: string;
   term_key: string;
-  tree_type: "pine" | "blossom" | "fruit";
+  tree_type: "tree" | "fruit";
   grown_at: string;
   items: { hanzi: string } | null;
 };

@@ -113,7 +113,7 @@ export default function GardenScene({
             }}
             aria-label={item.hanzi}
           >
-            {treeEmoji(item.type, term)}
+            {treeEmoji(item.type, term, item.itemId)}
           </button>
         );
       })}

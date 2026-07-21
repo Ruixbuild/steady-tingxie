@@ -4,7 +4,8 @@
 // so this never ships reachable in production.
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { termKey, previousTermKey, termBounds, treeType, type TreeType } from "@/lib/garden";
+import { termKey, previousTermKey, termBounds, gardenTier, type TreeType } from "@/lib/garden";
+import type { SectionKind } from "@/lib/supabase/types";
 
 function randomTimeWithin(start: Date, end: Date): string {
   const cappedEnd = Math.min(end.getTime(), Date.now());
@@ -31,6 +32,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing childId" }, { status: 400 });
   }
 
+  const { data: child } = await supabase
+    .from("children")
+    .select("level")
+    .eq("id", childId)
+    .maybeSingle();
+  if (!child) {
+    return NextResponse.json({ error: "Child not found" }, { status: 400 });
+  }
+
   const { data: listsRaw } = await supabase.from("lists").select("id").eq("child_id", childId);
   const listIds = (listsRaw ?? []).map((l) => l.id);
   if (listIds.length === 0) {
@@ -39,12 +49,13 @@ export async function POST(request: Request) {
 
   const { data: sectionsRaw } = await supabase
     .from("sections")
-    .select("items(id)")
+    .select("kind, items(id, hanzi)")
     .in("list_id", listIds);
-  const itemIds = ((sectionsRaw ?? []) as unknown as { items: { id: string }[] | null }[]).flatMap(
-    (s) => (s.items ?? []).map((it) => it.id)
-  );
-  if (itemIds.length === 0) {
+  const seedItems = ((sectionsRaw ?? []) as unknown as {
+    kind: SectionKind;
+    items: { id: string; hanzi: string }[] | null;
+  }[]).flatMap((s) => (s.items ?? []).map((it) => ({ id: it.id, kind: s.kind, hanzi: it.hanzi })));
+  if (seedItems.length === 0) {
     return NextResponse.json({ error: "This child's lists have no items to seed from" }, { status: 400 });
   }
 
@@ -63,14 +74,14 @@ export async function POST(request: Request) {
 
   for (const key of keys) {
     const { start, end } = termBounds(key);
-    const shuffled = [...itemIds].sort(() => Math.random() - 0.5);
+    const shuffled = [...seedItems].sort(() => Math.random() - 0.5);
     const pick = shuffled.slice(0, Math.min(shuffled.length, 5 + Math.floor(Math.random() * 4)));
-    for (const itemId of pick) {
+    for (const item of pick) {
       rows.push({
         child_id: childId,
-        item_id: itemId,
+        item_id: item.id,
         term_key: key,
-        tree_type: treeType(itemId, key),
+        tree_type: gardenTier(child.level, item.kind, item.hanzi),
         grown_at: randomTimeWithin(start, end),
       });
     }

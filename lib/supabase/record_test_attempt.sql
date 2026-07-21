@@ -5,8 +5,11 @@
 -- Requires touch_daily_streak.sql to already be applied.
 -- Garden extension: grows a tree_growths row on an unsupervised test pass
 -- for each kind (words/pinyin: v_passed; passage: zero missed chars) — the
--- garden only reflects tests actually passed, never Learn practice. Requires
--- garden_schema.sql to already be applied.
+-- garden only reflects tests actually passed, never Learn practice. The
+-- species (tree vs fruit) is a difficulty tier from garden_tier(), keyed
+-- off the child's grade and the word's length/kind — see
+-- garden_tier_migration.sql, which must be applied (after garden_schema.sql)
+-- before this file.
 -- Run this once in the Supabase SQL Editor.
 -- Drops the old 7-arg signature first — otherwise it coexists as an
 -- ambiguous overload alongside the new 8-arg (hard_mode) one below.
@@ -54,8 +57,10 @@ declare
   v_base int;
   v_threshold int;
   v_char_passed boolean;
+  v_child_level text;
 begin
   select best_pct into v_best_before from lists where id = record_test_attempt.list_id;
+  select level into v_child_level from children where id = record_test_attempt.child_id;
 
   for v_item in select * from jsonb_array_elements(record_test_attempt.item_results) loop
     v_kind := v_item->>'kind';
@@ -100,10 +105,11 @@ begin
       end if;
 
       if not record_test_attempt.supervised and v_total_chars > 0 and v_missed_count = 0 then
+        select hanzi into v_hanzi from items where id = v_item_id;
         insert into tree_growths (child_id, item_id, term_key, tree_type)
         values (
           record_test_attempt.child_id, v_item_id, garden_term_key(now()),
-          garden_tree_type(v_item_id::text, garden_term_key(now()))
+          garden_tier(v_child_level, v_kind, v_hanzi)
         )
         on conflict (child_id, item_id, term_key) do nothing;
       end if;
@@ -137,15 +143,15 @@ begin
             last_seen = now()
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
 
+          select hanzi into v_hanzi from items where id = v_item_id;
           insert into tree_growths (child_id, item_id, term_key, tree_type)
           values (
             record_test_attempt.child_id, v_item_id, garden_term_key(now()),
-            garden_tree_type(v_item_id::text, garden_term_key(now()))
+            garden_tier(v_child_level, v_kind, v_hanzi)
           )
           on conflict (child_id, item_id, term_key) do nothing;
 
           if v_prev_fail then
-            select hanzi into v_hanzi from items where id = v_item_id;
             v_flipped := v_flipped || jsonb_build_object('item_id', v_item_id, 'hanzi', v_hanzi);
           end if;
         else
@@ -182,15 +188,15 @@ begin
             last_seen = now()
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
 
+          select hanzi into v_hanzi from items where id = v_item_id;
           insert into tree_growths (child_id, item_id, term_key, tree_type)
           values (
             record_test_attempt.child_id, v_item_id, garden_term_key(now()),
-            garden_tree_type(v_item_id::text, garden_term_key(now()))
+            garden_tier(v_child_level, v_kind, v_hanzi)
           )
           on conflict (child_id, item_id, term_key) do nothing;
 
           if v_prev_fail then
-            select hanzi into v_hanzi from items where id = v_item_id;
             v_flipped := v_flipped || jsonb_build_object('item_id', v_item_id, 'hanzi', v_hanzi);
           end if;
         else

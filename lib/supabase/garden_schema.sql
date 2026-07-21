@@ -8,8 +8,10 @@
 -- project's default grants until "enable row level security" runs — do not
 -- leave that gap open.
 --
--- garden_term_key / garden_tree_type must exist before record_item_progress.sql
--- and record_test_attempt.sql are (re-)applied, since those call them.
+-- garden_term_key must exist before record_test_attempt.sql is (re-)applied,
+-- since it calls it. Note: garden_tree_type() below is superseded by
+-- garden_tier() in garden_tier_migration.sql, which must be run after this
+-- file — apply that migration too, it's not optional.
 
 -- ============================================================
 -- Table

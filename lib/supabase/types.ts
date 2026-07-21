@@ -114,7 +114,7 @@ export type Session = {
 
 // --- Seasonal Garden extension (additive, see tingxie-garden-extension.md) ---
 
-export type TreeType = "pine" | "blossom" | "fruit";
+export type TreeType = "tree" | "fruit";
 
 export type TreeGrowth = {
   id: string;

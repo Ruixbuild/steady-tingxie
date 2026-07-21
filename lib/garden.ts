@@ -1,13 +1,18 @@
 // Seasonal Garden extension — pure helpers shared by the /garden route.
-// See tingxie-garden-extension.md. Term boundaries and the hash algorithm
-// here must stay bit-for-bit in sync with garden_term_key/garden_tree_type
-// in lib/supabase/garden_schema.sql (which is what actually decides a
-// tree's term_key/tree_type at insert time) — this file only needs to
-// reproduce term math for display (pill labels, fade-by-recency) and to
-// derive stable, non-random scene layout from an item_id.
+// See tingxie-garden-extension.md. Term boundaries here must stay in sync
+// with garden_term_key() in lib/supabase/garden_schema.sql (which is what
+// actually decides a tree's term_key at insert time) — this file only
+// needs to reproduce term math for display (pill labels, fade-by-recency)
+// and to derive stable, non-random scene layout from an item_id.
+
+import type { Level, SectionKind } from "@/lib/supabase/types";
 
 export type Term = 1 | 2 | 3 | 4;
-export type TreeType = "pine" | "blossom" | "fruit";
+
+// A tree's species is a difficulty tier, not a random pick: 'tree' = an
+// easy/short word for the child's grade band, 'fruit' = a longer word or
+// passage — more reward for the harder practice.
+export type TreeType = "tree" | "fruit";
 
 export function getTerm(date: Date): Term {
   const md = (date.getMonth() + 1) * 100 + date.getDate(); // getMonth is 0-based; +1 -> Jan=1
@@ -48,22 +53,39 @@ function hashString(s: string): number {
   return h;
 }
 
-// 'blossom'/'fruit' render as a season-appropriate fruit rather than a
-// fixed emoji — 🌸 is deliberately avoided since the existing per-list
-// word garden (app/kid/[childId]/list/[listId]/progress) already uses it
-// to mean "almost mastered" (level 2); reusing it here for a *fully grown*
-// tree would contradict that meaning. 'pine' stays a constant evergreen
-// (no seasonal read either way).
-const SEASON_FRUIT: Record<Term, Record<Exclude<TreeType, "pine">, string>> = {
-  1: { blossom: "🍓", fruit: "🍒" }, // spring: strawberry, cherry
-  2: { blossom: "🍉", fruit: "🍑" }, // summer: watermelon, peach
-  3: { blossom: "🍎", fruit: "🍐" }, // autumn: apple, pear
-  4: { blossom: "🍊", fruit: "🍋" }, // winter: tangerine, lemon
+// Mirrors garden_tier() in lib/supabase/garden_tier_migration.sql
+// bit-for-bit — this is what decides a tree's real tree_type server-side;
+// this copy is only for the dev-only seed route to fabricate realistic
+// data (app/api/garden/seed/route.ts).
+//   P1-P3: tree = 1-2 char 词语 or any pinyin item; fruit = longer 词语 or 默写
+//   P4-P6: tree = up to 4 char 词语 or any pinyin item; fruit = longer 词语 or 默写
+export function gardenTier(level: Level, kind: SectionKind, hanzi: string): TreeType {
+  const grade = Number(level.slice(1)) || 6;
+  const threshold = grade <= 3 ? 2 : 4;
+  if (kind === "passage") return "fruit";
+  if (kind === "pinyin") return "tree";
+  if (kind === "words" && hanzi.length > threshold) return "fruit";
+  return "tree";
+}
+
+// Candidate emoji per tier — 'fruit' varies by season (more reward for the
+// harder tier), 'tree' stays a plain, season-agnostic pair. 🌸 is
+// deliberately avoided: the existing per-list word garden (app/kid/
+// [childId]/list/[listId]/progress) already uses it to mean "almost
+// mastered" (level 2), so reusing it for a *fully grown* tree would
+// contradict that meaning. Which candidate renders is picked
+// deterministically per item, purely for scatter variety.
+const TREE_CANDIDATES = ["🌳", "🌲"];
+const SEASON_FRUIT: Record<Term, string[]> = {
+  1: ["🍓", "🍒"], // spring: strawberry, cherry
+  2: ["🍉", "🍑"], // summer: watermelon, peach
+  3: ["🍎", "🍐"], // autumn: apple, pear
+  4: ["🍊", "🍋"], // winter: tangerine, lemon
 };
 
-export function treeEmoji(type: TreeType, term: Term): string {
-  if (type === "pine") return "🌲";
-  return SEASON_FRUIT[term][type];
+export function treeEmoji(type: TreeType, term: Term, itemId: string): string {
+  const candidates = type === "tree" ? TREE_CANDIDATES : SEASON_FRUIT[term];
+  return candidates[hashString(itemId + ":species") % candidates.length];
 }
 
 export type TreeLayout = {
@@ -165,14 +187,4 @@ export function previousTermKey(key: string): string {
   const year = Number(yearStr);
   const term = Number(termStr) as Term;
   return term === 1 ? `${year - 1}-T4` : `${year}-T${term - 1}`;
-}
-
-// Mirrors garden_tree_type() in lib/supabase/garden_schema.sql — only used
-// by the dev-only seed route (app/api/garden/seed/route.ts), since real
-// tree_type values are decided server-side by that SQL function at insert
-// time, not recomputed here.
-export function treeType(itemId: string, key: string): TreeType {
-  const hash = hashString(itemId + key);
-  const types: TreeType[] = ["pine", "blossom", "fruit"];
-  return types[hash % 3];
 }
