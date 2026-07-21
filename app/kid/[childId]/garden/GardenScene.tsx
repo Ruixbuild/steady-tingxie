@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   fadeOpacity,
+  termNumberFromKey,
   treeEmoji,
   treeLayouts,
   type SeasonBackdrop,
@@ -36,6 +37,7 @@ export default function GardenScene({
   }, [items]);
 
   const activeTree = items.find((it) => it.id === activeTreeId) ?? null;
+  const term = termNumberFromKey(termKey);
 
   const layoutByItemId = useMemo(
     () => treeLayouts(items.map((it) => it.itemId)),
@@ -111,7 +113,7 @@ export default function GardenScene({
             }}
             aria-label={item.hanzi}
           >
-            {treeEmoji(item.type)}
+            {treeEmoji(item.type, term)}
           </button>
         );
       })}

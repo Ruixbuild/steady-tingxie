@@ -48,14 +48,22 @@ function hashString(s: string): number {
   return h;
 }
 
-const TREE_EMOJI: Record<TreeType, string> = {
-  pine: "🌲",
-  blossom: "🌸",
-  fruit: "🍎",
+// 'blossom'/'fruit' render as a season-appropriate fruit rather than a
+// fixed emoji — 🌸 is deliberately avoided since the existing per-list
+// word garden (app/kid/[childId]/list/[listId]/progress) already uses it
+// to mean "almost mastered" (level 2); reusing it here for a *fully grown*
+// tree would contradict that meaning. 'pine' stays a constant evergreen
+// (no seasonal read either way).
+const SEASON_FRUIT: Record<Term, Record<Exclude<TreeType, "pine">, string>> = {
+  1: { blossom: "🍓", fruit: "🍒" }, // spring: strawberry, cherry
+  2: { blossom: "🍉", fruit: "🍑" }, // summer: watermelon, peach
+  3: { blossom: "🍎", fruit: "🍐" }, // autumn: apple, pear
+  4: { blossom: "🍊", fruit: "🍋" }, // winter: tangerine, lemon
 };
 
-export function treeEmoji(type: TreeType): string {
-  return TREE_EMOJI[type];
+export function treeEmoji(type: TreeType, term: Term): string {
+  if (type === "pine") return "🌲";
+  return SEASON_FRUIT[term][type];
 }
 
 export type TreeLayout = {
