@@ -57,6 +57,7 @@ export default function TestSession({
   const [wordItemDone, setWordItemDone] = useState(false);
   const [showCapModal, setShowCapModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
 
   useEffect(() => {
     document.body.classList.add("test-mode");
@@ -83,6 +84,7 @@ export default function TestSession({
 
   async function submitAttempt(itemResults: ItemResult[]) {
     setSubmitting(true);
+    setSubmitError(false);
     const supabase = createClient();
     const durationS = Math.round((Date.now() - sessionStartRef.current) / 1000);
     const { data: attemptId, error } = await supabase.rpc("record_test_attempt", {
@@ -96,7 +98,11 @@ export default function TestSession({
       hard_mode: hardMode,
     });
     if (error) {
+      // Leaving this silent would re-render the same (already-finished) last
+      // item from scratch — indistinguishable from the test endlessly
+      // repeating. Surface it instead so the child/parent can retry.
       setSubmitting(false);
+      setSubmitError(true);
       return;
     }
     router.push(`/kid/${childId}/list/${listId}/results/${attemptId}`);
@@ -196,6 +202,19 @@ export default function TestSession({
 
       {submitting ? (
         <p style={{ color: "var(--mut)" }}>Saving…</p>
+      ) : submitError ? (
+        <div className="flex flex-col items-center gap-4 py-6">
+          <p className="text-sm text-center" style={{ color: "var(--miss)" }}>
+            Couldn&apos;t save your results. Check your connection and try again.
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => submitAttempt(resultsRef.current)}
+          >
+            Retry
+          </button>
+        </div>
       ) : currentItem.kind === "words" ? (
         <>
           {strokeChars(currentItem.hanzi).length > 1 && (
