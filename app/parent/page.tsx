@@ -160,14 +160,8 @@ export default async function ParentPage() {
     }));
 
     const weakByKind = {
-      words: (() => {
-        const w = trickyItems.filter((it) => it.kind === "words");
-        return w.length >= 2 ? w.slice(0, 3).map((it) => it.item_id) : [];
-      })(),
-      pinyin: (() => {
-        const p = trickyItems.filter((it) => it.kind === "pinyin");
-        return p.length >= 2 ? p.slice(0, 3).map((it) => it.item_id) : [];
-      })(),
+      words: trickyItems.filter((it) => it.kind === "words").slice(0, 3).map((it) => it.item_id),
+      pinyin: trickyItems.filter((it) => it.kind === "pinyin").slice(0, 3).map((it) => it.item_id),
       passage: weakPassageItemIds,
     };
 
@@ -175,10 +169,6 @@ export default async function ParentPage() {
     const daysToTest = activeList.test_date ? daysUntil(activeList.test_date) : null;
     const wordsPerDay =
       daysToTest && daysToTest > 0 ? Math.ceil(unmasteredCount / daysToTest) : null;
-    const weakCount = trickyItems.length;
-    const planPinCount =
-      daysToTest && daysToTest > 0 ? Math.min(5, Math.ceil(weakCount / daysToTest)) : 0;
-    const planPinIds = trickyItems.slice(0, planPinCount).map((it) => it.item_id);
 
     focusData.push({
       ...base,
@@ -190,7 +180,6 @@ export default async function ParentPage() {
       weakByKind,
       weakPassageChars,
       wordsPerDay,
-      planPinIds,
     });
   }
 

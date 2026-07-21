@@ -19,7 +19,7 @@ export default async function ResultsPage({
 
   const { data: attempt } = await supabase
     .from("attempts")
-    .select("id, child_id, list_id, mode, supervised, score, total, guess_pct, detail, duration_s")
+    .select("id, child_id, list_id, mode, supervised, score, total, detail, duration_s")
     .eq("id", attemptId)
     .eq("child_id", childId)
     .eq("list_id", listId)
@@ -58,10 +58,6 @@ export default async function ResultsPage({
               「{f.hanzi}」was wrong last time — right today! 🎉
             </p>
           ))}
-
-        {!attempt.supervised && attempt.guess_pct != null && pct > attempt.guess_pct && (
-          <p className="text-center">🎯 You beat the app&apos;s guess of {attempt.guess_pct}%!</p>
-        )}
 
         {!attempt.supervised &&
           (newBest ? (
