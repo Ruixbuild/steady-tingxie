@@ -45,7 +45,7 @@ export default async function ParentPage() {
       predicted: 0,
       sections: [],
       weakTop5: [],
-      weakByKind: { words: [], pinyin: [] },
+      weakByKind: { words: [], pinyin: [], passage: [] },
       weakPassageChars: [],
     };
 
@@ -80,6 +80,7 @@ export default async function ParentPage() {
     const nonPassageLevels: number[] = [];
     const passageCharMissed: boolean[] = [];
     const weakPassageChars: string[] = [];
+    const weakPassageItemIds: string[] = [];
     for (const s of sections ?? []) {
       if (s.kind === "passage") {
         // predicted% needs passage char_misses too
@@ -92,11 +93,16 @@ export default async function ParentPage() {
             .maybeSingle();
           const misses = (passMastery?.char_misses ?? {}) as Record<string, number>;
           const chars = Array.from(it.hanzi);
+          let itemHasWeakChar = false;
           for (const pos of passageQuizPositions(it.hanzi)) {
             const missed = (misses[String(pos)] ?? 0) > 0;
             passageCharMissed.push(missed);
-            if (missed) weakPassageChars.push(chars[pos]);
+            if (missed) {
+              weakPassageChars.push(chars[pos]);
+              itemHasWeakChar = true;
+            }
           }
+          if (itemHasWeakChar) weakPassageItemIds.push(it.id);
         }
       } else {
         for (const it of s.items ?? []) {
@@ -122,7 +128,11 @@ export default async function ParentPage() {
       const solid = passageCharMissed.filter((missed) => !missed).length;
       const r = solid / passageCharMissed.length;
       const light = r >= 0.8 ? ("green" as const) : r >= 0.5 ? ("orange" as const) : ("red" as const);
-      sectionLights.push({ kind: "passage", r, light });
+      // Slot 默写 in right after 词语 rather than at the end.
+      const wordsIdx = sectionLights.findIndex((s) => s.kind === "words");
+      const passageLight = { kind: "passage" as const, r, light };
+      if (wordsIdx >= 0) sectionLights.splice(wordsIdx + 1, 0, passageLight);
+      else sectionLights.push(passageLight);
     }
 
     const trickyItems = (sections ?? [])
@@ -158,6 +168,7 @@ export default async function ParentPage() {
         const p = trickyItems.filter((it) => it.kind === "pinyin");
         return p.length >= 2 ? p.slice(0, 3).map((it) => it.item_id) : [];
       })(),
+      passage: weakPassageItemIds,
     };
 
     const unmasteredCount = nonPassageLevels.filter((l) => l < 2).length;

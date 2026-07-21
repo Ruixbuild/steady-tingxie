@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { ListStatus, SectionKind } from "@/lib/supabase/types";
-import { isTricky, passageQuizPositions, predictedPct } from "@/lib/testScoring";
+import { passageQuizPositions, predictedPct } from "@/lib/testScoring";
 
 export type ListRow = {
   id: string;
@@ -74,78 +74,6 @@ async function computePredictedPct(childId: string, listId: string): Promise<num
   return predictedPct({ nonPassageLevels, passageCharMissed });
 }
 
-async function fetchTrickyHanzi(childId: string, listId: string) {
-  const supabase = createClient();
-  const { data: sectionsRaw } = await supabase
-    .from("sections")
-    .select("kind, items(id, hanzi)")
-    .eq("list_id", listId);
-  const sections = (sectionsRaw ?? []) as unknown as SectionRaw[];
-
-  const nonPassageItemIds: string[] = [];
-  for (const s of sections) {
-    if (s.kind === "passage") continue;
-    for (const it of s.items ?? []) nonPassageItemIds.push(it.id);
-  }
-
-  const { data: masteryRows } =
-    nonPassageItemIds.length > 0
-      ? await supabase
-          .from("mastery")
-          .select("item_id, level, misses")
-          .eq("child_id", childId)
-          .in("item_id", nonPassageItemIds)
-      : { data: [] };
-  const masteryByItem = new Map((masteryRows ?? []).map((m) => [m.item_id, m]));
-
-  const tricky: { hanzi: string; level: number; misses: number }[] = [];
-  for (const s of sections) {
-    if (s.kind === "passage") continue;
-    for (const it of s.items ?? []) {
-      const m = masteryByItem.get(it.id);
-      const level = m?.level ?? 0;
-      const misses = m?.misses ?? 0;
-      if (isTricky(s.kind, level, misses)) {
-        tricky.push({ hanzi: it.hanzi, level, misses });
-      }
-    }
-  }
-  return tricky;
-}
-
-async function carryWeakWords(childId: string, sourceListId: string, targetListId: string) {
-  const supabase = createClient();
-  const tricky = await fetchTrickyHanzi(childId, sourceListId);
-  if (tricky.length === 0) return { matched: 0 };
-
-  const { data: targetSectionsRaw } = await supabase
-    .from("sections")
-    .select("kind, items(id, hanzi)")
-    .eq("list_id", targetListId);
-  const targetSections = (targetSectionsRaw ?? []) as unknown as SectionRaw[];
-
-  const targetItemsByHanzi = new Map<string, string>();
-  for (const s of targetSections) {
-    if (s.kind === "passage") continue;
-    for (const it of s.items ?? []) {
-      if (!targetItemsByHanzi.has(it.hanzi)) targetItemsByHanzi.set(it.hanzi, it.id);
-    }
-  }
-
-  let matched = 0;
-  for (const t of tricky) {
-    const targetItemId = targetItemsByHanzi.get(t.hanzi);
-    if (!targetItemId) continue;
-    await supabase
-      .from("mastery")
-      .update({ level: t.level, misses: t.misses })
-      .eq("child_id", childId)
-      .eq("item_id", targetItemId);
-    matched++;
-  }
-  return { matched };
-}
-
 export default function ListsTable({ lists }: { lists: ListRow[] }) {
   const supabase = createClient();
   const [rows, setRows] = useState(lists);
@@ -154,7 +82,6 @@ export default function ListsTable({ lists }: { lists: ListRow[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [draftDate, setDraftDate] = useState("");
-  const [carryTarget, setCarryTarget] = useState<Record<string, string>>({});
 
   function flash(text: string) {
     setMessage(text);
@@ -250,18 +177,6 @@ export default function ListsTable({ lists }: { lists: ListRow[] }) {
     flash(`Marked "${row.name}" as tested.`);
   }
 
-  async function handleCarry(row: ListRow) {
-    const targetId = carryTarget[row.id];
-    if (!targetId) {
-      flash("Pick a target list first.");
-      return;
-    }
-    setBusyId(row.id);
-    const { matched } = await carryWeakWords(row.childId, row.id, targetId);
-    setBusyId(null);
-    flash(matched > 0 ? `Carried ${matched} weak word(s) forward.` : "No matching words found in the target list.");
-  }
-
   return (
     <div className="flex flex-col gap-4">
       {message && (
@@ -269,9 +184,7 @@ export default function ListsTable({ lists }: { lists: ListRow[] }) {
           {message}
         </div>
       )}
-      {rows.map((row) => {
-        const candidateTargets = rows.filter((r) => r.childId === row.childId && r.id !== row.id);
-        return (
+      {rows.map((row) => (
           <div key={row.id} className="card p-5 flex flex-col gap-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
@@ -381,41 +294,8 @@ export default function ListsTable({ lists }: { lists: ListRow[] }) {
                 Delete
               </button>
             </div>
-
-            {candidateTargets.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm" style={{ color: "var(--mut)" }}>
-                  Carry weak words to:
-                </span>
-                <select
-                  value={carryTarget[row.id] ?? ""}
-                  onChange={(e) => setCarryTarget((prev) => ({ ...prev, [row.id]: e.target.value }))}
-                  className="rounded-full border px-3 py-1 outline-none text-sm"
-                  style={{ borderColor: "var(--line)", color: "var(--ink)" }}
-                >
-                  <option value="">Choose a list…</option>
-                  {candidateTargets.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-secondary"
-                  onClick={() => handleCarry(row)}
-                  disabled={busyId === row.id}
-                >
-                  Carry →
-                </button>
-                <Link href="/parent/upload" className="text-sm" style={{ color: "var(--accent)" }}>
-                  or create a new list
-                </Link>
-              </div>
-            )}
           </div>
-        );
-      })}
+      ))}
     </div>
   );
 }

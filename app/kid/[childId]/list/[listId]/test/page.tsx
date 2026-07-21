@@ -96,10 +96,14 @@ export default async function TestPage({
       if (s.kind === "passage") counts.passage += n;
     }
     for (const s of sections ?? []) {
-      if (s.kind === "passage") continue;
       for (const it of s.items ?? []) {
         const m = masteryByItem.get(it.id);
-        if (isTricky(s.kind, m?.level ?? 0, m?.misses ?? 0)) counts.tricky += 1;
+        if (s.kind === "passage") {
+          const positions = passageQuizPositions(it.hanzi);
+          if (positions.some((pos) => (m?.char_misses?.[String(pos)] ?? 0) > 0)) counts.tricky += 1;
+        } else if (isTricky(s.kind, m?.level ?? 0, m?.misses ?? 0)) {
+          counts.tricky += 1;
+        }
       }
     }
 
@@ -129,10 +133,14 @@ export default async function TestPage({
       testItems = testItems.concat(items);
     }
 
-    if (requestedMode === "tricky" && s.kind !== "passage") {
+    if (requestedMode === "tricky") {
       for (const it of s.items ?? []) {
         const m = masteryByItem.get(it.id);
-        if (isTricky(s.kind, m?.level ?? 0, m?.misses ?? 0)) {
+        if (s.kind === "passage") {
+          const positions = passageQuizPositions(it.hanzi);
+          const weak = positions.some((pos) => (m?.char_misses?.[String(pos)] ?? 0) > 0);
+          if (weak) testItems.push({ id: it.id, hanzi: it.hanzi, pinyin: it.pinyin, kind: "passage" });
+        } else if (isTricky(s.kind, m?.level ?? 0, m?.misses ?? 0)) {
           testItems.push({ id: it.id, hanzi: it.hanzi, pinyin: it.pinyin, kind: s.kind as "words" | "pinyin" });
         }
       }

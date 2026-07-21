@@ -14,7 +14,7 @@ export type FocusData = {
   predicted: number;
   sections: { kind: "words" | "pinyin" | "passage"; r: number; light: "green" | "orange" | "red" }[];
   weakTop5: { itemId: string; hanzi: string; kind: "words" | "pinyin" }[];
-  weakByKind: { words: string[]; pinyin: string[] };
+  weakByKind: { words: string[]; pinyin: string[]; passage: string[] };
   weakPassageChars: string[];
   wordsPerDay?: number | null;
   planPinIds?: string[];
@@ -187,6 +187,15 @@ export default function ChildFocusCard({ data }: { data: FocusData }) {
             className="btn btn-secondary"
           >
             Pin 3 weakest pinyin
+          </button>
+        )}
+        {data.weakByKind.passage.length > 0 && (
+          <button
+            type="button"
+            onClick={() => pinItems(data.weakByKind.passage)}
+            className="btn btn-secondary"
+          >
+            Send 默写 to practice
           </button>
         )}
         {data.daysToTest != null && (data.planPinIds?.length ?? 0) > 0 && (

@@ -175,7 +175,7 @@ export default function LearnSession({
 
       {currentItem.kind === "passage" && (
         <p className="text-sm text-center" style={{ color: "var(--mut)" }}>
-          💡 Tap any word below to jump straight to it — underlined ones need more practice
+          💡 Tap any word below to jump straight to it — brown-bordered ones need more practice
         </p>
       )}
 
@@ -196,13 +196,12 @@ export default function LearnSession({
                   height: 44,
                   fontSize: "1.3rem",
                   borderRadius: 12,
-                  border: `1.5px solid ${on ? "var(--accent)" : done ? "var(--ok)" : "var(--line)"}`,
+                  border: `${tricky && !on ? 2.5 : 1.5}px solid ${
+                    on ? "var(--accent)" : tricky ? "var(--go)" : done ? "var(--ok)" : "var(--line)"
+                  }`,
                   background: on ? "var(--accent-soft)" : done ? "var(--ok-soft)" : "#fff",
                   color: on ? "var(--accent-d)" : "var(--ink)",
                   cursor: clickable ? "pointer" : undefined,
-                  textDecoration: tricky ? "underline" : "none",
-                  textDecorationColor: "var(--warn)",
-                  textDecorationThickness: 3,
                 }}
               >
                 {c}
