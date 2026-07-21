@@ -57,7 +57,9 @@ export default function GardenScene({
         style={{ height: "52%", background: backdrop.ground }}
       />
 
-      {backdrop.ambient.map((emoji, i) => (
+      {backdrop.ambient
+        .filter((emoji) => emoji !== backdrop.icon)
+        .map((emoji, i) => (
         <span
           key={i}
           className="absolute select-none"

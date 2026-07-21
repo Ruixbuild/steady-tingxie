@@ -144,19 +144,31 @@ export default async function ChildHomePage({
         >
           ← Switch profile
         </Link>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <div className="flex items-center gap-3 min-w-0">
             <span className="text-4xl">{child.emoji}</span>
-            <div>
-              <h1 className="text-2xl font-semibold">{child.name}</h1>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-semibold truncate">{child.name}</h1>
               <p style={{ color: "var(--mut)" }}>{child.level}</p>
             </div>
           </div>
-          <div className="text-right text-sm" style={{ color: "var(--mut)" }}>
-            <p>
-              ⭐ Writer Lv {writerLevel} · {child.xp % 50}/50
-            </p>
-            <p>🔥{child.streak}</p>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="text-right text-sm" style={{ color: "var(--mut)" }}>
+              <p>
+                ⭐ Lv {writerLevel} · {child.xp % 50}/50
+              </p>
+              <p>🔥{child.streak}</p>
+            </div>
+            <Link
+              href={`/kid/${childId}/garden`}
+              className="card flex flex-col items-center justify-center gap-0.5"
+              style={{ width: 56, height: 56, flexShrink: 0 }}
+            >
+              <span className="text-xl leading-none">🌳</span>
+              <span className="text-[10px] leading-none" style={{ color: "var(--mut)" }}>
+                Garden
+              </span>
+            </Link>
           </div>
         </div>
 
@@ -188,16 +200,6 @@ export default async function ChildHomePage({
             canSkipWatch={child.xp >= 50}
           />
         </div>
-
-        <Link
-          href={`/kid/${childId}/garden`}
-          className="card flex items-center justify-between p-5 mb-8"
-        >
-          <span className="font-semibold">🌳 My Garden</span>
-          <span className="text-sm" style={{ color: "var(--mut)" }}>
-            See what you&apos;ve grown
-          </span>
-        </Link>
 
         <h2 className="text-lg font-semibold mb-3">My lists</h2>
         <div className="flex flex-col gap-3">
