@@ -34,7 +34,7 @@ export default async function ProfilePickerPage() {
         style={{ boxShadow: "0 8px 24px rgba(44,130,201,.18)" }}
       />
 
-      <h1 className="text-center mt-2">Who&apos;s practising today?</h1>
+      <h1 className="text-center mt-2">Who&apos;s learning today?</h1>
 
       <div
         className="w-full max-w-2xl gap-4 mt-6"
@@ -65,8 +65,16 @@ export default async function ProfilePickerPage() {
         + Add child
       </Link>
 
-      <div className="mt-8">
+      <div className="mt-8 flex flex-col items-center gap-2">
         <SettingsGear />
+        <a
+          href="https://alert-marquess-169.notion.site/Online-Safety-Tips-3a4efcd98b9c8063b5b3f1b3b52b7690"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "var(--accent)" }}
+        >
+          Online Safety Tips
+        </a>
       </div>
     </main>
   );
