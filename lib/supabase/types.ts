@@ -112,6 +112,19 @@ export type Session = {
   started_at: string;
 };
 
+// --- Seasonal Garden extension (additive, see tingxie-garden-extension.md) ---
+
+export type TreeType = "pine" | "blossom" | "fruit";
+
+export type TreeGrowth = {
+  id: string;
+  child_id: string;
+  item_id: string;
+  term_key: string;
+  tree_type: TreeType;
+  grown_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -171,6 +184,12 @@ export type Database = {
         Row: Session;
         Insert: Partial<Session> & { child_id: string; size: number };
         Update: Partial<Session>;
+        Relationships: [];
+      };
+      tree_growths: {
+        Row: TreeGrowth;
+        Insert: Partial<TreeGrowth> & { child_id: string; item_id: string; term_key: string; tree_type: TreeType };
+        Update: Partial<TreeGrowth>;
         Relationships: [];
       };
     };

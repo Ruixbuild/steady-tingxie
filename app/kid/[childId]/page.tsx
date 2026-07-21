@@ -189,6 +189,16 @@ export default async function ChildHomePage({
           />
         </div>
 
+        <Link
+          href={`/kid/${childId}/garden`}
+          className="card flex items-center justify-between p-5 mb-8"
+        >
+          <span className="font-semibold">🌳 My Garden</span>
+          <span className="text-sm" style={{ color: "var(--mut)" }}>
+            See what you&apos;ve grown
+          </span>
+        </Link>
+
         <h2 className="text-lg font-semibold mb-3">My lists</h2>
         <div className="flex flex-col gap-3">
           {(!lists || lists.length === 0) && (

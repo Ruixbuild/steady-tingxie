@@ -3,6 +3,10 @@
 -- raw {strokes, totalMistakes} pairs the client reports, instead of trusting
 -- a client-computed boolean — keeps the actual grading threshold server-side.
 -- Requires touch_daily_streak.sql to already be applied.
+-- Garden extension: grows a tree_growths row on an unsupervised test pass
+-- for each kind (words/pinyin: v_passed; passage: zero missed chars) — the
+-- garden only reflects tests actually passed, never Learn practice. Requires
+-- garden_schema.sql to already be applied.
 -- Run this once in the Supabase SQL Editor.
 -- Drops the old 7-arg signature first — otherwise it coexists as an
 -- ambiguous overload alongside the new 8-arg (hard_mode) one below.
@@ -95,6 +99,15 @@ begin
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
       end if;
 
+      if not record_test_attempt.supervised and v_total_chars > 0 and v_missed_count = 0 then
+        insert into tree_growths (child_id, item_id, term_key, tree_type)
+        values (
+          record_test_attempt.child_id, v_item_id, garden_term_key(now()),
+          garden_tree_type(v_item_id::text, garden_term_key(now()))
+        )
+        on conflict (child_id, item_id, term_key) do nothing;
+      end if;
+
     elsif v_kind = 'words' then
       v_passed := true;
       for v_char in select * from jsonb_array_elements(coalesce(v_item->'chars', '[]'::jsonb)) loop
@@ -123,6 +136,13 @@ begin
             prev_fail = false,
             last_seen = now()
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
+
+          insert into tree_growths (child_id, item_id, term_key, tree_type)
+          values (
+            record_test_attempt.child_id, v_item_id, garden_term_key(now()),
+            garden_tree_type(v_item_id::text, garden_term_key(now()))
+          )
+          on conflict (child_id, item_id, term_key) do nothing;
 
           if v_prev_fail then
             select hanzi into v_hanzi from items where id = v_item_id;
@@ -161,6 +181,13 @@ begin
             prev_fail = false,
             last_seen = now()
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
+
+          insert into tree_growths (child_id, item_id, term_key, tree_type)
+          values (
+            record_test_attempt.child_id, v_item_id, garden_term_key(now()),
+            garden_tree_type(v_item_id::text, garden_term_key(now()))
+          )
+          on conflict (child_id, item_id, term_key) do nothing;
 
           if v_prev_fail then
             select hanzi into v_hanzi from items where id = v_item_id;
