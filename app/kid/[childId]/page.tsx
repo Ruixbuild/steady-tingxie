@@ -144,31 +144,31 @@ export default async function ChildHomePage({
         >
           ← Switch profile
         </Link>
-        <div className="flex items-center justify-between gap-3 mb-2">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-start justify-between gap-3 mb-2 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="text-4xl">{child.emoji}</span>
-            <div className="min-w-0">
-              <h1 className="text-2xl font-semibold truncate">{child.name}</h1>
+            <div>
+              <h1 className="text-2xl font-semibold">{child.name}</h1>
               <p style={{ color: "var(--mut)" }}>{child.level}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="text-right text-sm" style={{ color: "var(--mut)" }}>
-              <p>
-                ⭐ Lv {writerLevel} · {child.xp % 50}/50
-              </p>
-              <p>🔥{child.streak}</p>
             </div>
             <Link
               href={`/kid/${childId}/garden`}
-              className="card flex flex-col items-center justify-center gap-0.5"
-              style={{ width: 56, height: 56, flexShrink: 0 }}
+              className="card flex items-center gap-1.5 px-4 py-2"
             >
-              <span className="text-xl leading-none">🌳</span>
-              <span className="text-[10px] leading-none" style={{ color: "var(--mut)" }}>
-                Garden
+              <span className="text-lg leading-none">🌳</span>
+              <span
+                className="text-sm font-semibold whitespace-nowrap"
+                style={{ color: "var(--accent-d)" }}
+              >
+                Visit garden
               </span>
             </Link>
+          </div>
+          <div className="text-right text-sm shrink-0" style={{ color: "var(--mut)" }}>
+            <p>
+              ⭐ Lv {writerLevel} · {child.xp % 50}/50
+            </p>
+            <p>🔥{child.streak}</p>
           </div>
         </div>
 
