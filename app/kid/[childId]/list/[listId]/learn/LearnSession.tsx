@@ -169,6 +169,12 @@ export default function LearnSession({
         ✓ I know this
       </button>
 
+      {currentItem.kind === "passage" && (
+        <p className="text-sm text-center" style={{ color: "var(--mut)" }}>
+          💡 Tap any word below to jump straight to it
+        </p>
+      )}
+
       {currentItem.kind !== "pinyin" && (
         <div className="flex gap-2 justify-center flex-wrap">
           {strokeChars(currentItem.hanzi).map((c, i) => {
