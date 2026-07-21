@@ -9,6 +9,12 @@ create or replace function record_item_progress(
 language plpgsql
 security invoker
 as $$
+-- #variable_conflict use_column: the mastery table's RLS policy references a
+-- bare, unqualified child_id in its USING/WITH CHECK clause; since this
+-- function's own parameter is also named child_id, that's ambiguous (42702)
+-- between the column and the parameter the moment this update gets
+-- row-security-checked. Same fix as record_test_attempt.sql.
+#variable_conflict use_column
 declare
   v_monday date := date_trunc('week', (now() at time zone 'Asia/Singapore')::date)::date;
   v_new_xp int;

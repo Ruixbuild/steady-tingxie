@@ -13,6 +13,13 @@
 -- Run this once in the Supabase SQL Editor.
 -- Drops the old 7-arg signature first — otherwise it coexists as an
 -- ambiguous overload alongside the new 8-arg (hard_mode) one below.
+-- #variable_conflict use_column: every child_id reference in this function's
+-- own body is already qualified, but the mastery/attempts/tree_growths/lists
+-- RLS policies reference a bare, unqualified `child_id` in their USING/WITH
+-- CHECK clauses. Since this parameter is also named child_id, that makes the
+-- policy text ambiguous between the column and this function's parameter
+-- (42702) the moment a write here gets row-security-checked — this pragma
+-- resolves that in favor of the column, which is what RLS always means.
 drop function if exists record_test_attempt(uuid, uuid, text, boolean, int, int, jsonb);
 
 create or replace function record_test_attempt(
@@ -28,6 +35,7 @@ create or replace function record_test_attempt(
 language plpgsql
 security invoker
 as $$
+#variable_conflict use_column
 declare
   v_attempt_id uuid;
   v_item jsonb;

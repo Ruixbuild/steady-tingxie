@@ -10,6 +10,12 @@ create or replace function create_list_tx(
 language plpgsql
 security invoker
 as $$
+-- #variable_conflict use_column: lists' and mastery's RLS policies each
+-- reference a bare, unqualified child_id in their USING/WITH CHECK clauses;
+-- since this function's own parameter is also named child_id, that's
+-- ambiguous (42702) the moment either insert below gets row-security-checked.
+-- Same fix as record_test_attempt.sql/record_item_progress.sql.
+#variable_conflict use_column
 declare
   v_list_id uuid;
   v_section jsonb;

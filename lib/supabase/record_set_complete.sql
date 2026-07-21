@@ -13,6 +13,12 @@ create or replace function record_set_complete(
 language plpgsql
 security invoker
 as $$
+-- #variable_conflict use_column: sessions' RLS policy references a bare,
+-- unqualified child_id in its USING/WITH CHECK clause; since this function's
+-- own parameter is also named child_id, that's ambiguous (42702) the moment
+-- the insert below gets row-security-checked. Same fix as
+-- record_test_attempt.sql/record_item_progress.sql.
+#variable_conflict use_column
 declare
   v_today date := (now() at time zone 'Asia/Singapore')::date;
   v_list_name text;
