@@ -60,7 +60,7 @@ export default function TestPinyinInput({ hanzi, answer, onDone }: Props) {
         </p>
       )}
 
-      <button type="button" onClick={submit} disabled={done} className="btn btn-primary">
+      <button type="button" onClick={submit} disabled={done} className="btn btn-primary mt-6">
         Next
       </button>
     </div>

@@ -74,7 +74,7 @@ export default function PinyinToneInput({ onChange, onEnter, disabled }: Props) 
             type="button"
             onClick={() => removeChip(i)}
             className="rounded-full px-3 py-1"
-            style={{ background: "var(--accent-soft)", color: "var(--accent-d)", fontWeight: 700, fontSize: "2rem" }}
+            style={{ background: "var(--accent-soft)", color: "var(--accent-d)", fontWeight: 700, fontSize: "1.3rem" }}
             title="Tap to remove"
           >
             {word} ✕
@@ -88,7 +88,7 @@ export default function PinyinToneInput({ onChange, onEnter, disabled }: Props) 
           disabled={disabled || awaitingTone}
           placeholder={confirmed.length === 0 ? "type pinyin letters, e.g. ni" : ""}
           className="rounded-full border px-4 py-2 outline-none"
-          style={{ borderColor: "var(--line)", color: "var(--ink)", minWidth: 120 }}
+          style={{ borderColor: "var(--line)", color: "var(--ink)", minWidth: 120, fontSize: "1.6rem" }}
           autoComplete="off"
           autoCapitalize="off"
           spellCheck={false}
@@ -118,7 +118,7 @@ export default function PinyinToneInput({ onChange, onEnter, disabled }: Props) 
                 type="button"
                 onClick={() => confirmWithTone(tone)}
                 className="btn btn-sm btn-secondary"
-                style={{ fontSize: "2rem", minWidth: 56, minHeight: 56 }}
+                style={{ fontSize: "2.5rem", minWidth: 64, minHeight: 64 }}
               >
                 {mark}
               </button>

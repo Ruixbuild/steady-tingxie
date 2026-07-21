@@ -47,7 +47,7 @@ export default function PinyinDrill({ hanzi, answer, onDone }: Props) {
         </p>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 mt-6">
         <button type="button" onClick={check} className="btn btn-primary">
           Check
         </button>

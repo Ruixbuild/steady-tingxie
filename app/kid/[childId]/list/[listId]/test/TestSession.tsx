@@ -87,7 +87,7 @@ export default function TestSession({
     setSubmitError(false);
     const supabase = createClient();
     const durationS = Math.round((Date.now() - sessionStartRef.current) / 1000);
-    const { data: attemptId, error } = await supabase.rpc("record_test_attempt", {
+    const rpcArgs = {
       child_id: childId,
       list_id: listId,
       mode,
@@ -96,7 +96,17 @@ export default function TestSession({
       duration_s: durationS,
       item_results: itemResults,
       hard_mode: hardMode,
-    });
+    };
+    let { data: attemptId, error } = await supabase.rpc("record_test_attempt", rpcArgs);
+    if (error) {
+      // A test can easily run longer than the access token's lifetime,
+      // especially with the tab backgrounded (mobile browsers throttle the
+      // client's own auto-refresh timer while hidden) — one silent retry
+      // after refreshing the session covers that common transient case
+      // instead of surfacing an error for it.
+      await supabase.auth.refreshSession();
+      ({ data: attemptId, error } = await supabase.rpc("record_test_attempt", rpcArgs));
+    }
     if (error) {
       // Leaving this silent would re-render the same (already-finished) last
       // item from scratch — indistinguishable from the test endlessly
