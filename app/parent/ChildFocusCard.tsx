@@ -135,7 +135,7 @@ export default function ChildFocusCard({ data }: { data: FocusData }) {
       {data.weakTop5.length > 0 && (
         <div className="flex flex-col gap-2">
           <p className="text-xs" style={{ color: "var(--mut)" }}>
-            {`Pins appear as "today's set" — ${data.childName} won't know you chose them.`}
+            Pins appear as &quot;today&apos;s set&quot;.
           </p>
           {data.weakTop5.map((item) => {
             const pinned = pinnedIds.has(item.itemId);

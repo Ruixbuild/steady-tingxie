@@ -47,7 +47,11 @@ export default function GardenClient({
 
   const trickyIds = sections
     .flatMap((s) => s.items.map((it) => ({ ...it, kind: s.kind })))
-    .filter((it) => isTricky(it.kind, it.level, it.misses))
+    .filter(
+      (it) =>
+        isTricky(it.kind, it.level, it.misses) ||
+        (it.kind === "passage" && Object.values(it.charMisses ?? {}).some((n) => n > 0))
+    )
     .map((it) => it.id);
 
   useEffect(() => {
