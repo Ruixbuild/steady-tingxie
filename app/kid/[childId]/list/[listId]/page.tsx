@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { SectionKind } from "@/lib/supabase/types";
+import { strokeChars, isPunctuationChar } from "@/lib/hanzi";
 import HubWordList, { type HubSection } from "./HubWordList";
+import HubPrefetch from "./HubPrefetch";
 
 const KIND_LABEL: Record<SectionKind, string> = {
   words: "词语",
@@ -74,8 +76,17 @@ export default async function ListHubPage({
     })),
   }));
 
+  const prefetchTargets = Array.from(
+    new Set(
+      (sections ?? [])
+        .flatMap((s) => (s.items ?? []).flatMap((it) => strokeChars(it.hanzi)))
+        .filter((c) => !isPunctuationChar(c))
+    )
+  );
+
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
+      <HubPrefetch chars={prefetchTargets} />
       <div className="w-full max-w-xl">
         <Link
           href={`/kid/${childId}`}
