@@ -15,6 +15,7 @@ export type FocusData = {
   sections: { kind: "words" | "pinyin" | "passage"; r: number; light: "green" | "orange" | "red" }[];
   weakTop5: { itemId: string; hanzi: string; kind: "words" | "pinyin" }[];
   weakByKind: { words: string[]; pinyin: string[] };
+  weakPassageChars: string[];
   wordsPerDay?: number | null;
   planPinIds?: string[];
 };
@@ -132,6 +133,17 @@ export default function ChildFocusCard({ data }: { data: FocusData }) {
         <p className="text-sm" style={{ color: "var(--mut)" }}>
           Since last session: {data.lastSummary}
         </p>
+      )}
+
+      {data.weakPassageChars.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <p className="text-xs" style={{ color: "var(--mut)" }}>
+            默写 — needs practice
+          </p>
+          <p className="hanzi" style={{ color: "#B8600B" }}>
+            {data.weakPassageChars.join(" ")}
+          </p>
+        </div>
       )}
 
       {data.weakTop5.length > 0 && (

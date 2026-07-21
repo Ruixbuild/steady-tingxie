@@ -46,6 +46,7 @@ export default async function ParentPage() {
       sections: [],
       weakTop5: [],
       weakByKind: { words: [], pinyin: [] },
+      weakPassageChars: [],
     };
 
     if (!activeList) {
@@ -78,6 +79,7 @@ export default async function ParentPage() {
 
     const nonPassageLevels: number[] = [];
     const passageCharMissed: boolean[] = [];
+    const weakPassageChars: string[] = [];
     for (const s of sections ?? []) {
       if (s.kind === "passage") {
         // predicted% needs passage char_misses too
@@ -89,8 +91,11 @@ export default async function ParentPage() {
             .eq("item_id", it.id)
             .maybeSingle();
           const misses = (passMastery?.char_misses ?? {}) as Record<string, number>;
+          const chars = Array.from(it.hanzi);
           for (const pos of passageQuizPositions(it.hanzi)) {
-            passageCharMissed.push((misses[String(pos)] ?? 0) > 0);
+            const missed = (misses[String(pos)] ?? 0) > 0;
+            passageCharMissed.push(missed);
+            if (missed) weakPassageChars.push(chars[pos]);
           }
         }
       } else {
@@ -172,6 +177,7 @@ export default async function ParentPage() {
       sections: sectionLights,
       weakTop5,
       weakByKind,
+      weakPassageChars,
       wordsPerDay,
       planPinIds,
     });

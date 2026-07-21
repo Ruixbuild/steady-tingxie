@@ -189,7 +189,7 @@ export default async function ReportsPage() {
                             <td className="py-1">{it.level}</td>
                             <td className="py-1">
                               {isTricky(it.kind, it.level, it.misses) ? (
-                                <span style={{ color: "var(--warn)" }}>{it.misses}</span>
+                                <span style={{ color: "#B8600B" }}>{it.misses}</span>
                               ) : (
                                 it.misses
                               )}
@@ -215,7 +215,7 @@ export default async function ReportsPage() {
                         {p.trickyChars.length > 0 && (
                           <p className="text-sm">
                             Needs practice:{" "}
-                            <span className="hanzi" style={{ color: "var(--warn)" }}>
+                            <span className="hanzi" style={{ color: "#B8600B" }}>
                               {p.trickyChars.join(" ")}
                             </span>
                           </p>

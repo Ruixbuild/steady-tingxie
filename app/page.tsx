@@ -34,7 +34,9 @@ export default async function ProfilePickerPage() {
         style={{ boxShadow: "0 8px 24px rgba(44,130,201,.18)" }}
       />
 
-      <h1 className="text-center mt-2">Who&apos;s learning today?</h1>
+      <h1 className="text-center mt-2" style={{ fontSize: "2rem", fontWeight: 800 }}>
+        Who&apos;s learning today?
+      </h1>
 
       <div
         className="w-full max-w-2xl gap-4 mt-6"
