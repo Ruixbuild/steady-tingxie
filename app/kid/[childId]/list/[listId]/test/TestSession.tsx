@@ -58,6 +58,7 @@ export default function TestSession({
   const [showCapModal, setShowCapModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(false);
+  const [submitErrorDetail, setSubmitErrorDetail] = useState<string | null>(null);
 
   useEffect(() => {
     document.body.classList.add("test-mode");
@@ -85,6 +86,7 @@ export default function TestSession({
   async function submitAttempt(itemResults: ItemResult[]) {
     setSubmitting(true);
     setSubmitError(false);
+    setSubmitErrorDetail(null);
     const supabase = createClient();
     const durationS = Math.round((Date.now() - sessionStartRef.current) / 1000);
     const rpcArgs = {
@@ -113,6 +115,7 @@ export default function TestSession({
       // repeating. Surface it instead so the child/parent can retry.
       setSubmitting(false);
       setSubmitError(true);
+      setSubmitErrorDetail(error.message ?? String(error));
       return;
     }
     router.push(`/kid/${childId}/list/${listId}/results/${attemptId}`);
@@ -217,6 +220,11 @@ export default function TestSession({
           <p className="text-sm text-center" style={{ color: "var(--miss)" }}>
             Couldn&apos;t save your results. Check your connection and try again.
           </p>
+          {submitErrorDetail && (
+            <p className="text-xs text-center" style={{ color: "var(--mut)" }}>
+              {submitErrorDetail}
+            </p>
+          )}
           <button
             type="button"
             className="btn btn-primary"
