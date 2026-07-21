@@ -71,7 +71,7 @@ export default async function ProfilePickerPage() {
           href="https://alert-marquess-169.notion.site/Online-Safety-Tips-3a4efcd98b9c8063b5b3f1b3b52b7690"
           target="_blank"
           rel="noopener noreferrer"
-          style={{ color: "var(--ink)", textDecoration: "underline" }}
+          style={{ color: "var(--ink)", opacity: 0.75, textDecoration: "underline" }}
         >
           Online Safety Tips
         </a>
