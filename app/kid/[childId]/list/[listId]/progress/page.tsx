@@ -51,7 +51,7 @@ export default async function ProgressPage({
     allItemIds.length > 0
       ? await supabase
           .from("mastery")
-          .select("item_id, level, misses")
+          .select("item_id, level, misses, char_misses")
           .eq("child_id", childId)
           .in("item_id", allItemIds)
       : { data: [] };
@@ -63,7 +63,13 @@ export default async function ProgressPage({
     title: s.title,
     items: (s.items ?? []).map((it) => {
       const m = masteryByItem.get(it.id);
-      return { id: it.id, hanzi: it.hanzi, level: m?.level ?? 0, misses: m?.misses ?? 0 };
+      return {
+        id: it.id,
+        hanzi: it.hanzi,
+        level: m?.level ?? 0,
+        misses: m?.misses ?? 0,
+        charMisses: s.kind === "passage" ? ((m?.char_misses ?? {}) as Record<string, number>) : undefined,
+      };
     }),
   }));
 

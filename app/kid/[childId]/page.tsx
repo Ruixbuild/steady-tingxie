@@ -81,9 +81,13 @@ export default async function ChildHomePage({
     }[];
 
     const nonPassageItemIds: string[] = [];
+    const passageItemIds: string[] = [];
     for (const section of sections ?? []) {
-      if (section.kind === "passage") continue;
-      for (const item of section.items ?? []) nonPassageItemIds.push(item.id);
+      if (section.kind === "passage") {
+        for (const item of section.items ?? []) passageItemIds.push(item.id);
+      } else {
+        for (const item of section.items ?? []) nonPassageItemIds.push(item.id);
+      }
     }
 
     if (nonPassageItemIds.length > 0) {
@@ -107,6 +111,21 @@ export default async function ChildHomePage({
 
       const nonMastered = rows.filter((m) => m.level < 3).map((m) => m.item_id);
       surpriseId = pickRandom(nonMastered);
+    }
+
+    // A parent-pinned 默写 passage doesn't compete for the "N words today"
+    // slot count — it's a whole sentence, not a word — but it still needs
+    // to surface as picked-for-you practice, so it's added on top.
+    if (passageItemIds.length > 0) {
+      const { data: passageMasteryRows } = await supabase
+        .from("mastery")
+        .select("item_id, pinned")
+        .eq("child_id", childId)
+        .in("item_id", passageItemIds);
+      const pinnedPassageIds = (passageMasteryRows ?? [])
+        .filter((m) => m.pinned)
+        .map((m) => m.item_id);
+      pinnedIds = [...pinnedIds, ...pinnedPassageIds];
     }
   }
 

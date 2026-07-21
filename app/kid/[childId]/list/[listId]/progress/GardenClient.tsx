@@ -6,7 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 import { isTricky } from "@/lib/testScoring";
 import Confetti from "@/components/Confetti";
 
-type GardenItem = { id: string; hanzi: string; level: number; misses: number };
+type GardenItem = {
+  id: string;
+  hanzi: string;
+  level: number;
+  misses: number;
+  charMisses?: Record<string, number>;
+};
 type GardenSection = { kind: "words" | "pinyin" | "passage"; title: string | null; items: GardenItem[] };
 
 const KIND_LABEL: Record<GardenSection["kind"], string> = {
@@ -80,29 +86,73 @@ export default function GardenClient({
           <p className="text-sm mb-2" style={{ color: "var(--mut)" }}>
             {KIND_LABEL[section.kind]}
           </p>
-          <div className="flex flex-wrap gap-3">
-            {section.items.map((item) => {
-              const tricky = isTricky(section.kind, item.level, item.misses);
-              const emoji =
-                item.level === 3 ? (hardMode ? "🌲" : "🌳") : STAGE_EMOJI[item.level] ?? "🌱";
-              return (
-                <div
-                  key={item.id}
-                  className="inline-flex items-center gap-2 rounded-2xl px-3 py-2"
-                  style={{
-                    background: "var(--card)",
-                    border: tricky ? "2px solid var(--warn)" : "1.5px solid var(--line)",
-                  }}
-                >
-                  <span className="text-xl">{emoji}</span>
-                  <span className="hanzi text-lg">{item.hanzi}</span>
-                  <span className="text-xs" style={{ color: "var(--mut)" }}>
-                    {LEVEL_LABEL[item.level] ?? "New"}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+          {section.kind === "passage" ? (
+            <div className="flex flex-col gap-3">
+              {section.items.map((item) => {
+                const emoji =
+                  item.level === 3 ? (hardMode ? "🌲" : "🌳") : STAGE_EMOJI[item.level] ?? "🌱";
+                return (
+                  <div
+                    key={item.id}
+                    className="card p-3 flex flex-col gap-2"
+                    style={{ background: "var(--card)" }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{emoji}</span>
+                      <span className="text-xs" style={{ color: "var(--mut)" }}>
+                        {LEVEL_LABEL[item.level] ?? "New"}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {Array.from(item.hanzi).map((c, i) => {
+                        const weak = (item.charMisses?.[String(i)] ?? 0) > 0;
+                        return (
+                          <span
+                            key={i}
+                            className="hanzi flex items-center justify-center"
+                            style={{
+                              minWidth: 36,
+                              height: 36,
+                              fontSize: "1rem",
+                              borderRadius: 10,
+                              border: `${weak ? 2.5 : 1.5}px solid ${weak ? "var(--go)" : "var(--line)"}`,
+                              background: "#fff",
+                            }}
+                          >
+                            {c}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {section.items.map((item) => {
+                const tricky = isTricky(section.kind, item.level, item.misses);
+                const emoji =
+                  item.level === 3 ? (hardMode ? "🌲" : "🌳") : STAGE_EMOJI[item.level] ?? "🌱";
+                return (
+                  <div
+                    key={item.id}
+                    className="inline-flex items-center gap-2 rounded-2xl px-3 py-2"
+                    style={{
+                      background: "var(--card)",
+                      border: tricky ? "2px solid var(--warn)" : "1.5px solid var(--line)",
+                    }}
+                  >
+                    <span className="text-xl">{emoji}</span>
+                    <span className="hanzi text-lg">{item.hanzi}</span>
+                    <span className="text-xs" style={{ color: "var(--mut)" }}>
+                      {LEVEL_LABEL[item.level] ?? "New"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       ))}
 
