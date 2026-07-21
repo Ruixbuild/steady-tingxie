@@ -14,6 +14,10 @@ export type LearnItem = {
   hanzi: string;
   pinyin: string | null;
   kind: "words" | "pinyin" | "passage";
+  /** Per-character miss counts (keyed by Array.from(hanzi) position) from
+   * past 默写 tests — used to flag which characters in the passage need
+   * more practice. Only ever set for kind "passage". */
+  charMisses?: Record<string, number>;
 };
 
 export default function LearnSession({
@@ -171,7 +175,7 @@ export default function LearnSession({
 
       {currentItem.kind === "passage" && (
         <p className="text-sm text-center" style={{ color: "var(--mut)" }}>
-          💡 Tap any word below to jump straight to it
+          💡 Tap any word below to jump straight to it — underlined ones need more practice
         </p>
       )}
 
@@ -181,6 +185,7 @@ export default function LearnSession({
             const done = i < charIndex;
             const on = i === charIndex;
             const clickable = currentItem.kind === "passage" && i !== charIndex;
+            const tricky = (currentItem.charMisses?.[String(i)] ?? 0) > 0;
             return (
               <span
                 key={i}
@@ -195,6 +200,9 @@ export default function LearnSession({
                   background: on ? "var(--accent-soft)" : done ? "var(--ok-soft)" : "#fff",
                   color: on ? "var(--accent-d)" : "var(--ink)",
                   cursor: clickable ? "pointer" : undefined,
+                  textDecoration: tricky ? "underline" : "none",
+                  textDecorationColor: "var(--warn)",
+                  textDecorationThickness: 3,
                 }}
               >
                 {c}

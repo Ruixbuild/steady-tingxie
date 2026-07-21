@@ -110,8 +110,15 @@ export default async function ParentPage() {
         ).length;
         const r = items.length > 0 ? masteredCount / items.length : 0;
         const light = r >= 0.8 ? ("green" as const) : r >= 0.5 ? ("orange" as const) : ("red" as const);
-        return { kind: s.kind as "words" | "pinyin", r, light };
+        return { kind: s.kind as "words" | "pinyin" | "passage", r, light };
       });
+
+    if ((sections ?? []).some((s) => s.kind === "passage") && passageCharMissed.length > 0) {
+      const solid = passageCharMissed.filter((missed) => !missed).length;
+      const r = solid / passageCharMissed.length;
+      const light = r >= 0.8 ? ("green" as const) : r >= 0.5 ? ("orange" as const) : ("red" as const);
+      sectionLights.push({ kind: "passage", r, light });
+    }
 
     const trickyItems = (sections ?? [])
       .filter((s) => s.kind !== "passage")

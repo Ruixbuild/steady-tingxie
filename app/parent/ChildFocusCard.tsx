@@ -12,7 +12,7 @@ export type FocusData = {
   activeList: { id: string; name: string } | null;
   daysToTest: number | null;
   predicted: number;
-  sections: { kind: "words" | "pinyin"; r: number; light: "green" | "orange" | "red" }[];
+  sections: { kind: "words" | "pinyin" | "passage"; r: number; light: "green" | "orange" | "red" }[];
   weakTop5: { itemId: string; hanzi: string; kind: "words" | "pinyin" }[];
   weakByKind: { words: string[]; pinyin: string[] };
   wordsPerDay?: number | null;
@@ -20,7 +20,7 @@ export type FocusData = {
 };
 
 const LIGHT_COLOR = { green: "var(--ok)", orange: "var(--warn)", red: "var(--miss)" };
-const KIND_LABEL = { words: "词语", pinyin: "拼音" };
+const KIND_LABEL = { words: "词语", pinyin: "拼音", passage: "默写" };
 
 export default function ChildFocusCard({ data }: { data: FocusData }) {
   const router = useRouter();

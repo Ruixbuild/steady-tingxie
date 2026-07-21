@@ -56,13 +56,36 @@ export default async function LearnPage({
     items: { id: string; ord: number; hanzi: string; pinyin: string | null }[] | null;
   }[];
 
+  const passageItemIds: string[] = [];
+  for (const section of sections ?? []) {
+    if (section.kind !== "passage") continue;
+    for (const it of section.items ?? []) passageItemIds.push(it.id);
+  }
+  const { data: passageMasteryRows } =
+    passageItemIds.length > 0
+      ? await supabase
+          .from("mastery")
+          .select("item_id, char_misses")
+          .eq("child_id", childId)
+          .in("item_id", passageItemIds)
+      : { data: [] };
+  const charMissesByItem = new Map(
+    (passageMasteryRows ?? []).map((m) => [m.item_id, m.char_misses as Record<string, number>])
+  );
+
   let allItems: LearnItem[] = [];
   for (const section of sections ?? []) {
     const kind = section.kind as "words" | "pinyin" | "passage";
     const sectionItems = (section.items ?? [])
       .slice()
       .sort((a, b) => a.ord - b.ord)
-      .map((it) => ({ id: it.id, hanzi: it.hanzi, pinyin: it.pinyin, kind }));
+      .map((it) => ({
+        id: it.id,
+        hanzi: it.hanzi,
+        pinyin: it.pinyin,
+        kind,
+        charMisses: kind === "passage" ? charMissesByItem.get(it.id) : undefined,
+      }));
     allItems = allItems.concat(sectionItems);
   }
 

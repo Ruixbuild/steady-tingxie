@@ -12,6 +12,7 @@ type SectionRaw = {
 };
 
 type ItemRow = { hanzi: string; kind: "words" | "pinyin"; level: number; misses: number };
+type PassageRow = { hanzi: string; level: number; totalChars: number; trickyChars: string[] };
 
 export default async function ReportsPage() {
   const supabase = await createServerSupabaseClient();
@@ -77,21 +78,28 @@ export default async function ReportsPage() {
     }
     itemRows.sort((a, b) => b.misses - a.misses || a.level - b.level);
 
-    const trickyPassageChars: string[] = [];
+    const passageRows: PassageRow[] = [];
     for (const s of sections ?? []) {
       if (s.kind !== "passage") continue;
       for (const it of s.items ?? []) {
         const { data: passMastery } = await supabase
           .from("mastery")
-          .select("char_misses")
+          .select("level, char_misses")
           .eq("child_id", child.id)
           .eq("item_id", it.id)
           .maybeSingle();
         const charMisses = (passMastery?.char_misses ?? {}) as Record<string, number>;
         const chars = Array.from(it.hanzi);
-        for (const pos of passageQuizPositions(it.hanzi)) {
-          if ((charMisses[String(pos)] ?? 0) > 0) trickyPassageChars.push(chars[pos]);
-        }
+        const positions = passageQuizPositions(it.hanzi);
+        const trickyChars = positions
+          .filter((pos) => (charMisses[String(pos)] ?? 0) > 0)
+          .map((pos) => chars[pos]);
+        passageRows.push({
+          hanzi: it.hanzi,
+          level: passMastery?.level ?? 0,
+          totalChars: positions.length,
+          trickyChars,
+        });
       }
     }
 
@@ -120,7 +128,7 @@ export default async function ReportsPage() {
         actualTotal: list.actual_total,
       },
       itemRows,
-      trickyPassageChars,
+      passageRows,
       attempts,
     });
   }
@@ -193,12 +201,27 @@ export default async function ReportsPage() {
                   </div>
                 )}
 
-                {(r.trickyPassageChars?.length ?? 0) > 0 && (
-                  <div>
-                    <p className="text-sm mb-1" style={{ color: "var(--mut)" }}>
-                      Tricky passage characters
+                {(r.passageRows?.length ?? 0) > 0 && (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-sm" style={{ color: "var(--mut)" }}>
+                      默写
                     </p>
-                    <p className="hanzi text-xl">{r.trickyPassageChars!.join(" ")}</p>
+                    {r.passageRows!.map((p, i) => (
+                      <div key={i} className="flex flex-col gap-1">
+                        <p className="hanzi">{p.hanzi}</p>
+                        <p className="text-sm" style={{ color: "var(--mut)" }}>
+                          Level {p.level} · {p.totalChars - p.trickyChars.length}/{p.totalChars} characters solid
+                        </p>
+                        {p.trickyChars.length > 0 && (
+                          <p className="text-sm">
+                            Needs practice:{" "}
+                            <span className="hanzi" style={{ color: "var(--warn)" }}>
+                              {p.trickyChars.join(" ")}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </>
