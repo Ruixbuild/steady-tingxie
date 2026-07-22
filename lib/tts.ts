@@ -19,25 +19,27 @@ const PUNCTUATION_NAMES: Record<string, string> = {
   "、": "顿号",
 };
 
-/** Every utterance in this file is run through this before being spoken —
- * the single place both narration rules live.
- *
- * 1. Punctuation marks embedded mid-utterance are frequently swallowed
- *    silently by the speech engine (it treats them as a prosodic pause, not
- *    something to say) even though a 默写 test child needs to actually hear
- *    that a comma/period/etc. belongs at that position. Spelling each mark
- *    out by name (逗号/句号/…) makes it audible regardless of position.
- * 2. The engine treats an utterance as "done" the instant its last audible
- *    sound ends and cuts it off with no room for the natural decay a
- *    longer phrase gets for free — most noticeable on a single syllable.
- *    A trailing Chinese comma is a silent prosodic pause to the engine
- *    (never itself pronounced as a word), just padding to speak past.
- */
-function prepareSpeech(text: string): string {
-  const spoken = Array.from(text)
+/** Punctuation marks embedded mid-utterance are frequently swallowed
+ * silently by a speech engine (treated as a prosodic pause, not something
+ * to say) even though a 默写 test child needs to actually hear that a
+ * comma/period/etc. belongs at that position. Spelling each mark out by
+ * name (逗号/句号/…) makes it audible regardless of position — applies to
+ * both the Google TTS request text and the Web Speech fallback. */
+function namePunctuation(text: string): string {
+  return Array.from(text)
     .map((ch) => PUNCTUATION_NAMES[ch] ?? ch)
     .join("");
-  return `${spoken}，`;
+}
+
+/** A real synthesized MP3 (Google TTS) has natural trailing decay/silence,
+ * so no extra padding is needed for it — only the Web Speech fallback
+ * engine cuts an utterance off the instant its last audible sound ends,
+ * with no room for a longer phrase's natural decay (most noticeable on a
+ * single syllable). A trailing Chinese comma is a silent prosodic pause to
+ * that engine (never itself pronounced as a word), just padding to speak
+ * past — so it's added only when preparing text for that fallback path. */
+function padForFallback(text: string): string {
+  return `${text}，`;
 }
 
 /** The one place that controls how fast a phrase/sentence (as opposed to a
@@ -83,13 +85,13 @@ function stopCurrent() {
   }
 }
 
-function fallbackSpeakPrepared(prepared: string, lang: string, rate: number, onend?: () => void) {
+function fallbackSpeak(text: string, lang: string, rate: number, onend?: () => void) {
   if (typeof window === "undefined" || !window.speechSynthesis) {
     onend?.();
     return;
   }
   const synth = window.speechSynthesis;
-  const utterance = new SpeechSynthesisUtterance(prepared);
+  const utterance = new SpeechSynthesisUtterance(padForFallback(namePunctuation(text)));
   utterance.lang = lang;
   utterance.rate = rate;
   if (onend) utterance.onend = onend;
@@ -105,7 +107,7 @@ function fallbackSpeakPrepared(prepared: string, lang: string, rate: number, one
 }
 
 async function playOne(text: string, lang: string, rate: number, onend?: () => void) {
-  const prepared = prepareSpeech(text);
+  const prepared = namePunctuation(text);
   try {
     const url = await fetchAudioUrl(prepared, lang, rate);
     const audio = new Audio(url);
@@ -114,10 +116,10 @@ async function playOne(text: string, lang: string, rate: number, onend?: () => v
       currentAudio = null;
       onend?.();
     };
-    audio.onerror = () => fallbackSpeakPrepared(prepared, lang, rate, onend);
+    audio.onerror = () => fallbackSpeak(text, lang, rate, onend);
     await audio.play();
   } catch {
-    fallbackSpeakPrepared(prepared, lang, rate, onend);
+    fallbackSpeak(text, lang, rate, onend);
   }
 }
 
@@ -127,7 +129,7 @@ export function speak(text: string, lang = "zh-CN", rate = 1) {
 }
 
 /** Speaks a single character or word — kept as a named alias so call sites
- * read clearly, but the anti-cutoff padding lives in speak() itself. */
+ * read clearly. */
 export function speakChar(char: string, lang = "zh-CN", rate = 1) {
   speak(char, lang, rate);
 }
