@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Level } from "@/lib/supabase/types";
 
@@ -16,10 +17,39 @@ export default function SettingsForm({
 }: {
   childOptions: ChildOption[];
 }) {
+  const router = useRouter();
   const supabase = createClient();
   const [children, setChildren] = useState(childOptions);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [nameDrafts, setNameDrafts] = useState<Record<string, string>>({});
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function deleteChild(childId: string, childName: string) {
+    if (
+      !window.confirm(
+        `Delete ${childName}'s profile? This permanently removes their lists and all progress.`
+      )
+    )
+      return;
+    setDeletingId(childId);
+    setDeleteError(null);
+    const { error } = await supabase.from("children").delete().eq("id", childId);
+    if (error) {
+      // The previous delete button silently did nothing on failure — this
+      // surfaces the actual error (RLS block, a foreign-key constraint from
+      // lists/mastery/attempts/etc. referencing this child, etc.) instead
+      // of leaving the parent staring at a profile that won't go away.
+      setDeletingId(null);
+      setDeleteError(
+        [error.message, error.details, error.hint, error.code].filter(Boolean).join(" | ")
+      );
+      return;
+    }
+    setChildren((prev) => prev.filter((c) => c.id !== childId));
+    setDeletingId(null);
+    router.refresh();
+  }
 
   async function saveName(childId: string) {
     const child = children.find((c) => c.id === childId);
@@ -134,6 +164,34 @@ export default function SettingsForm({
             ))}
         </div>
       )}
+
+      <div className="card p-5 flex flex-col gap-3" style={{ borderColor: "var(--miss)" }}>
+        <p className="font-semibold">Danger zone</p>
+        <p className="text-sm" style={{ color: "var(--mut)" }}>
+          Permanently deletes a child&apos;s profile, lists, and all progress. This can&apos;t be undone.
+        </p>
+        {deleteError && (
+          <p className="text-xs" style={{ color: "var(--miss)" }}>
+            {deleteError}
+          </p>
+        )}
+        {children.map((c) => (
+          <div key={c.id} className="flex items-center justify-between">
+            <span>
+              {c.name} <span style={{ color: "var(--mut)" }}>({c.level})</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => deleteChild(c.id, c.name)}
+              disabled={deletingId === c.id}
+              className="btn btn-sm btn-secondary"
+              style={{ color: "var(--miss)" }}
+            >
+              🗑 Delete
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
