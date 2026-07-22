@@ -20,6 +20,11 @@
 -- policy text ambiguous between the column and this function's parameter
 -- (42702) the moment a write here gets row-security-checked — this pragma
 -- resolves that in favor of the column, which is what RLS always means.
+-- On a pass, misses is now reset to 0 alongside level — previously it was
+-- left untouched, so isTricky() (level<2 OR misses>0) kept flagging an item
+-- as tricky forever after even a single miss, no matter how many times it
+-- was mastered afterward. Doesn't retroactively fix rows already stuck this
+-- way — see this file's usage note for a one-time backfill.
 drop function if exists record_test_attempt(uuid, uuid, text, boolean, int, int, jsonb);
 
 create or replace function record_test_attempt(
@@ -146,6 +151,7 @@ begin
         if v_passed then
           update mastery m set
             level = 3,
+            misses = 0,
             improved = case when v_prev_fail then true else m.improved end,
             prev_fail = false,
             last_seen = now()
@@ -191,6 +197,7 @@ begin
         if v_passed then
           update mastery m set
             level = 3,
+            misses = 0,
             improved = case when v_prev_fail then true else m.improved end,
             prev_fail = false,
             last_seen = now()
