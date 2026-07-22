@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PASSAGE_PUNCTUATION } from "@/lib/testScoring";
-import { speakSequence, speakSequencePaused, PHRASE_RATE } from "@/lib/tts";
+import { speak, speakSequence, PHRASE_RATE } from "@/lib/tts";
 import PeekModal from "./PeekModal";
 import TrickyCharPractice from "./TrickyCharPractice";
 
@@ -28,7 +28,7 @@ export default function ReaderView({
       <div className="flex gap-3 flex-wrap">
         <button
           type="button"
-          onClick={() => speakSequencePaused(chars, "zh-CN", PHRASE_RATE, 350)}
+          onClick={() => speak(hanzi, "zh-CN", PHRASE_RATE)}
           className="btn btn-sm btn-secondary"
         >
           🐢 Read full sentence
