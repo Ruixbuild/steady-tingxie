@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { speak, PHRASE_RATE } from "@/lib/tts";
 import { strokeChars } from "@/lib/hanzi";
 import type { AttemptMode } from "@/lib/supabase/types";
 import type { CharMistakes, ItemResult } from "@/lib/testTypes";
@@ -50,7 +49,6 @@ export default function TestSession({
   const sessionStartRef = useRef(now());
   const capThresholdRef = useRef(CAP_MS);
   const wordCharResultsRef = useRef<CharMistakes[]>([]);
-  const spokenItemRef = useRef<string | null>(null);
 
   const [queueIndex, setQueueIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
@@ -75,13 +73,6 @@ export default function TestSession({
   }, []);
 
   const currentItem = items[queueIndex];
-
-  useEffect(() => {
-    if (currentItem?.kind === "words" && spokenItemRef.current !== currentItem.id) {
-      spokenItemRef.current = currentItem.id;
-      speak(currentItem.hanzi, "zh-CN", PHRASE_RATE);
-    }
-  }, [currentItem]);
 
   async function submitAttempt(itemResults: ItemResult[]) {
     setSubmitting(true);

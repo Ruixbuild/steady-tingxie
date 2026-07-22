@@ -31,6 +31,34 @@ function namePunctuation(text: string): string {
     .join("");
 }
 
+/** The one place controlling how long the pause after a spoken-out
+ * punctuation name is, for the Google TTS path. Naming a mark instead of
+ * speaking it as a raw comma/period (see namePunctuation) means the engine
+ * no longer sees the punctuation itself, so it stops inserting the natural
+ * breath-pause a real mark would otherwise get for free — this restores
+ * one explicitly via SSML <break>. */
+const PUNCTUATION_PAUSE_MS = 300;
+
+function escapeSsml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** Builds the SSML sent to Google TTS: each punctuation mark becomes its
+ * spoken name followed by an explicit break, so a full 默写 sentence reads
+ * with natural pausing at commas/periods instead of running straight
+ * through them as if they were just more words. */
+function toGoogleSSML(text: string): string {
+  const body = Array.from(text)
+    .map((ch) => {
+      const name = PUNCTUATION_NAMES[ch];
+      return name
+        ? `${escapeSsml(name)}<break time="${PUNCTUATION_PAUSE_MS}ms"/>`
+        : escapeSsml(ch);
+    })
+    .join("");
+  return `<speak>${body}</speak>`;
+}
+
 /** A real synthesized MP3 (Google TTS) has natural trailing decay/silence,
  * so no extra padding is needed for it — only the Web Speech fallback
  * engine cuts an utterance off the instant its last audible sound ends,
@@ -47,23 +75,23 @@ function padForFallback(text: string): string {
  * Tune this single value to change the pace everywhere at once. */
 export const PHRASE_RATE = 0.85;
 
-// object-URL cache keyed by prepared text + lang + rate — avoids re-fetching
-// audio for text this session has already narrated (e.g. Replay buttons).
+// object-URL cache keyed by SSML + lang + rate — avoids re-fetching audio
+// for text this session has already narrated (e.g. Replay buttons).
 const audioCache = new Map<string, Promise<string>>();
 
-function cacheKey(prepared: string, lang: string, rate: number) {
-  return `${lang}|${rate}|${prepared}`;
+function cacheKey(ssml: string, lang: string, rate: number) {
+  return `${lang}|${rate}|${ssml}`;
 }
 
-async function fetchAudioUrl(prepared: string, lang: string, rate: number): Promise<string> {
-  const key = cacheKey(prepared, lang, rate);
+async function fetchAudioUrl(ssml: string, lang: string, rate: number): Promise<string> {
+  const key = cacheKey(ssml, lang, rate);
   const cached = audioCache.get(key);
   if (cached) return cached;
   const promise = (async () => {
     const res = await fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: prepared, lang, rate }),
+      body: JSON.stringify({ ssml, lang, rate }),
     });
     if (!res.ok) throw new Error(`tts fetch failed: ${res.status}`);
     const blob = await res.blob();
@@ -107,9 +135,9 @@ function fallbackSpeak(text: string, lang: string, rate: number, onend?: () => v
 }
 
 async function playOne(text: string, lang: string, rate: number, onend?: () => void) {
-  const prepared = namePunctuation(text);
+  const ssml = toGoogleSSML(text);
   try {
-    const url = await fetchAudioUrl(prepared, lang, rate);
+    const url = await fetchAudioUrl(ssml, lang, rate);
     const audio = new Audio(url);
     currentAudio = audio;
     audio.onended = () => {

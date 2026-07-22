@@ -12,7 +12,10 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const maxDuration = 20;
 
-const MAX_TEXT_LENGTH = 500;
+// SSML markup (<speak>, <break time="…ms"/> per punctuation mark) adds
+// overhead beyond the raw sentence length, so this is sized generously
+// above any real passage rather than tightly around plain text.
+const MAX_TEXT_LENGTH = 2000;
 const VOICE_NAME = "cmn-CN-Wavenet-A";
 
 export async function POST(request: Request) {
@@ -29,18 +32,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "TTS not configured" }, { status: 500 });
   }
 
-  let payload: { text?: string; lang?: string; rate?: number };
+  let payload: { text?: string; ssml?: string; lang?: string; rate?: number };
   try {
     payload = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { text, lang = "zh-CN", rate = 1 } = payload;
-  if (!text || typeof text !== "string" || text.length === 0) {
+  const { text, ssml, lang = "zh-CN", rate = 1 } = payload;
+  const body = ssml ?? text;
+  if (!body || typeof body !== "string" || body.length === 0) {
     return NextResponse.json({ error: "Missing text" }, { status: 400 });
   }
-  if (text.length > MAX_TEXT_LENGTH) {
+  if (body.length > MAX_TEXT_LENGTH) {
     return NextResponse.json({ error: "Text too long" }, { status: 413 });
   }
 
@@ -53,7 +57,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        input: { text },
+        input: ssml ? { ssml } : { text },
         voice: { languageCode, name: VOICE_NAME },
         audioConfig: { audioEncoding: "MP3", speakingRate },
       }),
