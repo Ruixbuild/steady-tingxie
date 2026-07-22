@@ -37,7 +37,7 @@ export default function CharLadder({ char, announceWord, skipWatch, epochRef, on
   const isPunctuation = isPunctuationChar(char);
 
   function announce() {
-    if (announceWord) speakSequencePaused([announceWord, char], "zh-CN", PHRASE_RATE, 600);
+    if (announceWord) speakSequencePaused([announceWord, char], "zh-CN", PHRASE_RATE, 350);
     else speakChar(char);
   }
   const [stage, setStage] = useState<Stage>(skipWatch ? "trace" : "watch");
