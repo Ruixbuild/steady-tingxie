@@ -3,14 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader, getCharData } from "@/lib/hanziCache";
-import { speak, speakSequencePaused, PHRASE_RATE, ANNOUNCE_WORD_PAUSE_MS } from "@/lib/tts";
+import { speak, speakWordThenChar, PHRASE_RATE } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
 
 type Props = {
   char: string;
+  /** The full word this char belongs to, and this char's position within
+   * it (Array.from index) — always the whole word, never just this char
+   * alone, so a polyphonic character (e.g. 乐, yuè in 乐曲 but lè
+   * elsewhere) gets read with the surrounding context that disambiguates
+   * it. Omitted only when silent (PassageSession's blind quiz never
+   * narrates automatically, so there's nothing to announce). */
   announceWord?: string;
+  charIndex?: number;
   /** Skip the automatic on-mount pronunciation — the child can still tap
    * "Hear it again" manually. Used by PassageSession's "first 2 words"
    * reveal mode, where later characters shouldn't get an automatic hint. */
@@ -29,7 +36,7 @@ type Props = {
 // the client. Epoch-guarded the same way as Learn's CharLadder even though
 // there's only one stage here — the hazard (a stale onComplete firing after
 // Skip or the 10-min-cap exit) is the same regardless of stage count.
-export default function TestCharQuiz({ char, announceWord, silent, hideReplayButton, hardMode, epochRef, onDone }: Props) {
+export default function TestCharQuiz({ char, announceWord, charIndex, silent, hideReplayButton, hardMode, epochRef, onDone }: Props) {
   const isPunctuation = isPunctuationChar(char);
   const [done, setDone] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -44,10 +51,9 @@ export default function TestCharQuiz({ char, announceWord, silent, hideReplayBut
     setDone(false);
     setLoadError(false);
     if (silent) return;
-    if (announceWord)
-      speakSequencePaused([announceWord, char], "zh-CN", PHRASE_RATE, ANNOUNCE_WORD_PAUSE_MS);
+    if (announceWord) speakWordThenChar(announceWord, charIndex ?? 0, "zh-CN", PHRASE_RATE);
     else speak(char);
-  }, [char, announceWord, silent]);
+  }, [char, announceWord, charIndex, silent]);
 
   useEffect(() => {
     if (isPunctuation) {
@@ -141,9 +147,7 @@ export default function TestCharQuiz({ char, announceWord, silent, hideReplayBut
           <button
             type="button"
             onClick={() =>
-              announceWord
-                ? speakSequencePaused([announceWord, char], "zh-CN", PHRASE_RATE, ANNOUNCE_WORD_PAUSE_MS)
-                : speak(char)
+              announceWord ? speakWordThenChar(announceWord, charIndex ?? 0, "zh-CN", PHRASE_RATE) : speak(char)
             }
             className="btn btn-secondary"
           >

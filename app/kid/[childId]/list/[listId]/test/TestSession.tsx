@@ -265,7 +265,8 @@ export default function TestSession({
             <TestCharQuiz
               key={`${currentItem.id}-${charIndex}`}
               char={strokeChars(currentItem.hanzi)[charIndex]}
-              announceWord={charIndex === 0 ? currentItem.hanzi : undefined}
+              announceWord={currentItem.hanzi}
+              charIndex={charIndex}
               hardMode={hardMode}
               epochRef={epochRef}
               onDone={handleWordCharDone}

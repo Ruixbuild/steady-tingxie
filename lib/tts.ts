@@ -46,14 +46,20 @@ function escapeSsml(text: string): string {
 /** Builds the SSML sent to Google TTS: each punctuation mark becomes its
  * spoken name followed by an explicit break, so a full 默写 sentence reads
  * with natural pausing at commas/periods instead of running straight
- * through them as if they were just more words. */
-function toGoogleSSML(text: string): string {
+ * through them as if they were just more words. If emphasizeIndex is set,
+ * that character (by Array.from position) is wrapped in <emphasis> instead
+ * of being pulled out and spoken alone — a polyphonic character (e.g. 乐,
+ * read yuè in 乐曲 but lè elsewhere) only gets the correct reading when the
+ * engine sees its surrounding word, so the word is never dropped just to
+ * spotlight one character within it. */
+function toGoogleSSML(text: string, emphasizeIndex?: number): string {
   const body = Array.from(text)
-    .map((ch) => {
+    .map((ch, i) => {
       const name = PUNCTUATION_NAMES[ch];
-      return name
+      const rendered = name
         ? `${escapeSsml(name)}<break time="${PUNCTUATION_PAUSE_MS}ms"/>`
         : escapeSsml(ch);
+      return i === emphasizeIndex ? `<emphasis level="strong">${rendered}</emphasis>` : rendered;
     })
     .join("");
   return `<speak>${body}</speak>`;
@@ -140,8 +146,14 @@ function fallbackSpeak(text: string, lang: string, rate: number, onend?: () => v
   }, 0);
 }
 
-async function playOne(text: string, lang: string, rate: number, onend?: () => void) {
-  const ssml = toGoogleSSML(text);
+async function playOne(
+  text: string,
+  lang: string,
+  rate: number,
+  onend?: () => void,
+  emphasizeIndex?: number
+) {
+  const ssml = toGoogleSSML(text, emphasizeIndex);
   try {
     const url = await fetchAudioUrl(ssml, lang, rate);
     const audio = new Audio(url);
@@ -162,12 +174,6 @@ export function speak(text: string, lang = "zh-CN", rate = 1) {
   playOne(text, lang, rate);
 }
 
-/** Speaks a single character or word — kept as a named alias so call sites
- * read clearly. */
-export function speakChar(char: string, lang = "zh-CN", rate = 1) {
-  speak(char, lang, rate);
-}
-
 function playSequenceFrom(texts: string[], i: number, lang: string, rate: number) {
   if (i >= texts.length) return;
   playOne(texts[i], lang, rate, () => playSequenceFrom(texts, i + 1, lang, rate));
@@ -182,28 +188,28 @@ export function speakSequence(texts: string[], lang = "zh-CN", rate = 1) {
   playSequenceFrom(texts, 0, lang, rate);
 }
 
-function playPausedFrom(
-  texts: string[],
-  i: number,
-  lang: string,
-  rate: number,
-  pauseMs: number
-) {
-  if (i >= texts.length) return;
-  playOne(texts[i], lang, rate, () => {
-    setTimeout(() => playPausedFrom(texts, i + 1, lang, rate, pauseMs), pauseMs);
-  });
-}
-
-/** Speaks each string one at a time with a deliberate silent gap between
- * them — e.g. Learn's char ladder, which announces the whole word/phrase
- * then pauses before the specific character being practised. */
-export function speakSequencePaused(
-  texts: string[],
+/** Announces a whole word/phrase, pauses, then announces it again with the
+ * character at charIndex (an Array.from(word) position) emphasized —
+ * shared by Learn's char ladder and Test's word quiz for "say the word,
+ * then spotlight the character being practised." Deliberately never
+ * isolates the character into its own bare utterance: a polyphonic
+ * character (乐 = yuè in 乐曲, lè elsewhere) only reads correctly with its
+ * surrounding word intact, so the word is repeated rather than dropped. */
+export function speakWordThenChar(
+  word: string,
+  charIndex: number,
   lang = "zh-CN",
   rate = 1,
   pauseMs = ANNOUNCE_WORD_PAUSE_MS
 ) {
   stopCurrent();
-  playPausedFrom(texts, 0, lang, rate, pauseMs);
+  if (Array.from(word).length <= 1) {
+    // Nothing to disambiguate — announcing a lone character twice back to
+    // back would just be a redundant echo of itself.
+    playOne(word, lang, rate);
+    return;
+  }
+  playOne(word, lang, rate, () => {
+    setTimeout(() => playOne(word, lang, rate, undefined, charIndex), pauseMs);
+  });
 }

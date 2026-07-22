@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader } from "@/lib/hanziCache";
-import { speakChar, speakSequencePaused, PHRASE_RATE, ANNOUNCE_WORD_PAUSE_MS } from "@/lib/tts";
+import { speak, speakWordThenChar, PHRASE_RATE } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
@@ -12,10 +12,15 @@ type Stage = "watch" | "trace" | "copy";
 
 type Props = {
   char: string;
-  /** The full word/phrase this char belongs to — passed only for the
-   * phrase's first char, so the whole phrase is read once, then this char
-   * alone, mirroring Test's announceWord behavior. */
+  /** The full word/phrase this char belongs to, and this char's position
+   * within it (Array.from index) — when provided, always the whole item,
+   * never just this char alone, so a polyphonic character (e.g. 乐, yuè in
+   * 乐曲 but lè elsewhere) gets read with the surrounding context that
+   * disambiguates it instead of guessing from the character in isolation.
+   * Omitted by callers with no word context to give (falls back to
+   * speaking the bare character). */
   announceWord?: string;
+  charIndex?: number;
   skipWatch: boolean;
   epochRef: { current: number };
   onDone: (result: { written: boolean; traceSvg: string | null }) => void;
@@ -33,13 +38,12 @@ const DEFAULT_MESSAGE: Record<Stage, string> = {
   copy: "✏ Now from memory — you can do it!",
 };
 
-export default function CharLadder({ char, announceWord, skipWatch, epochRef, onDone }: Props) {
+export default function CharLadder({ char, announceWord, charIndex, skipWatch, epochRef, onDone }: Props) {
   const isPunctuation = isPunctuationChar(char);
 
   function announce() {
-    if (announceWord)
-      speakSequencePaused([announceWord, char], "zh-CN", PHRASE_RATE, ANNOUNCE_WORD_PAUSE_MS);
-    else speakChar(char);
+    if (announceWord) speakWordThenChar(announceWord, charIndex ?? 0, "zh-CN", PHRASE_RATE);
+    else speak(char);
   }
   const [stage, setStage] = useState<Stage>(skipWatch ? "trace" : "watch");
   const [message, setMessage] = useState(DEFAULT_MESSAGE[skipWatch ? "trace" : "watch"]);
