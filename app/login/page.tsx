@@ -52,7 +52,7 @@ function LoginPageContent() {
           Steady Ting Xie
         </h1>
         <p className="text-center mb-6" style={{ color: "var(--mut)" }}>
-          Master the right strokes, step by step with your child.
+          Master Chinese, stroke by stroke.
         </p>
 
         {status === "sent" ? (

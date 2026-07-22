@@ -269,6 +269,10 @@ export default function UploadFlow({
     return (
       <div className="flex flex-col gap-6">
         <h3 className="font-semibold mb-1">2 · Enter / review the words</h3>
+        <p className="text-sm" style={{ color: "var(--mut)" }}>
+          💡 words 词语 tests writing characters with narration · pinyin 拼音 tests
+          writing pinyin · dictation 默写 tests writing characters without narration
+        </p>
         <ReviewTable sections={sections} onChange={setSections} />
         <button type="button" onClick={proceedToAssign} className="btn btn-primary self-start">
           Assign →

@@ -34,7 +34,7 @@ export default async function ProfilePickerPage() {
         style={{ boxShadow: "0 8px 24px rgba(44,130,201,.18)" }}
       />
 
-      <h1 className="text-center mt-2" style={{ fontSize: "1.625rem", fontWeight: 800 }}>
+      <h1 className="text-center mt-2" style={{ fontSize: "1.5rem", fontWeight: 800 }}>
         Who&apos;s learning today?
       </h1>
 
@@ -73,6 +73,7 @@ export default async function ProfilePickerPage() {
           href="https://alert-marquess-169.notion.site/Online-Safety-Tips-3a4efcd98b9c8063b5b3f1b3b52b7690"
           target="_blank"
           rel="noopener noreferrer"
+          className="mt-4"
           style={{ color: "var(--ink)", opacity: 0.75, textDecoration: "underline" }}
         >
           Online Safety Tips

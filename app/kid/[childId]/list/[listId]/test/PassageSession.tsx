@@ -2,7 +2,13 @@
 
 import { useMemo, useRef, useState } from "react";
 import TestCharQuiz from "./TestCharQuiz";
-import { speak, speakSequence, PHRASE_RATE } from "@/lib/tts";
+import {
+  speak,
+  speakSequence,
+  PHRASE_RATE,
+  PASSAGE_READ_RATE,
+  PASSAGE_PUNCTUATION_PAUSE_MS,
+} from "@/lib/tts";
 import type { ItemResult } from "@/lib/testTypes";
 
 type QuizChar = { globalIndex: number; char: string };
@@ -60,7 +66,9 @@ export default function PassageSession({ itemId, hanzi, hardMode, reveal, epochR
         {reveal === "full" ? (
           <button
             type="button"
-            onClick={() => speak(hanzi, "zh-CN", PHRASE_RATE)}
+            onClick={() =>
+              speak(hanzi, "zh-CN", PASSAGE_READ_RATE, PASSAGE_PUNCTUATION_PAUSE_MS)
+            }
             className="btn btn-sm btn-secondary"
           >
             🐢 Read full sentence

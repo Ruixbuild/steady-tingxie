@@ -117,12 +117,15 @@ export function treeLayouts(itemIds: string[]): Record<string, TreeLayout> {
     rowItems.forEach((itemId, slotIdx) => {
       const jitterRange = Math.max(1, Math.round(slotWidth * 0.3));
       const leftJitter = (hashString(itemId + ":left") % (jitterRange * 2 + 1)) - jitterRange;
+      // Position is anchored by the icon's left edge, not centered, and the
+      // scene clips overflow — so the right-side margin has to leave room
+      // for the icon's own width (up to 34px), not just a thin percentage.
       const leftPct = Math.min(
-        96,
-        Math.max(2, slotIdx * slotWidth + slotWidth / 2 + leftJitter)
+        88,
+        Math.max(8, slotIdx * slotWidth + slotWidth / 2 + leftJitter)
       );
       const bottomJitter = (hashString(itemId + ":bottom") % (ROW_JITTER_PX * 2 + 1)) - ROW_JITTER_PX;
-      const bottomPx = Math.max(4, ROW_BOTTOM_PX[rowIdx] + bottomJitter);
+      const bottomPx = Math.max(10, ROW_BOTTOM_PX[rowIdx] + bottomJitter);
       const sizePx = 12 + (hashString(itemId + ":size") % 23); // 12-34px
       const rotationDeg = -6 + (hashString(itemId + ":rot") % 13); // -6..+6deg
       layouts[itemId] = { leftPct, bottomPx, sizePx, rotationDeg };

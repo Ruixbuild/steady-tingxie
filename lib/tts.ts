@@ -52,12 +52,16 @@ function escapeSsml(text: string): string {
  * read yuè in 乐曲 but lè elsewhere) only gets the correct reading when the
  * engine sees its surrounding word, so the word is never dropped just to
  * spotlight one character within it. */
-function toGoogleSSML(text: string, emphasizeIndex?: number): string {
+function toGoogleSSML(
+  text: string,
+  emphasizeIndex?: number,
+  punctuationPauseMs: number = PUNCTUATION_PAUSE_MS
+): string {
   const body = Array.from(text)
     .map((ch, i) => {
       const name = PUNCTUATION_NAMES[ch];
       const rendered = name
-        ? `${escapeSsml(name)}<break time="${PUNCTUATION_PAUSE_MS}ms"/>`
+        ? `${escapeSsml(name)}<break time="${punctuationPauseMs}ms"/>`
         : escapeSsml(ch);
       return i === emphasizeIndex ? `<emphasis level="strong">${rendered}</emphasis>` : rendered;
     })
@@ -86,6 +90,13 @@ export const PHRASE_RATE = 0.85;
  * shared by Learn's char ladder and Test's word/passage char quiz so both
  * screens sound identical, and tuning one page's pacing tunes both. */
 export const ANNOUNCE_WORD_PAUSE_MS = 80;
+
+/** Slower rate + longer punctuation pause for 默写 test's "Read full
+ * sentence" specifically — the only place a child hears an entire passage
+ * read as one continuous utterance, so it gets more deliberate pacing than
+ * the shared PHRASE_RATE/PUNCTUATION_PAUSE_MS used everywhere else. */
+export const PASSAGE_READ_RATE = 0.65;
+export const PASSAGE_PUNCTUATION_PAUSE_MS = 550;
 
 // object-URL cache keyed by SSML + lang + rate — avoids re-fetching audio
 // for text this session has already narrated (e.g. Replay buttons).
@@ -151,9 +162,10 @@ async function playOne(
   lang: string,
   rate: number,
   onend?: () => void,
-  emphasizeIndex?: number
+  emphasizeIndex?: number,
+  punctuationPauseMs?: number
 ) {
-  const ssml = toGoogleSSML(text, emphasizeIndex);
+  const ssml = toGoogleSSML(text, emphasizeIndex, punctuationPauseMs);
   try {
     const url = await fetchAudioUrl(ssml, lang, rate);
     const audio = new Audio(url);
@@ -169,9 +181,9 @@ async function playOne(
   }
 }
 
-export function speak(text: string, lang = "zh-CN", rate = 1) {
+export function speak(text: string, lang = "zh-CN", rate = 1, punctuationPauseMs?: number) {
   stopCurrent();
-  playOne(text, lang, rate);
+  playOne(text, lang, rate, undefined, undefined, punctuationPauseMs);
 }
 
 function playSequenceFrom(texts: string[], i: number, lang: string, rate: number) {
