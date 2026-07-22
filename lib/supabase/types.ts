@@ -260,6 +260,12 @@ export type Database = {
         };
         Returns: string;
       };
+      delete_child_tx: {
+        Args: {
+          child_id: string;
+        };
+        Returns: undefined;
+      };
     };
   };
 };

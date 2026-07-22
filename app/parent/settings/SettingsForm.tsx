@@ -34,12 +34,11 @@ export default function SettingsForm({
       return;
     setDeletingId(childId);
     setDeleteError(null);
-    const { error } = await supabase.from("children").delete().eq("id", childId);
+    // Plain delete() 404s on Revision's revision_attempts/revision_mastery/
+    // revision_assignments tables, which use NO ACTION instead of cascade —
+    // delete_child_tx clears those first, then the child row itself.
+    const { error } = await supabase.rpc("delete_child_tx", { child_id: childId });
     if (error) {
-      // The previous delete button silently did nothing on failure — this
-      // surfaces the actual error (RLS block, a foreign-key constraint from
-      // lists/mastery/attempts/etc. referencing this child, etc.) instead
-      // of leaving the parent staring at a profile that won't go away.
       setDeletingId(null);
       setDeleteError(
         [error.message, error.details, error.hint, error.code].filter(Boolean).join(" | ")
