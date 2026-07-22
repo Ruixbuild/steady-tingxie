@@ -214,7 +214,14 @@ export function speakSequence(texts: string[], lang = "zh-CN", rate = 1) {
  * to be reverted (see toGoogleSSML's warning: Google TTS silently
  * truncates audio when only part of the text is tag-wrapped on this
  * voice), so this trades that narrow edge case for narration that's
- * reliably audible for every word. */
+ * reliably audible for every word.
+ *
+ * The isolated character is always spoken at the natural rate (1), not
+ * the phrase's (usually slower) rate — a single syllable played back
+ * slowed-down comes out muffled/mumbled on this voice, so only the
+ * phrase itself gets the deliberate pace and the character stays crisp,
+ * matching how every other bare-character narration (speak(char)) in
+ * the app already sounds. */
 export function speakWordThenChar(
   word: string,
   char: string,
@@ -225,11 +232,11 @@ export function speakWordThenChar(
   stopCurrent();
   if (Array.from(word).length <= 1) {
     // Nothing to announce separately — the word already is the character.
-    playOne(word, lang, rate);
+    playOne(word, lang, 1);
     return;
   }
   playOne(word, lang, rate, () => {
-    setTimeout(() => playOne(char, lang, rate), pauseMs);
+    setTimeout(() => playOne(char, lang, 1), pauseMs);
   });
 }
 
