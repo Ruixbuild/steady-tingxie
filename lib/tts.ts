@@ -147,26 +147,39 @@ export function speakSequence(texts: string[], lang = "zh-CN", rate = NARRATION_
   playSequenceFrom(texts, 0, lang, rate);
 }
 
-/** Announces a whole word/phrase, then announces the specific character
- * being practised alone — shared by Learn's char ladder and Test's
- * word/passage quiz for "say the word, then the character," and repeated
- * each time the child advances to the next character. No artificial pause
- * is inserted between the two; the character starts as soon as the
- * phrase's own audio ends. A rare polyphonic character (e.g. 乐, yuè in
- * 乐曲 but lè elsewhere) can default to the wrong reading when spoken in
- * total isolation like this — a within-phrase <emphasis>/<prosody> wrap
- * was tried to fix that and had to be reverted (mixing tagged and
- * untagged text in one <speak> silently truncated the audio on Google
- * TTS), so this trades that narrow edge case for narration that's
- * reliably audible for every word. */
+/** A brief silent gap between the phrase and the character in
+ * speakWordThenChar — with zero gap, the character's audio starts the
+ * instant the phrase's onended fires, cutting off the phrase's own
+ * trailing decay and making it sound abruptly cut short instead of
+ * naturally finished. */
+const WORD_TO_CHAR_PAUSE_MS = 200;
+
+/** Announces a whole word/phrase, pauses briefly, then announces the
+ * specific character being practised alone — shared by Learn's char
+ * ladder and Test's word/passage quiz for "say the word, then the
+ * character," and repeated each time the child advances to the next
+ * character. A rare polyphonic character (e.g. 乐, yuè in 乐曲 but lè
+ * elsewhere) can default to the wrong reading when spoken in total
+ * isolation like this — a within-phrase <emphasis>/<prosody> wrap was
+ * tried to fix that and had to be reverted (mixing tagged and untagged
+ * text in one <speak> silently truncated the audio on Google TTS), so
+ * this trades that narrow edge case for narration that's reliably
+ * audible for every word.
+ *
+ * The isolated character always plays at rate 1 regardless of the
+ * phrase's rate — a single syllable slowed down (or sped up) the same
+ * amount as a full phrase comes out faded/muffled on this voice, so only
+ * the phrase itself uses the tunable `rate`. */
 export function speakWordThenChar(word: string, char: string, lang = "zh-CN", rate = NARRATION_RATE) {
   stopCurrent();
   if (Array.from(word).length <= 1) {
     // Nothing to announce separately — the word already is the character.
-    playOne(word, lang, rate);
+    playOne(word, lang, 1);
     return;
   }
-  playOne(word, lang, rate, () => playOne(char, lang, rate));
+  playOne(word, lang, rate, () => {
+    setTimeout(() => playOne(char, lang, 1), WORD_TO_CHAR_PAUSE_MS);
+  });
 }
 
 /** Stops whatever is currently narrating (Google TTS audio or the Web
