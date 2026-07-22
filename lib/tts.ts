@@ -24,50 +24,13 @@ const PUNCTUATION_NAMES: Record<string, string> = {
  * to say) even though a 默写 test child needs to actually hear that a
  * comma/period/etc. belongs at that position. Spelling each mark out by
  * name (逗号/句号/…) makes it audible regardless of position — applies to
- * both the Google TTS request text and the Web Speech fallback. */
+ * both the Google TTS request text and the Web Speech fallback. Sent as
+ * plain text with no SSML/break tuning — the voice's own natural pacing
+ * around a real word is relied on instead of a forced pause. */
 function namePunctuation(text: string): string {
   return Array.from(text)
     .map((ch) => PUNCTUATION_NAMES[ch] ?? ch)
     .join("");
-}
-
-/** The one place controlling how long the pause after a spoken-out
- * punctuation name is, for the Google TTS path. Naming a mark instead of
- * speaking it as a raw comma/period (see namePunctuation) means the engine
- * no longer sees the punctuation itself, so it stops inserting the natural
- * breath-pause a real mark would otherwise get for free — this restores
- * one explicitly via SSML <break>. */
-const PUNCTUATION_PAUSE_MS = 300;
-
-function escapeSsml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-/** Builds the SSML sent to Google TTS: each punctuation mark becomes its
- * spoken name followed by an explicit break, so a full 默写 sentence reads
- * with natural pausing at commas/periods instead of running straight
- * through them as if they were just more words.
- *
- * Do NOT wrap only a *substring* of this text in a nested tag (e.g.
- * <emphasis>/<prosody> around one character within a longer phrase) to
- * "spotlight" it — verified against the live Google TTS API that on this
- * voice, mixing tagged and untagged text in one <speak> silently truncates
- * the synthesized audio to a fraction of its real duration (a 2-syllable
- * phrase dropped from 1.34s to 0.29s with nothing to indicate the failure
- * — no error, just garbled/cut-off audio). Wrapping the *entire* text in a
- * tag is fine; wrapping part of it is not. This was tried once already
- * (speakWordThenChar) and had to be reverted — see git history if
- * tempted to reintroduce it. */
-function toGoogleSSML(text: string, punctuationPauseMs: number = PUNCTUATION_PAUSE_MS): string {
-  const body = Array.from(text)
-    .map((ch) => {
-      const name = PUNCTUATION_NAMES[ch];
-      return name
-        ? `${escapeSsml(name)}<break time="${punctuationPauseMs}ms"/>`
-        : escapeSsml(ch);
-    })
-    .join("");
-  return `<speak>${body}</speak>`;
 }
 
 /** A real synthesized MP3 (Google TTS) has natural trailing decay/silence,
@@ -81,48 +44,23 @@ function padForFallback(text: string): string {
   return `${text}，`;
 }
 
-/** The one place that controls how fast a phrase/sentence (as opposed to a
- * single character) is read aloud, across Learn, Test, and Dictation.
- * Tune this single value to change the pace everywhere at once. Was 0.85
- * (deliberately slower than natural) but that came out muffled/mumbled on
- * this Wavenet voice, the same problem the isolated-character rate had —
- * 1 (natural speed) is the only value confirmed clear on this voice. */
-export const PHRASE_RATE = 1;
-
-/** The one place that controls the pause between announcing a whole
- * word/phrase and then the specific character being practised/tested —
- * shared by Learn's char ladder and Test's word/passage char quiz so both
- * screens sound identical, and tuning one page's pacing tunes both. */
-export const ANNOUNCE_WORD_PAUSE_MS = 80;
-
-/** Longer punctuation pause for 默写 test's "Read full sentence"
- * specifically — the only place a child hears an entire passage read as
- * one continuous utterance, so it gets a more deliberate pause at
- * commas/periods than the shared PUNCTUATION_PAUSE_MS used everywhere
- * else. Deliberately reuses PHRASE_RATE rather than a slower rate of its
- * own — a 0.65 rate was tried here and made the Wavenet voice sound
- * muffled/distorted, so pacing this button relies on the punctuation
- * pause alone, not a slower speaking rate. */
-export const PASSAGE_READ_RATE = PHRASE_RATE;
-export const PASSAGE_PUNCTUATION_PAUSE_MS = 550;
-
-// object-URL cache keyed by SSML + lang + rate — avoids re-fetching audio
-// for text this session has already narrated (e.g. Replay buttons).
+// object-URL cache keyed by text + lang — avoids re-fetching audio for
+// text this session has already narrated (e.g. Replay buttons).
 const audioCache = new Map<string, Promise<string>>();
 
-function cacheKey(ssml: string, lang: string, rate: number) {
-  return `${lang}|${rate}|${ssml}`;
+function cacheKey(text: string, lang: string) {
+  return `${lang}|${text}`;
 }
 
-async function fetchAudioUrl(ssml: string, lang: string, rate: number): Promise<string> {
-  const key = cacheKey(ssml, lang, rate);
+async function fetchAudioUrl(text: string, lang: string): Promise<string> {
+  const key = cacheKey(text, lang);
   const cached = audioCache.get(key);
   if (cached) return cached;
   const promise = (async () => {
     const res = await fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ssml, lang, rate }),
+      body: JSON.stringify({ text, lang }),
     });
     if (!res.ok) throw new Error(`tts fetch failed: ${res.status}`);
     const blob = await res.blob();
@@ -144,7 +82,7 @@ function stopCurrent() {
   }
 }
 
-function fallbackSpeak(text: string, lang: string, rate: number, onend?: () => void) {
+function fallbackSpeak(text: string, lang: string, onend?: () => void) {
   if (typeof window === "undefined" || !window.speechSynthesis) {
     onend?.();
     return;
@@ -152,7 +90,6 @@ function fallbackSpeak(text: string, lang: string, rate: number, onend?: () => v
   const synth = window.speechSynthesis;
   const utterance = new SpeechSynthesisUtterance(padForFallback(namePunctuation(text)));
   utterance.lang = lang;
-  utterance.rate = rate;
   if (onend) utterance.onend = onend;
   currentUtterance = utterance;
   // Chrome can silently drop a speak() issued in the same tick as cancel()
@@ -165,82 +102,62 @@ function fallbackSpeak(text: string, lang: string, rate: number, onend?: () => v
   }, 0);
 }
 
-async function playOne(
-  text: string,
-  lang: string,
-  rate: number,
-  onend?: () => void,
-  punctuationPauseMs?: number
-) {
-  const ssml = toGoogleSSML(text, punctuationPauseMs);
+async function playOne(text: string, lang: string, onend?: () => void) {
+  const spoken = namePunctuation(text);
   try {
-    const url = await fetchAudioUrl(ssml, lang, rate);
+    const url = await fetchAudioUrl(spoken, lang);
     const audio = new Audio(url);
     currentAudio = audio;
     audio.onended = () => {
       currentAudio = null;
       onend?.();
     };
-    audio.onerror = () => fallbackSpeak(text, lang, rate, onend);
+    audio.onerror = () => fallbackSpeak(text, lang, onend);
     await audio.play();
   } catch {
-    fallbackSpeak(text, lang, rate, onend);
+    fallbackSpeak(text, lang, onend);
   }
 }
 
-export function speak(text: string, lang = "zh-CN", rate = 1, punctuationPauseMs?: number) {
+export function speak(text: string, lang = "zh-CN") {
   stopCurrent();
-  playOne(text, lang, rate, undefined, punctuationPauseMs);
+  playOne(text, lang);
 }
 
-function playSequenceFrom(texts: string[], i: number, lang: string, rate: number) {
+function playSequenceFrom(texts: string[], i: number, lang: string) {
   if (i >= texts.length) return;
-  playOne(texts[i], lang, rate, () => playSequenceFrom(texts, i + 1, lang, rate));
+  playOne(texts[i], lang, () => playSequenceFrom(texts, i + 1, lang));
 }
 
 /** Speaks each string in order, only starting the next once the previous
  * utterance finishes — e.g. announcing a whole test word before the
  * specific character being tested. No gap is inserted between them beyond
  * each utterance's own natural pause. */
-export function speakSequence(texts: string[], lang = "zh-CN", rate = 1) {
+export function speakSequence(texts: string[], lang = "zh-CN") {
   stopCurrent();
-  playSequenceFrom(texts, 0, lang, rate);
+  playSequenceFrom(texts, 0, lang);
 }
 
-/** Announces a whole word/phrase, pauses, then announces the specific
- * character being practised alone — shared by Learn's char ladder and
- * Test's word/passage quiz for "say the word, then the character," and
- * repeated each time the child advances to the next character. A rare
- * polyphonic character (e.g. 乐, yuè in 乐曲 but lè elsewhere) can default
- * to the wrong reading when spoken in total isolation like this — a
- * within-phrase <emphasis>/<prosody> wrap was tried to fix that and had
- * to be reverted (see toGoogleSSML's warning: Google TTS silently
- * truncates audio when only part of the text is tag-wrapped on this
- * voice), so this trades that narrow edge case for narration that's
- * reliably audible for every word.
- *
- * The isolated character is always spoken at the natural rate (1), not
- * the phrase's (usually slower) rate — a single syllable played back
- * slowed-down comes out muffled/mumbled on this voice, so only the
- * phrase itself gets the deliberate pace and the character stays crisp,
- * matching how every other bare-character narration (speak(char)) in
- * the app already sounds. */
-export function speakWordThenChar(
-  word: string,
-  char: string,
-  lang = "zh-CN",
-  rate = 1,
-  pauseMs = ANNOUNCE_WORD_PAUSE_MS
-) {
+/** Announces a whole word/phrase, then announces the specific character
+ * being practised alone — shared by Learn's char ladder and Test's
+ * word/passage quiz for "say the word, then the character," and repeated
+ * each time the child advances to the next character. No artificial pause
+ * is inserted between the two; the character starts as soon as the
+ * phrase's own audio ends. A rare polyphonic character (e.g. 乐, yuè in
+ * 乐曲 but lè elsewhere) can default to the wrong reading when spoken in
+ * total isolation like this — a within-phrase <emphasis>/<prosody> wrap
+ * was tried to fix that and had to be reverted (mixing tagged and
+ * untagged text in one <speak> silently truncated the audio on Google
+ * TTS), so this trades that narrow edge case for narration that's
+ * reliably audible for every word. */
+export function speakWordThenChar(word: string, char: string, lang = "zh-CN") {
   stopCurrent();
   if (Array.from(word).length <= 1) {
     // Nothing to announce separately — the word already is the character.
-    playOne(word, lang, 1);
+    playOne(word, lang);
     return;
   }
-  playOne(word, lang, rate, () => {
-    setTimeout(() => playOne(char, lang, 1), pauseMs);
-  });
+  playOne(word, lang, () => playOne(char, lang));
 }
 
 /** Stops whatever is currently narrating (Google TTS audio or the Web

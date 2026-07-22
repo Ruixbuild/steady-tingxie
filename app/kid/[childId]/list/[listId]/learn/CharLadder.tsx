@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader } from "@/lib/hanziCache";
-import { speak, speakWordThenChar, PHRASE_RATE } from "@/lib/tts";
+import { speak, speakWordThenChar } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
@@ -39,7 +39,7 @@ export default function CharLadder({ char, announceWord, skipWatch, epochRef, on
   const isPunctuation = isPunctuationChar(char);
 
   function announce() {
-    if (announceWord) speakWordThenChar(announceWord, char, "zh-CN", PHRASE_RATE);
+    if (announceWord) speakWordThenChar(announceWord, char);
     else speak(char);
   }
   const [stage, setStage] = useState<Stage>(skipWatch ? "trace" : "watch");
