@@ -13,9 +13,10 @@ type Stage = "watch" | "trace" | "copy";
 type Props = {
   char: string;
   /** The full word/phrase this char belongs to — when provided, the whole
-   * phrase is announced first, then this char alone. Omitted by callers
-   * with no word context to give (falls back to speaking the bare
-   * character). */
+   * phrase is announced first, then this char alone. Callers only pass
+   * this for an item's first character, so the phrase is heard once per
+   * item, not repeated for every character in it; later characters fall
+   * back to speaking just the bare character. */
   announceWord?: string;
   skipWatch: boolean;
   epochRef: { current: number };

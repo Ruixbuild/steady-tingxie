@@ -217,7 +217,7 @@ export default function LearnSession({
         <CharLadder
           key={`${currentItem.id}-${charIndex}`}
           char={strokeChars(currentItem.hanzi)[charIndex]}
-          announceWord={currentItem.hanzi}
+          announceWord={charIndex === 0 ? currentItem.hanzi : undefined}
           skipWatch={skipWatch}
           epochRef={epochRef}
           onDone={handleCharDone}

@@ -11,7 +11,10 @@ import FreehandPad from "@/components/FreehandPad";
 type Props = {
   char: string;
   /** The full word this char belongs to — when provided, the whole word is
-   * announced first, then this char alone. Omitted only when silent
+   * announced first, then this char alone. TestSession only passes this
+   * for an item's first character, so the word is heard once per item,
+   * not repeated for every character in it; later characters fall back to
+   * speaking just the bare character. Always omitted when silent
    * (PassageSession's blind quiz never narrates automatically, so there's
    * nothing to announce). */
   announceWord?: string;
