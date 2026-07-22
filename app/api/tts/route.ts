@@ -1,11 +1,11 @@
 // Backs lib/tts.ts: proxies text to Google Cloud Text-to-Speech (Mandarin
-// Chirp3-HD voice — Google's newest, most natural-sounding model) so
-// narration comes from a real neural voice instead of whatever the child's
-// browser happens to ship. Requires GOOGLE_TTS_API_KEY (a Google Cloud API
-// key with the Text-to-Speech API enabled) to be set — fails closed (500)
-// rather than silently falling through, same posture as app/api/digest.
-// The client falls back to the Web Speech API on any non-200 response, so
-// a missing/invalid key degrades rather than breaks narration.
+// WaveNet voice) so narration comes from a real neural voice instead of
+// whatever the child's browser happens to ship. Requires GOOGLE_TTS_API_KEY
+// (a Google Cloud API key with the Text-to-Speech API enabled) to be set —
+// fails closed (500) rather than silently falling through, same posture as
+// app/api/digest. The client falls back to the Web Speech API on any
+// non-200 response, so a missing/invalid key degrades rather than breaks
+// narration.
 //
 // Sent as plain text with Google's own default voice settings — no
 // speakingRate/pitch override, no SSML. Every attempt at tuning those
@@ -20,7 +20,7 @@ export const runtime = "nodejs";
 export const maxDuration = 20;
 
 const MAX_TEXT_LENGTH = 1000;
-const VOICE_NAME = "cmn-CN-Chirp3-HD-Kore";
+const VOICE_NAME = "cmn-CN-Wavenet-D";
 
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();
