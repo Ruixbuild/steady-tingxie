@@ -92,11 +92,15 @@ export const PHRASE_RATE = 0.85;
  * screens sound identical, and tuning one page's pacing tunes both. */
 export const ANNOUNCE_WORD_PAUSE_MS = 80;
 
-/** Slower rate + longer punctuation pause for 默写 test's "Read full
- * sentence" specifically — the only place a child hears an entire passage
- * read as one continuous utterance, so it gets more deliberate pacing than
- * the shared PHRASE_RATE/PUNCTUATION_PAUSE_MS used everywhere else. */
-export const PASSAGE_READ_RATE = 0.65;
+/** Longer punctuation pause for 默写 test's "Read full sentence"
+ * specifically — the only place a child hears an entire passage read as
+ * one continuous utterance, so it gets a more deliberate pause at
+ * commas/periods than the shared PUNCTUATION_PAUSE_MS used everywhere
+ * else. Deliberately reuses PHRASE_RATE rather than a slower rate of its
+ * own — a 0.65 rate was tried here and made the Wavenet voice sound
+ * muffled/distorted, so pacing this button relies on the punctuation
+ * pause alone, not a slower speaking rate. */
+export const PASSAGE_READ_RATE = PHRASE_RATE;
 export const PASSAGE_PUNCTUATION_PAUSE_MS = 550;
 
 // object-URL cache keyed by SSML + lang + rate — avoids re-fetching audio
