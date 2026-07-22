@@ -19,6 +19,22 @@ export default function SettingsForm({
   const supabase = createClient();
   const [children, setChildren] = useState(childOptions);
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [nameDrafts, setNameDrafts] = useState<Record<string, string>>({});
+
+  async function saveName(childId: string) {
+    const child = children.find((c) => c.id === childId);
+    const draft = nameDrafts[childId]?.trim();
+    if (!child || !draft || draft === child.name) return;
+    setChildren((prev) => prev.map((c) => (c.id === childId ? { ...c, name: draft } : c)));
+    setNameDrafts((prev) => {
+      const next = { ...prev };
+      delete next[childId];
+      return next;
+    });
+    setSavingKey(`name:${childId}`);
+    await supabase.from("children").update({ name: draft }).eq("id", childId);
+    setSavingKey(null);
+  }
 
   async function toggleHardMode(childId: string) {
     const child = children.find((c) => c.id === childId);
@@ -32,6 +48,42 @@ export default function SettingsForm({
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="card p-5 flex flex-col gap-3">
+        <p className="font-semibold">Child profiles</p>
+        {children.map((c) => {
+          const draft = nameDrafts[c.id] ?? c.name;
+          const dirty = draft.trim().length > 0 && draft.trim() !== c.name;
+          return (
+            <div key={c.id} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={draft}
+                onChange={(e) =>
+                  setNameDrafts((prev) => ({ ...prev, [c.id]: e.target.value }))
+                }
+                className="flex-1"
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  border: "1px solid var(--line)",
+                }}
+              />
+              <span style={{ color: "var(--mut)" }}>({c.level})</span>
+              {dirty && (
+                <button
+                  type="button"
+                  onClick={() => saveName(c.id)}
+                  disabled={savingKey === `name:${c.id}`}
+                  className="btn btn-sm btn-primary"
+                >
+                  Save
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
       <div className="card p-5 flex items-center justify-between">
         <div>
           <p className="font-semibold">Weekly email digest</p>
