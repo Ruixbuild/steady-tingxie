@@ -46,24 +46,25 @@ function escapeSsml(text: string): string {
 /** Builds the SSML sent to Google TTS: each punctuation mark becomes its
  * spoken name followed by an explicit break, so a full 默写 sentence reads
  * with natural pausing at commas/periods instead of running straight
- * through them as if they were just more words. If emphasizeIndex is set,
- * that character (by Array.from position) is wrapped in <emphasis> instead
- * of being pulled out and spoken alone — a polyphonic character (e.g. 乐,
- * read yuè in 乐曲 but lè elsewhere) only gets the correct reading when the
- * engine sees its surrounding word, so the word is never dropped just to
- * spotlight one character within it. */
-function toGoogleSSML(
-  text: string,
-  emphasizeIndex?: number,
-  punctuationPauseMs: number = PUNCTUATION_PAUSE_MS
-): string {
+ * through them as if they were just more words.
+ *
+ * Do NOT wrap only a *substring* of this text in a nested tag (e.g.
+ * <emphasis>/<prosody> around one character within a longer phrase) to
+ * "spotlight" it — verified against the live Google TTS API that on this
+ * voice, mixing tagged and untagged text in one <speak> silently truncates
+ * the synthesized audio to a fraction of its real duration (a 2-syllable
+ * phrase dropped from 1.34s to 0.29s with nothing to indicate the failure
+ * — no error, just garbled/cut-off audio). Wrapping the *entire* text in a
+ * tag is fine; wrapping part of it is not. This was tried once already
+ * (speakWordThenChar) and had to be reverted — see git history if
+ * tempted to reintroduce it. */
+function toGoogleSSML(text: string, punctuationPauseMs: number = PUNCTUATION_PAUSE_MS): string {
   const body = Array.from(text)
-    .map((ch, i) => {
+    .map((ch) => {
       const name = PUNCTUATION_NAMES[ch];
-      const rendered = name
+      return name
         ? `${escapeSsml(name)}<break time="${punctuationPauseMs}ms"/>`
         : escapeSsml(ch);
-      return i === emphasizeIndex ? `<emphasis level="strong">${rendered}</emphasis>` : rendered;
     })
     .join("");
   return `<speak>${body}</speak>`;
@@ -162,10 +163,9 @@ async function playOne(
   lang: string,
   rate: number,
   onend?: () => void,
-  emphasizeIndex?: number,
   punctuationPauseMs?: number
 ) {
-  const ssml = toGoogleSSML(text, emphasizeIndex, punctuationPauseMs);
+  const ssml = toGoogleSSML(text, punctuationPauseMs);
   try {
     const url = await fetchAudioUrl(ssml, lang, rate);
     const audio = new Audio(url);
@@ -183,7 +183,7 @@ async function playOne(
 
 export function speak(text: string, lang = "zh-CN", rate = 1, punctuationPauseMs?: number) {
   stopCurrent();
-  playOne(text, lang, rate, undefined, undefined, punctuationPauseMs);
+  playOne(text, lang, rate, undefined, punctuationPauseMs);
 }
 
 function playSequenceFrom(texts: string[], i: number, lang: string, rate: number) {
@@ -200,28 +200,40 @@ export function speakSequence(texts: string[], lang = "zh-CN", rate = 1) {
   playSequenceFrom(texts, 0, lang, rate);
 }
 
-/** Announces a whole word/phrase, pauses, then announces it again with the
- * character at charIndex (an Array.from(word) position) emphasized —
- * shared by Learn's char ladder and Test's word quiz for "say the word,
- * then spotlight the character being practised." Deliberately never
- * isolates the character into its own bare utterance: a polyphonic
- * character (乐 = yuè in 乐曲, lè elsewhere) only reads correctly with its
- * surrounding word intact, so the word is repeated rather than dropped. */
+/** Announces a whole word/phrase, pauses, then announces the specific
+ * character being practised alone — shared by Learn's char ladder and
+ * Test's word/passage quiz for "say the word, then the character," and
+ * repeated each time the child advances to the next character. A rare
+ * polyphonic character (e.g. 乐, yuè in 乐曲 but lè elsewhere) can default
+ * to the wrong reading when spoken in total isolation like this — a
+ * within-phrase <emphasis>/<prosody> wrap was tried to fix that and had
+ * to be reverted (see toGoogleSSML's warning: Google TTS silently
+ * truncates audio when only part of the text is tag-wrapped on this
+ * voice), so this trades that narrow edge case for narration that's
+ * reliably audible for every word. */
 export function speakWordThenChar(
   word: string,
-  charIndex: number,
+  char: string,
   lang = "zh-CN",
   rate = 1,
   pauseMs = ANNOUNCE_WORD_PAUSE_MS
 ) {
   stopCurrent();
   if (Array.from(word).length <= 1) {
-    // Nothing to disambiguate — announcing a lone character twice back to
-    // back would just be a redundant echo of itself.
+    // Nothing to announce separately — the word already is the character.
     playOne(word, lang, rate);
     return;
   }
   playOne(word, lang, rate, () => {
-    setTimeout(() => playOne(word, lang, rate, undefined, charIndex), pauseMs);
+    setTimeout(() => playOne(char, lang, rate), pauseMs);
   });
+}
+
+/** Stops whatever is currently narrating (Google TTS audio or the Web
+ * Speech fallback) immediately — call this on unmount for any
+ * screen/component that can call speak()/speakSequence()/
+ * speakWordThenChar(), so navigating away mid-narration doesn't leave
+ * audio playing over the next page. */
+export function stopNarration() {
+  stopCurrent();
 }

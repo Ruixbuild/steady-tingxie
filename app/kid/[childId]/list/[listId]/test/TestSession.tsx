@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { stopNarration } from "@/lib/tts";
 import { strokeChars } from "@/lib/hanzi";
 import type { AttemptMode } from "@/lib/supabase/types";
 import type { CharMistakes, ItemResult } from "@/lib/testTypes";
@@ -62,6 +63,8 @@ export default function TestSession({
     document.body.classList.add("test-mode");
     return () => document.body.classList.remove("test-mode");
   }, []);
+
+  useEffect(() => stopNarration, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -266,7 +269,6 @@ export default function TestSession({
               key={`${currentItem.id}-${charIndex}`}
               char={strokeChars(currentItem.hanzi)[charIndex]}
               announceWord={currentItem.hanzi}
-              charIndex={charIndex}
               hardMode={hardMode}
               epochRef={epochRef}
               onDone={handleWordCharDone}

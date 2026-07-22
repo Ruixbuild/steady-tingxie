@@ -12,15 +12,11 @@ type Stage = "watch" | "trace" | "copy";
 
 type Props = {
   char: string;
-  /** The full word/phrase this char belongs to, and this char's position
-   * within it (Array.from index) — when provided, always the whole item,
-   * never just this char alone, so a polyphonic character (e.g. 乐, yuè in
-   * 乐曲 but lè elsewhere) gets read with the surrounding context that
-   * disambiguates it instead of guessing from the character in isolation.
-   * Omitted by callers with no word context to give (falls back to
-   * speaking the bare character). */
+  /** The full word/phrase this char belongs to — when provided, the whole
+   * phrase is announced first, then this char alone. Omitted by callers
+   * with no word context to give (falls back to speaking the bare
+   * character). */
   announceWord?: string;
-  charIndex?: number;
   skipWatch: boolean;
   epochRef: { current: number };
   onDone: (result: { written: boolean; traceSvg: string | null }) => void;
@@ -38,11 +34,11 @@ const DEFAULT_MESSAGE: Record<Stage, string> = {
   copy: "✏ Now from memory — you can do it!",
 };
 
-export default function CharLadder({ char, announceWord, charIndex, skipWatch, epochRef, onDone }: Props) {
+export default function CharLadder({ char, announceWord, skipWatch, epochRef, onDone }: Props) {
   const isPunctuation = isPunctuationChar(char);
 
   function announce() {
-    if (announceWord) speakWordThenChar(announceWord, charIndex ?? 0, "zh-CN", PHRASE_RATE);
+    if (announceWord) speakWordThenChar(announceWord, char, "zh-CN", PHRASE_RATE);
     else speak(char);
   }
   const [stage, setStage] = useState<Stage>(skipWatch ? "trace" : "watch");

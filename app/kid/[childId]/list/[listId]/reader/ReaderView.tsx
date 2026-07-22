@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PASSAGE_PUNCTUATION } from "@/lib/testScoring";
-import { speak, speakSequence, PHRASE_RATE } from "@/lib/tts";
+import { speak, speakSequence, stopNarration, PHRASE_RATE } from "@/lib/tts";
 import PeekModal from "./PeekModal";
 import TrickyCharPractice from "./TrickyCharPractice";
 
@@ -15,6 +15,8 @@ export default function ReaderView({
 }) {
   const [peekChar, setPeekChar] = useState<string | null>(null);
   const [practising, setPractising] = useState(false);
+
+  useEffect(() => stopNarration, []);
 
   const chars = Array.from(hanzi);
   const trickyChars = chars.filter((ch, i) => !PASSAGE_PUNCTUATION.has(ch) && (charMisses[String(i)] ?? 0) > 0);

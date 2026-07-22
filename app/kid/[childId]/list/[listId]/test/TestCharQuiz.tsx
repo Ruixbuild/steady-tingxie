@@ -10,14 +10,11 @@ import FreehandPad from "@/components/FreehandPad";
 
 type Props = {
   char: string;
-  /** The full word this char belongs to, and this char's position within
-   * it (Array.from index) — always the whole word, never just this char
-   * alone, so a polyphonic character (e.g. 乐, yuè in 乐曲 but lè
-   * elsewhere) gets read with the surrounding context that disambiguates
-   * it. Omitted only when silent (PassageSession's blind quiz never
-   * narrates automatically, so there's nothing to announce). */
+  /** The full word this char belongs to — when provided, the whole word is
+   * announced first, then this char alone. Omitted only when silent
+   * (PassageSession's blind quiz never narrates automatically, so there's
+   * nothing to announce). */
   announceWord?: string;
-  charIndex?: number;
   /** Skip the automatic on-mount pronunciation — the child can still tap
    * "Hear it again" manually. Used by PassageSession's "first 2 words"
    * reveal mode, where later characters shouldn't get an automatic hint. */
@@ -36,7 +33,7 @@ type Props = {
 // the client. Epoch-guarded the same way as Learn's CharLadder even though
 // there's only one stage here — the hazard (a stale onComplete firing after
 // Skip or the 10-min-cap exit) is the same regardless of stage count.
-export default function TestCharQuiz({ char, announceWord, charIndex, silent, hideReplayButton, hardMode, epochRef, onDone }: Props) {
+export default function TestCharQuiz({ char, announceWord, silent, hideReplayButton, hardMode, epochRef, onDone }: Props) {
   const isPunctuation = isPunctuationChar(char);
   const [done, setDone] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -51,9 +48,9 @@ export default function TestCharQuiz({ char, announceWord, charIndex, silent, hi
     setDone(false);
     setLoadError(false);
     if (silent) return;
-    if (announceWord) speakWordThenChar(announceWord, charIndex ?? 0, "zh-CN", PHRASE_RATE);
+    if (announceWord) speakWordThenChar(announceWord, char, "zh-CN", PHRASE_RATE);
     else speak(char);
-  }, [char, announceWord, charIndex, silent]);
+  }, [char, announceWord, silent]);
 
   useEffect(() => {
     if (isPunctuation) {
@@ -147,7 +144,7 @@ export default function TestCharQuiz({ char, announceWord, charIndex, silent, hi
           <button
             type="button"
             onClick={() =>
-              announceWord ? speakWordThenChar(announceWord, charIndex ?? 0, "zh-CN", PHRASE_RATE) : speak(char)
+              announceWord ? speakWordThenChar(announceWord, char, "zh-CN", PHRASE_RATE) : speak(char)
             }
             className="btn btn-secondary"
           >

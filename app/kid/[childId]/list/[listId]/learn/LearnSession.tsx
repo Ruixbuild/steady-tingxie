@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Confetti from "@/components/Confetti";
-import { speak } from "@/lib/tts";
+import { speak, stopNarration } from "@/lib/tts";
 import { strokeChars } from "@/lib/hanzi";
 import CharLadder from "./CharLadder";
 import PinyinDrill from "./PinyinDrill";
@@ -51,6 +51,8 @@ export default function LearnSession({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSkipWatch(localStorage.getItem(`skipWatch:${childId}`) === "true");
   }, [childId]);
+
+  useEffect(() => stopNarration, []);
 
   function showToast(text: string) {
     setToast(text);
@@ -216,7 +218,6 @@ export default function LearnSession({
           key={`${currentItem.id}-${charIndex}`}
           char={strokeChars(currentItem.hanzi)[charIndex]}
           announceWord={currentItem.hanzi}
-          charIndex={charIndex}
           skipWatch={skipWatch}
           epochRef={epochRef}
           onDone={handleCharDone}
