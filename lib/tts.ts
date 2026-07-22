@@ -79,7 +79,7 @@ export const PHRASE_RATE = 0.85;
  * word/phrase and then the specific character being practised/tested —
  * shared by Learn's char ladder and Test's word/passage char quiz so both
  * screens sound identical, and tuning one page's pacing tunes both. */
-export const ANNOUNCE_WORD_PAUSE_MS = 150;
+export const ANNOUNCE_WORD_PAUSE_MS = 80;
 
 // object-URL cache keyed by SSML + lang + rate — avoids re-fetching audio
 // for text this session has already narrated (e.g. Replay buttons).
