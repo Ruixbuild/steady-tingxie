@@ -45,7 +45,7 @@ function padForFallback(text: string): string {
 /** The one place that controls how fast a phrase/sentence (as opposed to a
  * single character) is read aloud, across Learn, Test, and Dictation.
  * Tune this single value to change the pace everywhere at once. */
-export const PHRASE_RATE = 0.45;
+export const PHRASE_RATE = 0.85;
 
 // object-URL cache keyed by prepared text + lang + rate — avoids re-fetching
 // audio for text this session has already narrated (e.g. Replay buttons).
