@@ -83,8 +83,11 @@ function padForFallback(text: string): string {
 
 /** The one place that controls how fast a phrase/sentence (as opposed to a
  * single character) is read aloud, across Learn, Test, and Dictation.
- * Tune this single value to change the pace everywhere at once. */
-export const PHRASE_RATE = 0.85;
+ * Tune this single value to change the pace everywhere at once. Was 0.85
+ * (deliberately slower than natural) but that came out muffled/mumbled on
+ * this Wavenet voice, the same problem the isolated-character rate had —
+ * 1 (natural speed) is the only value confirmed clear on this voice. */
+export const PHRASE_RATE = 1;
 
 /** The one place that controls the pause between announcing a whole
  * word/phrase and then the specific character being practised/tested —

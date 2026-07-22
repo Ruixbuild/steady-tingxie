@@ -50,6 +50,7 @@ export default function CharLadder({ char, announceWord, skipWatch, epochRef, on
   const containerRef = useRef<HTMLDivElement>(null);
   const pendingSvgRef = useRef<string | null>(null);
   const loopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const announcedCharRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Resetting local ladder state when the char prop changes (parent
@@ -66,6 +67,14 @@ export default function CharLadder({ char, announceWord, skipWatch, epochRef, on
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMessage(DEFAULT_MESSAGE[stage]);
     setStageComplete(false);
+
+    // A char is only ever unannounced the first time this effect sees it —
+    // tracked separately from `stage` so a child with "skip watch" on (who
+    // lands straight on trace/copy, never passing through the watch stage
+    // where announce() normally fires) still hears it once, without
+    // re-announcing on every later stage transition for the same char.
+    const isNewChar = announcedCharRef.current !== char;
+    if (isNewChar) announcedCharRef.current = char;
 
     if (isPunctuation) {
       announce();
@@ -118,6 +127,7 @@ export default function CharLadder({ char, announceWord, skipWatch, epochRef, on
       };
       loop(true);
     } else if (stage === "trace") {
+      if (isNewChar) announce();
       writer.quiz({
         leniency: 1.25,
         showHintAfterMisses: 1,
@@ -136,6 +146,7 @@ export default function CharLadder({ char, announceWord, skipWatch, epochRef, on
         },
       });
     } else {
+      if (isNewChar) announce();
       writer.quiz({
         leniency: 1.35,
         showHintAfterMisses: 2,
