@@ -130,7 +130,11 @@ async function playOne(text: string, lang: string, rate: number, onend?: () => v
 
 export function speak(text: string, lang = "zh-CN", rate = NARRATION_RATE) {
   stopCurrent();
-  playOne(text, lang, rate);
+  // A lone character always plays at natural rate regardless of what's
+  // passed in — this exact class of bug (a single syllable inheriting a
+  // slowed/sped phrase rate) has already caused a faded/muffled sound
+  // twice, from two different call sites forgetting to override it.
+  playOne(text, lang, Array.from(text).length <= 1 ? 1 : rate);
 }
 
 function playSequenceFrom(texts: string[], i: number, lang: string, rate: number) {
