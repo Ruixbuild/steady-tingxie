@@ -7,12 +7,10 @@
 // non-200 response, so a missing/invalid key degrades rather than breaks
 // narration.
 //
-// Sent as plain text with Google's own default voice settings — no
-// speakingRate/pitch override, no SSML. Every attempt at tuning those
-// (slower rates, SSML <break> pauses) made this voice sound muffled or
-// distorted; if a specific pacing need comes up again, adjust deliberately
-// from this plain baseline rather than reintroducing broad SSML/rate
-// tuning.
+// Sent as plain text — no SSML. An earlier attempt at SSML <break> pauses
+// for punctuation made the voice sound muffled/distorted, so pacing is
+// speakingRate-only now (see lib/tts.ts's NARRATION_RATE); re-check for
+// muffling if that's pushed far from 1 on whatever voice is current.
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -36,14 +34,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "TTS not configured" }, { status: 500 });
   }
 
-  let payload: { text?: string; lang?: string };
+  let payload: { text?: string; lang?: string; rate?: number };
   try {
     payload = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { text, lang = "zh-CN" } = payload;
+  const { text, lang = "zh-CN", rate = 1 } = payload;
   if (!text || typeof text !== "string" || text.length === 0) {
     return NextResponse.json({ error: "Missing text" }, { status: 400 });
   }
@@ -52,6 +50,7 @@ export async function POST(request: Request) {
   }
 
   const languageCode = lang.startsWith("zh") ? "cmn-CN" : lang;
+  const speakingRate = Math.min(4, Math.max(0.25, rate));
 
   const googleRes = await fetch(
     `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
@@ -61,7 +60,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         input: { text },
         voice: { languageCode, name: VOICE_NAME },
-        audioConfig: { audioEncoding: "MP3" },
+        audioConfig: { audioEncoding: "MP3", speakingRate },
       }),
     }
   );

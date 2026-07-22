@@ -44,23 +44,31 @@ function padForFallback(text: string): string {
   return `${text}，`;
 }
 
-// object-URL cache keyed by text + lang — avoids re-fetching audio for
-// text this session has already narrated (e.g. Replay buttons).
+/** The one place controlling narration speed, applied by every speak
+ * function's default so no call site needs to pass it. Google's own
+ * default (1) is the confirmed-clear baseline — tune this only
+ * deliberately, and re-check for muffling/distortion on whatever voice
+ * is current (see app/api/tts/route.ts's VOICE_NAME) if it's moved far
+ * from 1. */
+export const NARRATION_RATE = 0.88;
+
+// object-URL cache keyed by text + lang + rate — avoids re-fetching audio
+// for text this session has already narrated (e.g. Replay buttons).
 const audioCache = new Map<string, Promise<string>>();
 
-function cacheKey(text: string, lang: string) {
-  return `${lang}|${text}`;
+function cacheKey(text: string, lang: string, rate: number) {
+  return `${lang}|${rate}|${text}`;
 }
 
-async function fetchAudioUrl(text: string, lang: string): Promise<string> {
-  const key = cacheKey(text, lang);
+async function fetchAudioUrl(text: string, lang: string, rate: number): Promise<string> {
+  const key = cacheKey(text, lang, rate);
   const cached = audioCache.get(key);
   if (cached) return cached;
   const promise = (async () => {
     const res = await fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, lang }),
+      body: JSON.stringify({ text, lang, rate }),
     });
     if (!res.ok) throw new Error(`tts fetch failed: ${res.status}`);
     const blob = await res.blob();
@@ -82,7 +90,7 @@ function stopCurrent() {
   }
 }
 
-function fallbackSpeak(text: string, lang: string, onend?: () => void) {
+function fallbackSpeak(text: string, lang: string, rate: number, onend?: () => void) {
   if (typeof window === "undefined" || !window.speechSynthesis) {
     onend?.();
     return;
@@ -90,6 +98,7 @@ function fallbackSpeak(text: string, lang: string, onend?: () => void) {
   const synth = window.speechSynthesis;
   const utterance = new SpeechSynthesisUtterance(padForFallback(namePunctuation(text)));
   utterance.lang = lang;
+  utterance.rate = rate;
   if (onend) utterance.onend = onend;
   currentUtterance = utterance;
   // Chrome can silently drop a speak() issued in the same tick as cancel()
@@ -102,40 +111,40 @@ function fallbackSpeak(text: string, lang: string, onend?: () => void) {
   }, 0);
 }
 
-async function playOne(text: string, lang: string, onend?: () => void) {
+async function playOne(text: string, lang: string, rate: number, onend?: () => void) {
   const spoken = namePunctuation(text);
   try {
-    const url = await fetchAudioUrl(spoken, lang);
+    const url = await fetchAudioUrl(spoken, lang, rate);
     const audio = new Audio(url);
     currentAudio = audio;
     audio.onended = () => {
       currentAudio = null;
       onend?.();
     };
-    audio.onerror = () => fallbackSpeak(text, lang, onend);
+    audio.onerror = () => fallbackSpeak(text, lang, rate, onend);
     await audio.play();
   } catch {
-    fallbackSpeak(text, lang, onend);
+    fallbackSpeak(text, lang, rate, onend);
   }
 }
 
-export function speak(text: string, lang = "zh-CN") {
+export function speak(text: string, lang = "zh-CN", rate = NARRATION_RATE) {
   stopCurrent();
-  playOne(text, lang);
+  playOne(text, lang, rate);
 }
 
-function playSequenceFrom(texts: string[], i: number, lang: string) {
+function playSequenceFrom(texts: string[], i: number, lang: string, rate: number) {
   if (i >= texts.length) return;
-  playOne(texts[i], lang, () => playSequenceFrom(texts, i + 1, lang));
+  playOne(texts[i], lang, rate, () => playSequenceFrom(texts, i + 1, lang, rate));
 }
 
 /** Speaks each string in order, only starting the next once the previous
  * utterance finishes — e.g. announcing a whole test word before the
  * specific character being tested. No gap is inserted between them beyond
  * each utterance's own natural pause. */
-export function speakSequence(texts: string[], lang = "zh-CN") {
+export function speakSequence(texts: string[], lang = "zh-CN", rate = NARRATION_RATE) {
   stopCurrent();
-  playSequenceFrom(texts, 0, lang);
+  playSequenceFrom(texts, 0, lang, rate);
 }
 
 /** Announces a whole word/phrase, then announces the specific character
@@ -150,14 +159,14 @@ export function speakSequence(texts: string[], lang = "zh-CN") {
  * untagged text in one <speak> silently truncated the audio on Google
  * TTS), so this trades that narrow edge case for narration that's
  * reliably audible for every word. */
-export function speakWordThenChar(word: string, char: string, lang = "zh-CN") {
+export function speakWordThenChar(word: string, char: string, lang = "zh-CN", rate = NARRATION_RATE) {
   stopCurrent();
   if (Array.from(word).length <= 1) {
     // Nothing to announce separately — the word already is the character.
-    playOne(word, lang);
+    playOne(word, lang, rate);
     return;
   }
-  playOne(word, lang, () => playOne(char, lang));
+  playOne(word, lang, rate, () => playOne(char, lang, rate));
 }
 
 /** Stops whatever is currently narrating (Google TTS audio or the Web
