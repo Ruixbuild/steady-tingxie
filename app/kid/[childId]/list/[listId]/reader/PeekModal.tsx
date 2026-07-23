@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader } from "@/lib/hanziCache";
-import { speak } from "@/lib/tts";
+import { speak, CHAR_RATE } from "@/lib/tts";
 import RiceGrid from "@/components/RiceGrid";
 
 export default function PeekModal({
@@ -22,7 +22,7 @@ export default function PeekModal({
   const writerRef = useRef<HanziWriter | null>(null);
 
   useEffect(() => {
-    speak(char);
+    speak(char, "zh-CN", CHAR_RATE);
   }, [char]);
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function PeekModal({
     >
       <div className="card p-6 flex flex-col gap-4 items-center">
         <div className="flex gap-3">
-          <button type="button" onClick={() => speak(char)} className="btn btn-sm btn-secondary">
+          <button type="button" onClick={() => speak(char, "zh-CN", CHAR_RATE)} className="btn btn-sm btn-secondary">
             🔊 Replay
           </button>
           <button type="button" onClick={onClose} className="btn btn-sm btn-secondary">

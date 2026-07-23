@@ -1,16 +1,21 @@
 // Backs lib/tts.ts: proxies text to Google Cloud Text-to-Speech (Mandarin
-// WaveNet voice) so narration comes from a real neural voice instead of
-// whatever the child's browser happens to ship. Requires GOOGLE_TTS_API_KEY
+// Chirp3-HD "Sulafat" voice — chosen for sounding warmest across a
+// side-by-side comparison of WaveNet-D and several Chirp3-HD voices) so
+// narration comes from a real neural voice instead of whatever the child's
+// browser happens to ship. Requires GOOGLE_TTS_API_KEY
 // (a Google Cloud API key with the Text-to-Speech API enabled) to be set —
 // fails closed (500) rather than silently falling through, same posture as
 // app/api/digest. The client falls back to the Web Speech API on any
 // non-200 response, so a missing/invalid key degrades rather than breaks
 // narration.
 //
-// Sent as plain text — no SSML. An earlier attempt at SSML <break> pauses
-// for punctuation made the voice sound muffled/distorted, so pacing is
-// speakingRate-only now (see lib/tts.ts's NARRATION_RATE); re-check for
-// muffling if that's pushed far from 1 on whatever voice is current.
+// Sent as plain text — no SSML. Every SSML feature tried for Mandarin
+// pacing/pronunciation (<break>, <say-as interpret-as="characters">,
+// <phoneme>) either distorted the audio or was silently ignored by
+// Google's Mandarin voices, so pacing is speakingRate-only, via the named
+// rate constants in lib/tts.ts (CHAR_RATE/WORD_RATE/DICTATION_RATE/
+// PRAISE_RATE) — re-check for muffling on whatever voice is current
+// (VOICE_NAME below) before changing any of them.
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -18,7 +23,7 @@ export const runtime = "nodejs";
 export const maxDuration = 20;
 
 const MAX_TEXT_LENGTH = 1000;
-const VOICE_NAME = "cmn-CN-Wavenet-D";
+const VOICE_NAME = "cmn-CN-Chirp3-HD-Sulafat";
 
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();

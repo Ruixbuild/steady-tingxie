@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { verdict } from "@/lib/pinyin";
-import { speak } from "@/lib/tts";
+import { speak, WORD_RATE } from "@/lib/tts";
 import PinyinToneInput from "../PinyinToneInput";
 
 type Props = {
@@ -23,7 +23,7 @@ export default function TestPinyinInput({ hanzi, answer, onDone }: Props) {
   useEffect(() => {
     if (!spokenRef.current) {
       spokenRef.current = true;
-      speak(hanzi, "zh-CN");
+      speak(hanzi, "zh-CN", WORD_RATE);
     }
   }, [hanzi]);
 
@@ -42,7 +42,7 @@ export default function TestPinyinInput({ hanzi, answer, onDone }: Props) {
       <div className="flex gap-3">
         <button
           type="button"
-          onClick={() => speak(hanzi, "zh-CN")}
+          onClick={() => speak(hanzi, "zh-CN", WORD_RATE)}
           className="btn btn-sm btn-secondary"
         >
           🔊 Replay

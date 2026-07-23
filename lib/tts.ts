@@ -23,10 +23,13 @@ const PUNCTUATION_NAMES: Record<string, string> = {
  * silently by a speech engine (treated as a prosodic pause, not something
  * to say) even though a 默写 test child needs to actually hear that a
  * comma/period/etc. belongs at that position. Spelling each mark out by
- * name (逗号/句号/…) makes it audible regardless of position — applies to
- * both the Google TTS request text and the Web Speech fallback. Sent as
- * plain text with no SSML/break tuning — the voice's own natural pacing
- * around a real word is relied on instead of a forced pause. */
+ * name (逗号/句号/…) makes it audible regardless of position — applies
+ * unconditionally, in every context, to both the Google TTS request text
+ * and the Web Speech fallback. Sent as plain text with no SSML — every
+ * SSML feature tried for Mandarin on this API (<break> pauses,
+ * <say-as interpret-as="characters">, <phoneme> pronunciation override)
+ * either distorted the audio or was silently ignored; pacing is
+ * speakingRate-only. */
 function namePunctuation(text: string): string {
   return Array.from(text)
     .map((ch) => PUNCTUATION_NAMES[ch] ?? ch)
@@ -44,13 +47,19 @@ function padForFallback(text: string): string {
   return `${text}，`;
 }
 
-/** The one place controlling narration speed, applied by every speak
- * function's default so no call site needs to pass it. Google's own
- * default (1) is the confirmed-clear baseline — tune this only
- * deliberately, and re-check for muffling/distortion on whatever voice
- * is current (see app/api/tts/route.ts's VOICE_NAME) if it's moved far
- * from 1. */
-export const NARRATION_RATE = 0.88;
+/** Every narration call site names its own rate from this fixed set —
+ * there is no shared/implicit default. This is deliberate: an earlier
+ * design had one flat rate with a hardcoded exception for single
+ * characters, and that exception was reintroduced as a bug twice by call
+ * sites that forgot to override it. Naming the rate explicitly at every
+ * call site removes that failure mode entirely. Each value here was
+ * chosen by ear on the current voice (see app/api/tts/route.ts's
+ * VOICE_NAME) — re-verify for muffling/distortion before changing any of
+ * them or switching voices. */
+export const CHAR_RATE = 1;
+export const WORD_RATE = 0.8;
+export const DICTATION_RATE = 0.65;
+export const PRAISE_RATE = 1;
 
 // object-URL cache keyed by text + lang + rate — avoids re-fetching audio
 // for text this session has already narrated (e.g. Replay buttons).
@@ -128,13 +137,15 @@ async function playOne(text: string, lang: string, rate: number, onend?: () => v
   }
 }
 
-export function speak(text: string, lang = "zh-CN", rate = NARRATION_RATE) {
+/** `rate` is required, not defaulted — callers must name one of
+ * CHAR_RATE/WORD_RATE/DICTATION_RATE/PRAISE_RATE explicitly (see the
+ * comment above that set). The Revision feature's own narration calls
+ * predate this and only pass `text`, so `rate` keeps a default purely for
+ * that backward compatibility — every TingXie call site should still pass
+ * it explicitly rather than relying on the default. */
+export function speak(text: string, lang = "zh-CN", rate: number = WORD_RATE) {
   stopCurrent();
-  // A lone character always plays at natural rate regardless of what's
-  // passed in — this exact class of bug (a single syllable inheriting a
-  // slowed/sped phrase rate) has already caused a faded/muffled sound
-  // twice, from two different call sites forgetting to override it.
-  playOne(text, lang, Array.from(text).length <= 1 ? 1 : rate);
+  playOne(text, lang, rate);
 }
 
 function playSequenceFrom(texts: string[], i: number, lang: string, rate: number) {
@@ -143,10 +154,9 @@ function playSequenceFrom(texts: string[], i: number, lang: string, rate: number
 }
 
 /** Speaks each string in order, only starting the next once the previous
- * utterance finishes — e.g. announcing a whole test word before the
- * specific character being tested. No gap is inserted between them beyond
- * each utterance's own natural pause. */
-export function speakSequence(texts: string[], lang = "zh-CN", rate = NARRATION_RATE) {
+ * utterance finishes — e.g. Dictation's "read first 2 words" hint. No gap
+ * is inserted between them beyond each utterance's own natural pause. */
+export function speakSequence(texts: string[], lang = "zh-CN", rate: number = DICTATION_RATE) {
   stopCurrent();
   playSequenceFrom(texts, 0, lang, rate);
 }
@@ -158,31 +168,31 @@ export function speakSequence(texts: string[], lang = "zh-CN", rate = NARRATION_
  * naturally finished. */
 const WORD_TO_CHAR_PAUSE_MS = 200;
 
-/** Announces a whole word/phrase, pauses briefly, then announces the
- * specific character being practised alone — shared by Learn's char
- * ladder and Test's word/passage quiz for "say the word, then the
- * character," and repeated each time the child advances to the next
- * character. A rare polyphonic character (e.g. 乐, yuè in 乐曲 but lè
- * elsewhere) can default to the wrong reading when spoken in total
- * isolation like this — a within-phrase <emphasis>/<prosody> wrap was
- * tried to fix that and had to be reverted (mixing tagged and untagged
- * text in one <speak> silently truncated the audio on Google TTS), so
- * this trades that narrow edge case for narration that's reliably
- * audible for every word.
+/** Announces a whole word/phrase at `wordRate`, pauses briefly, then
+ * announces the specific character being practised alone at CHAR_RATE —
+ * shared by Learn's char ladder and Test's word/passage quiz for "say the
+ * word, then the character," repeated each time the child advances to
+ * the next character and auto-playing as the item/character changes
+ * (callers trigger this from a mount-keyed effect, not from here). A rare
+ * polyphonic character (e.g. 乐, yuè in 乐曲 but lè elsewhere) can default
+ * to the wrong reading when spoken in total isolation like this — a
+ * within-phrase <emphasis>/<prosody>/<phoneme> override was tried for
+ * this and either truncated the audio or was silently ignored by Google's
+ * Mandarin voices, so this trades that narrow edge case for narration
+ * that's reliably audible for every word.
  *
- * The isolated character always plays at rate 1 regardless of the
- * phrase's rate — a single syllable slowed down (or sped up) the same
- * amount as a full phrase comes out faded/muffled on this voice, so only
- * the phrase itself uses the tunable `rate`. */
-export function speakWordThenChar(word: string, char: string, lang = "zh-CN", rate = NARRATION_RATE) {
+ * The character always plays at CHAR_RATE regardless of `wordRate` — a
+ * single syllable played at anything other than natural speed comes out
+ * faded/muffled on this voice. */
+export function speakWordThenChar(word: string, char: string, wordRate: number, lang = "zh-CN") {
   stopCurrent();
   if (Array.from(word).length <= 1) {
     // Nothing to announce separately — the word already is the character.
-    playOne(word, lang, 1);
+    playOne(word, lang, CHAR_RATE);
     return;
   }
-  playOne(word, lang, rate, () => {
-    setTimeout(() => playOne(char, lang, 1), WORD_TO_CHAR_PAUSE_MS);
+  playOne(word, lang, wordRate, () => {
+    setTimeout(() => playOne(char, lang, CHAR_RATE), WORD_TO_CHAR_PAUSE_MS);
   });
 }
 
