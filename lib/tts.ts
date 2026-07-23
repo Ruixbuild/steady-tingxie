@@ -161,48 +161,10 @@ export function speakSequence(texts: string[], lang = "zh-CN", rate: number = DI
   playSequenceFrom(texts, 0, lang, rate);
 }
 
-/** A brief silent gap between the phrase and the character in
- * speakWordThenChar — with zero gap, the character's audio starts the
- * instant the phrase's onended fires, cutting off the phrase's own
- * trailing decay and making it sound abruptly cut short instead of
- * naturally finished. */
-const WORD_TO_CHAR_PAUSE_MS = 100;
-
-/** Announces a whole word/phrase at `wordRate`, pauses briefly, then
- * announces the specific character being practised alone at CHAR_RATE —
- * used by Test's word/passage quiz for "say the word, then the
- * character," repeated each time the child advances to the next
- * character and auto-playing as the item/character changes (callers
- * trigger this from a mount-keyed effect, not from here). A rare
- * polyphonic character (e.g. 乐, yuè in 乐曲 but lè elsewhere) can default
- * to the wrong reading when spoken in total isolation like this — several
- * fixes were tried (SSML emphasis/prosody/say-as/phoneme, muting
- * neighboring characters, word substitution per known-polyphonic
- * character) and each either distorted the audio, was silently ignored,
- * still mispronounced, or added more complexity than the edge case
- * warranted — so this accepts that narrow edge case in exchange for
- * narration that's simple and reliably audible for every word.
- *
- * The character always plays at CHAR_RATE regardless of `wordRate` — a
- * single syllable played at anything other than natural speed comes out
- * faded/muffled on this voice. */
-export function speakWordThenChar(word: string, char: string, wordRate: number, lang = "zh-CN") {
-  stopCurrent();
-  if (Array.from(word).length <= 1) {
-    // Nothing to announce separately — the word already is the character.
-    playOne(word, lang, CHAR_RATE);
-    return;
-  }
-  playOne(word, lang, wordRate, () => {
-    setTimeout(() => playOne(char, lang, CHAR_RATE), WORD_TO_CHAR_PAUSE_MS);
-  });
-}
-
 /** Stops whatever is currently narrating (Google TTS audio or the Web
  * Speech fallback) immediately — call this on unmount for any
- * screen/component that can call speak()/speakSequence()/
- * speakWordThenChar(), so navigating away mid-narration doesn't leave
- * audio playing over the next page. */
+ * screen/component that can call speak()/speakSequence(), so navigating
+ * away mid-narration doesn't leave audio playing over the next page. */
 export function stopNarration() {
   stopCurrent();
 }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader, getCharData } from "@/lib/hanziCache";
-import { speak, speakWordThenChar, CHAR_RATE, WORD_RATE } from "@/lib/tts";
+import { speak, CHAR_RATE, WORD_RATE } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
@@ -11,19 +11,19 @@ import FreehandPad from "@/components/FreehandPad";
 type Props = {
   char: string;
   /** The full word this char belongs to — when provided, the whole word is
-   * announced first, then this char alone. TestSession only passes this
-   * for an item's first character, so the word is heard once per item,
-   * not repeated for every character in it; later characters fall back to
-   * speaking just the bare character. Always omitted when silent
-   * (PassageSession's blind quiz never narrates automatically, so there's
-   * nothing to announce). */
+   * announced once on mount. TestSession only passes this for an item's
+   * first character, so the word is heard once per item; later characters
+   * are silent on mount (the child can still tap "Hear it again"). Always
+   * omitted when silent (PassageSession's blind quiz never narrates
+   * automatically, so there's nothing to announce). */
   announceWord?: string;
   /** The full word this char belongs to, for the "Hear it again" button —
    * unlike announceWord, this is passed for every character in the word,
-   * not just the first, so replaying always speaks the whole word (then
-   * the char) rather than the bare character alone. Omitted by
-   * PassageSession, where revealing the whole passage on a per-character
-   * replay tap would defeat the blind-dictation design. */
+   * not just the first, so replaying always speaks the whole word
+   * regardless of which character is active. Omitted by PassageSession,
+   * where revealing the whole passage on a per-character replay tap would
+   * defeat the blind-dictation design — there, replay falls back to just
+   * the bare character. */
   word?: string;
   /** Skip the automatic on-mount pronunciation — the child can still tap
    * "Hear it again" manually. Used by PassageSession's "first 2 words"
@@ -58,8 +58,7 @@ export default function TestCharQuiz({ char, announceWord, word, silent, hideRep
     setDone(false);
     setLoadError(false);
     if (silent) return;
-    if (announceWord) speakWordThenChar(announceWord, char, WORD_RATE);
-    else speak(char, "zh-CN", CHAR_RATE);
+    if (announceWord) speak(announceWord, "zh-CN", WORD_RATE);
   }, [char, announceWord, silent]);
 
   useEffect(() => {
@@ -153,11 +152,7 @@ export default function TestCharQuiz({ char, announceWord, word, silent, hideRep
         {!hideReplayButton && (
           <button
             type="button"
-            onClick={() =>
-              word
-                ? speakWordThenChar(word, char, WORD_RATE)
-                : speak(char, "zh-CN", CHAR_RATE)
-            }
+            onClick={() => (word ? speak(word, "zh-CN", WORD_RATE) : speak(char, "zh-CN", CHAR_RATE))}
             className="btn btn-secondary"
           >
             🔊 Hear it again
