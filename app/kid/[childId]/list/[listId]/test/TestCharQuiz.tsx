@@ -18,6 +18,13 @@ type Props = {
    * (PassageSession's blind quiz never narrates automatically, so there's
    * nothing to announce). */
   announceWord?: string;
+  /** The full word this char belongs to, for the "Hear it again" button —
+   * unlike announceWord, this is passed for every character in the word,
+   * not just the first, so replaying always speaks the whole word (then
+   * the char) rather than the bare character alone. Omitted by
+   * PassageSession, where revealing the whole passage on a per-character
+   * replay tap would defeat the blind-dictation design. */
+  word?: string;
   /** Skip the automatic on-mount pronunciation — the child can still tap
    * "Hear it again" manually. Used by PassageSession's "first 2 words"
    * reveal mode, where later characters shouldn't get an automatic hint. */
@@ -36,7 +43,7 @@ type Props = {
 // the client. Epoch-guarded the same way as Learn's CharLadder even though
 // there's only one stage here — the hazard (a stale onComplete firing after
 // Skip or the 10-min-cap exit) is the same regardless of stage count.
-export default function TestCharQuiz({ char, announceWord, silent, hideReplayButton, hardMode, epochRef, onDone }: Props) {
+export default function TestCharQuiz({ char, announceWord, word, silent, hideReplayButton, hardMode, epochRef, onDone }: Props) {
   const isPunctuation = isPunctuationChar(char);
   const [done, setDone] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -147,8 +154,8 @@ export default function TestCharQuiz({ char, announceWord, silent, hideReplayBut
           <button
             type="button"
             onClick={() =>
-              announceWord
-                ? speakWordThenChar(announceWord, char, WORD_RATE)
+              word
+                ? speakWordThenChar(word, char, WORD_RATE)
                 : speak(char, "zh-CN", CHAR_RATE)
             }
             className="btn btn-secondary"
