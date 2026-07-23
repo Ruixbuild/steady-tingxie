@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader } from "@/lib/hanziCache";
-import { speak, speakWordThenChar, CHAR_RATE, WORD_RATE } from "@/lib/tts";
+import { speak, speakWordThenChar, charNarrationText, CHAR_RATE, WORD_RATE } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
@@ -18,6 +18,12 @@ type Props = {
    * item, not repeated for every character in it; later characters fall
    * back to speaking just the bare character. */
   announceWord?: string;
+  /** The full word this char belongs to, always passed regardless of
+   * position — unlike announceWord, this isn't for the once-per-item
+   * phrase announcement, it's so a known polyphonic character (see
+   * lib/tts.ts's POLYPHONIC_CHARS) can still substitute its real word
+   * when narrated on its own, for a correct reading. */
+  word?: string;
   skipWatch: boolean;
   epochRef: { current: number };
   onDone: (result: { written: boolean; traceSvg: string | null }) => void;
@@ -35,12 +41,12 @@ const DEFAULT_MESSAGE: Record<Stage, string> = {
   copy: "✏ Now from memory — you can do it!",
 };
 
-export default function CharLadder({ char, announceWord, skipWatch, epochRef, onDone }: Props) {
+export default function CharLadder({ char, announceWord, word, skipWatch, epochRef, onDone }: Props) {
   const isPunctuation = isPunctuationChar(char);
 
   function announce() {
     if (announceWord) speakWordThenChar(announceWord, char, WORD_RATE);
-    else speak(char, "zh-CN", CHAR_RATE);
+    else speak(charNarrationText(char, word), "zh-CN", CHAR_RATE);
   }
   const [stage, setStage] = useState<Stage>(skipWatch ? "trace" : "watch");
   const [message, setMessage] = useState(DEFAULT_MESSAGE[skipWatch ? "trace" : "watch"]);

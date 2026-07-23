@@ -218,6 +218,7 @@ export default function LearnSession({
           key={`${currentItem.id}-${charIndex}`}
           char={strokeChars(currentItem.hanzi)[charIndex]}
           announceWord={charIndex === 0 ? currentItem.hanzi : undefined}
+          word={currentItem.hanzi}
           skipWatch={skipWatch}
           epochRef={epochRef}
           onDone={handleCharDone}

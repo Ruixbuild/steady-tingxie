@@ -47,6 +47,36 @@ function padForFallback(text: string): string {
   return `${text}，`;
 }
 
+/** Characters with more than one reading depending on context (e.g. 乐,
+ * yuè in 乐曲/音乐 but lè in 快乐), commonly taught at primary level.
+ * Google's Mandarin voices only resolve these correctly when the
+ * character is spoken as part of a real, fully audible word — every
+ * shortcut tried (SSML emphasis/prosody spotlighting a substring,
+ * say-as spelling, phoneme override, muting neighboring characters,
+ * pairing with an arbitrary non-word neighbor) either distorted the
+ * audio, was silently ignored, or still resolved to the wrong reading.
+ * See charNarrationText for how this list is used — add a character
+ * here if it's mispronounced in isolation somewhere in your lists. */
+const POLYPHONIC_CHARS = new Set([
+  "乐", "长", "数", "都", "还", "相", "觉", "更", "得", "行",
+]);
+
+/** The text to actually narrate for a single character in isolation.
+ * For an ordinary character this is just the character itself. For a
+ * known polyphonic character (see POLYPHONIC_CHARS), it's the character's
+ * *own containing word* instead — reusing the real word (already proven
+ * to read correctly) rather than the bare character (which defaults to
+ * one specific reading regardless of which one this word actually needs).
+ * This is correct per-occurrence without needing to know in advance which
+ * reading a given word wants: a list with 快乐 substitutes "快乐" (lè), a
+ * different list with 音乐 substitutes "音乐" (yuè) — each occurrence
+ * carries its own correct reading because it's real word text, not a
+ * fixed character→reading table. Falls back to the bare character when
+ * no containing word is known (e.g. a genuinely single-character item). */
+export function charNarrationText(char: string, word?: string): string {
+  return word && POLYPHONIC_CHARS.has(char) ? word : char;
+}
+
 /** Every narration call site names its own rate from this fixed set —
  * there is no shared/implicit default. This is deliberate: an earlier
  * design had one flat rate with a hardcoded exception for single
@@ -173,17 +203,14 @@ const WORD_TO_CHAR_PAUSE_MS = 100;
  * shared by Learn's char ladder and Test's word/passage quiz for "say the
  * word, then the character," repeated each time the child advances to
  * the next character and auto-playing as the item/character changes
- * (callers trigger this from a mount-keyed effect, not from here). A rare
- * polyphonic character (e.g. 乐, yuè in 乐曲 but lè elsewhere) can default
- * to the wrong reading when spoken in total isolation like this — a
- * within-phrase <emphasis>/<prosody>/<phoneme> override was tried for
- * this and either truncated the audio or was silently ignored by Google's
- * Mandarin voices, so this trades that narrow edge case for narration
- * that's reliably audible for every word.
+ * (callers trigger this from a mount-keyed effect, not from here). The
+ * isolated-character step goes through charNarrationText, so a known
+ * polyphonic character (see POLYPHONIC_CHARS) re-plays the whole word
+ * instead of the bare character, for a correct reading.
  *
- * The character always plays at CHAR_RATE regardless of `wordRate` — a
- * single syllable played at anything other than natural speed comes out
- * faded/muffled on this voice. */
+ * The character (or its word substitute) always plays at CHAR_RATE
+ * regardless of `wordRate` — a single syllable played at anything other
+ * than natural speed comes out faded/muffled on this voice. */
 export function speakWordThenChar(word: string, char: string, wordRate: number, lang = "zh-CN") {
   stopCurrent();
   if (Array.from(word).length <= 1) {
@@ -192,7 +219,7 @@ export function speakWordThenChar(word: string, char: string, wordRate: number, 
     return;
   }
   playOne(word, lang, wordRate, () => {
-    setTimeout(() => playOne(char, lang, CHAR_RATE), WORD_TO_CHAR_PAUSE_MS);
+    setTimeout(() => playOne(charNarrationText(char, word), lang, CHAR_RATE), WORD_TO_CHAR_PAUSE_MS);
   });
 }
 

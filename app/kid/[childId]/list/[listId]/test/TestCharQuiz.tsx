@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader, getCharData } from "@/lib/hanziCache";
-import { speak, speakWordThenChar, CHAR_RATE, WORD_RATE } from "@/lib/tts";
+import { speak, speakWordThenChar, charNarrationText, CHAR_RATE, WORD_RATE } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
@@ -18,12 +18,15 @@ type Props = {
    * (PassageSession's blind quiz never narrates automatically, so there's
    * nothing to announce). */
   announceWord?: string;
-  /** The full word this char belongs to, for the "Hear it again" button —
-   * unlike announceWord, this is passed for every character in the word,
-   * not just the first, so replaying always speaks the whole word (then
-   * the char) rather than the bare character alone. Omitted by
-   * PassageSession, where revealing the whole passage on a per-character
-   * replay tap would defeat the blind-dictation design. */
+  /** The full word this char belongs to, passed for every character in
+   * the word, not just the first (unlike announceWord). Used for two
+   * things: the "Hear it again" button always speaks the whole word (then
+   * the char) rather than the bare character alone, and a known
+   * polyphonic character (see lib/tts.ts's POLYPHONIC_CHARS) substitutes
+   * this word instead of the bare character even in the auto-narrated
+   * bare-character case, for a correct reading. Omitted by PassageSession,
+   * where revealing the whole passage on a per-character tap would defeat
+   * the blind-dictation design. */
   word?: string;
   /** Skip the automatic on-mount pronunciation — the child can still tap
    * "Hear it again" manually. Used by PassageSession's "first 2 words"
@@ -59,8 +62,8 @@ export default function TestCharQuiz({ char, announceWord, word, silent, hideRep
     setLoadError(false);
     if (silent) return;
     if (announceWord) speakWordThenChar(announceWord, char, WORD_RATE);
-    else speak(char, "zh-CN", CHAR_RATE);
-  }, [char, announceWord, silent]);
+    else speak(charNarrationText(char, word), "zh-CN", CHAR_RATE);
+  }, [char, announceWord, word, silent]);
 
   useEffect(() => {
     if (isPunctuation) {
