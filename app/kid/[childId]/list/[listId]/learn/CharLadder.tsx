@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader } from "@/lib/hanziCache";
-import { speak, speakWordThenChar, charNarrationText, CHAR_RATE, WORD_RATE } from "@/lib/tts";
+import { speak, WORD_RATE } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
@@ -12,18 +12,14 @@ type Stage = "watch" | "trace" | "copy";
 
 type Props = {
   char: string;
-  /** The full word/phrase this char belongs to — when provided, the whole
-   * phrase is announced first, then this char alone. Callers only pass
-   * this for an item's first character, so the phrase is heard once per
-   * item, not repeated for every character in it; later characters fall
-   * back to speaking just the bare character. */
-  announceWord?: string;
-  /** The full word this char belongs to, always passed regardless of
-   * position — unlike announceWord, this isn't for the once-per-item
-   * phrase announcement, it's so a known polyphonic character (see
-   * lib/tts.ts's POLYPHONIC_CHARS) can still substitute its real word
-   * when narrated on its own, for a correct reading. */
+  /** The full word/phrase this char belongs to, always passed regardless
+   * of position — used by the "Say it again" button, which always speaks
+   * the whole word/phrase rather than the individual character. */
   word?: string;
+  /** Only passed for an item's first character — gates the automatic
+   * one-time phrase announcement (see the announce-once-per-item effect
+   * below) so it plays once per item, not once per character. */
+  announceWord?: string;
   skipWatch: boolean;
   epochRef: { current: number };
   onDone: (result: { written: boolean; traceSvg: string | null }) => void;
@@ -41,12 +37,11 @@ const DEFAULT_MESSAGE: Record<Stage, string> = {
   copy: "✏ Now from memory — you can do it!",
 };
 
-export default function CharLadder({ char, announceWord, word, skipWatch, epochRef, onDone }: Props) {
+export default function CharLadder({ char, word, announceWord, skipWatch, epochRef, onDone }: Props) {
   const isPunctuation = isPunctuationChar(char);
 
-  function announce() {
-    if (announceWord) speakWordThenChar(announceWord, char, WORD_RATE);
-    else speak(charNarrationText(char, word), "zh-CN", CHAR_RATE);
+  function announceAgain() {
+    speak(word ?? char, "zh-CN", WORD_RATE);
   }
   const [stage, setStage] = useState<Stage>(skipWatch ? "trace" : "watch");
   const [message, setMessage] = useState(DEFAULT_MESSAGE[skipWatch ? "trace" : "watch"]);
@@ -74,16 +69,20 @@ export default function CharLadder({ char, announceWord, word, skipWatch, epochR
     setMessage(DEFAULT_MESSAGE[stage]);
     setStageComplete(false);
 
-    // A char is only ever unannounced the first time this effect sees it —
-    // tracked separately from `stage` so a child with "skip watch" on (who
-    // lands straight on trace/copy, never passing through the watch stage
-    // where announce() normally fires) still hears it once, without
-    // re-announcing on every later stage transition for the same char.
-    const isNewChar = announcedCharRef.current !== char;
-    if (isNewChar) announcedCharRef.current = char;
+    // Announce the phrase exactly once when a new character is first
+    // shown, regardless of which stage it starts on — a child with "skip
+    // watch" on lands straight on trace/copy, never passing through
+    // watch, so this is hoisted above the stage branches rather than
+    // living inside the watch-stage one. Never repeated on later stage
+    // transitions for the same character; only announceWord (passed for
+    // an item's first character only) triggers this at all — subsequent
+    // characters are silent until the child taps "Say it again".
+    if (announcedCharRef.current !== char) {
+      announcedCharRef.current = char;
+      if (announceWord) speak(announceWord, "zh-CN", WORD_RATE);
+    }
 
     if (isPunctuation) {
-      announce();
       setMessage("✏ Give it a try — no strokes are graded for punctuation.");
       return;
     }
@@ -113,14 +112,13 @@ export default function CharLadder({ char, announceWord, word, skipWatch, epochR
     });
 
     if (stage === "watch") {
-      announce();
       const loop = (first: boolean) => {
         if (epochRef.current !== myEpoch) return;
         writer.animateCharacter({
           onComplete: () => {
             if (epochRef.current !== myEpoch) return;
             if (first) {
-              setMessage("See it? Again, or go trace it!");
+              setMessage("Keep watching, or go trace it!");
               setStageComplete(true);
             }
             loopTimeoutRef.current = setTimeout(() => {
@@ -133,7 +131,6 @@ export default function CharLadder({ char, announceWord, word, skipWatch, epochR
       };
       loop(true);
     } else if (stage === "trace") {
-      if (isNewChar) announce();
       writer.quiz({
         leniency: 1.25,
         showHintAfterMisses: 1,
@@ -152,7 +149,6 @@ export default function CharLadder({ char, announceWord, word, skipWatch, epochR
         },
       });
     } else {
-      if (isNewChar) announce();
       writer.quiz({
         leniency: 1.35,
         showHintAfterMisses: 2,
@@ -179,10 +175,6 @@ export default function CharLadder({ char, announceWord, word, skipWatch, epochR
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [char, stage, retryKey, isPunctuation]);
-
-  function handleAgain() {
-    setRetryKey((k) => k + 1);
-  }
 
   function handleKnowIt() {
     setStage("copy");
@@ -233,11 +225,8 @@ export default function CharLadder({ char, announceWord, word, skipWatch, epochR
       </p>
 
       <div className="flex gap-3 flex-wrap justify-center">
-        <button type="button" onClick={handleAgain} className="btn btn-sm btn-secondary">
-          ↺ Again
-        </button>
-        <button type="button" onClick={announce} className="btn btn-sm btn-secondary">
-          🔊 Say it
+        <button type="button" onClick={announceAgain} className="btn btn-sm btn-secondary">
+          🔊 Say it again
         </button>
         <button
           type="button"
