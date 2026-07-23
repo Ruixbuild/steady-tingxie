@@ -166,7 +166,7 @@ export function speakSequence(texts: string[], lang = "zh-CN", rate: number = DI
  * instant the phrase's onended fires, cutting off the phrase's own
  * trailing decay and making it sound abruptly cut short instead of
  * naturally finished. */
-const WORD_TO_CHAR_PAUSE_MS = 200;
+const WORD_TO_CHAR_PAUSE_MS = 100;
 
 /** Announces a whole word/phrase at `wordRate`, pauses briefly, then
  * announces the specific character being practised alone at CHAR_RATE —
