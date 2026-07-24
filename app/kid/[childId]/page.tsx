@@ -147,8 +147,8 @@ export default async function ChildHomePage({
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-4xl">{child.emoji}</span>
             <h1 className="text-2xl font-semibold">
-              {child.name}{" "}
-              <span className="text-lg font-normal" style={{ color: "var(--mut)" }}>
+              {child.name}
+              <span className="text-lg font-normal ml-3" style={{ color: "var(--mut)" }}>
                 {child.level}
               </span>
             </h1>
@@ -168,8 +168,7 @@ export default async function ChildHomePage({
         </div>
 
         <p className="mb-6 text-sm" style={{ color: "var(--mut)" }}>
-          🔥{child.streak} day{child.streak === 1 ? "" : "s"} in a row · You&apos;ve
-          written {effortChars} characters this week!
+          {`🔥${child.streak} day${child.streak === 1 ? "" : "s"} in a row · You've written ${effortChars} characters this week!`}
         </p>
 
         {activeListRow && (
