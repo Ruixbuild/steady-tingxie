@@ -40,35 +40,13 @@ export default async function ChildHomePage({
   const { data: child } = await supabase
     .from("children")
     .select(
-      "id, name, level, emoji, xp, streak, cheer, chars_written_week, chars_week_start, revision_enabled"
+      "id, name, level, emoji, xp, streak, cheer, chars_written_week, chars_week_start"
     )
     .eq("id", childId)
     .maybeSingle();
 
   if (!child) {
     notFound();
-  }
-
-  let pendingRevisionAssignments: { chapterId: string; chapterTitle: string }[] = [];
-  if (child.revision_enabled) {
-    const { data: assignmentsRaw } = await supabase
-      .from("revision_assignments")
-      .select("chapter_id")
-      .eq("child_id", childId)
-      .eq("status", "pending");
-
-    const chapterIds = Array.from(new Set((assignmentsRaw ?? []).map((a) => a.chapter_id)));
-    if (chapterIds.length > 0) {
-      const { data: chaptersRaw } = await supabase
-        .from("curriculum_chapters")
-        .select("id, title")
-        .in("id", chapterIds);
-      const titleByChapterId = new Map((chaptersRaw ?? []).map((c) => [c.id, c.title]));
-      pendingRevisionAssignments = chapterIds.map((id) => ({
-        chapterId: id,
-        chapterTitle: titleByChapterId.get(id) ?? "Revision",
-      }));
-    }
   }
 
   const { data: lists } = await supabase
@@ -240,36 +218,6 @@ export default async function ChildHomePage({
             </Link>
           ))}
         </div>
-
-        {child.revision_enabled && (
-          <div className="mt-8">
-            <h2 className="text-lg font-semibold mb-3">Revision</h2>
-            <div className="flex flex-col gap-3">
-              {pendingRevisionAssignments.map((a) => (
-                <Link
-                  key={a.chapterId}
-                  href={`/kid/${childId}/revision/${a.chapterId}/test`}
-                  className="card flex items-center justify-between p-5"
-                  style={{ borderColor: "var(--accent)" }}
-                >
-                  <span className="font-semibold">📌 任务: {a.chapterTitle}</span>
-                  <span className="text-sm" style={{ color: "var(--accent-d)" }}>
-                    Start
-                  </span>
-                </Link>
-              ))}
-              <Link
-                href={`/kid/${childId}/revision`}
-                className="card flex items-center justify-between p-5"
-              >
-                <span className="font-semibold">📚 Browse Revision</span>
-                <span className="text-sm" style={{ color: "var(--mut)" }}>
-                  Read · Write · Test
-                </span>
-              </Link>
-            </div>
-          </div>
-        )}
       </div>
     </main>
   );
