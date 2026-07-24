@@ -96,7 +96,7 @@ export type TreeLayout = {
 };
 
 const ROW_COUNT = 3;
-const ROW_BOTTOM_PX = [8, 42, 76]; // invisible rows, bottom-to-top
+const ROW_BOTTOM_PX = [10, 60, 110]; // invisible rows, bottom-to-top — spread to fill the taller scene
 // Kept small on purpose — this is a *baseline* wobble, not free scatter.
 // A wider range let items drift across rows visually, which combined with
 // the old 16-40px size range read as clutter rather than a planted garden.
@@ -134,7 +134,8 @@ export function treeLayouts(
       const bottomPx = Math.max(10, ROW_BOTTOM_PX[rowIdx] + bottomJitter);
       // Tightened from a 16-40px range — that much size variance between
       // neighboring icons was reading as visual noise, not organic growth.
-      const sizePx = 22 + (hashString(itemId + ":size") % 11); // 22-32px
+      // Scaled up slightly to match the taller scene (240px -> 340px).
+      const sizePx = 26 + (hashString(itemId + ":size") % 13); // 26-38px
       // Fruit emoji (round, often with a stem/leaf) reads as visibly
       // "wonky" when rotated — unlike a tree, there's no natural pose for a
       // tilted apple — so only trees get the small scattered lean.
