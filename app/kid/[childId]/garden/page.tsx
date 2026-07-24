@@ -80,72 +80,97 @@ export default async function GardenPage({
 
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
-      <div className="w-full max-w-2xl">
-        <div className="max-w-xl mx-auto">
-          <Link
-            href={`/kid/${childId}`}
-            className="mb-3 inline-block"
-            style={{ color: "var(--accent)", fontWeight: 700 }}
-          >
-            ← Back
-          </Link>
+      <div className="w-full max-w-xl">
+        <Link
+          href={`/kid/${childId}`}
+          className="mb-4 inline-block"
+          style={{ color: "var(--accent)", fontWeight: 700 }}
+        >
+          ← Back
+        </Link>
 
-          <div className="flex items-baseline justify-between gap-3 flex-wrap mb-3">
-            <h1 className="text-2xl font-semibold">{child.name}&apos;s garden</h1>
-            <p className="text-xs" style={{ color: "var(--mut)" }}>
-              Term {termNumberFromKey(activeTerm)} · {SEASON_NAME[termNumberFromKey(activeTerm)]}
-            </p>
+        <h1 className="text-2xl font-semibold mb-1">{child.name}&apos;s garden</h1>
+        <p className="text-sm mb-4" style={{ color: "var(--mut)" }}>
+          Term {termNumberFromKey(activeTerm)} · {SEASON_NAME[termNumberFromKey(activeTerm)]} garden
+        </p>
+
+        {process.env.NODE_ENV !== "production" && <DebugSeedControls childId={childId} />}
+
+        {termPills.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto mb-4 pb-1">
+            {termPills.map((pill) => {
+              const active = pill.key === activeTerm;
+              return (
+                <Link
+                  key={pill.key}
+                  href={`/kid/${childId}/garden?term=${pill.key}`}
+                  className="chip whitespace-nowrap"
+                  style={
+                    active
+                      ? {
+                          border: "2px solid var(--accent)",
+                          background: "var(--accent-soft)",
+                          color: "var(--accent-d)",
+                        }
+                      : { border: "1px solid var(--line)", background: "#fff", color: "var(--mut)" }
+                  }
+                >
+                  Term {termNumberFromKey(pill.key)} · {pill.count}
+                </Link>
+              );
+            })}
           </div>
-
-          {process.env.NODE_ENV !== "production" && <DebugSeedControls childId={childId} />}
-
-          {termPills.length > 1 && (
-            <div className="flex gap-1.5 overflow-x-auto mb-3 pb-1">
-              {termPills.map((pill) => {
-                const active = pill.key === activeTerm;
-                return (
-                  <Link
-                    key={pill.key}
-                    href={`/kid/${childId}/garden?term=${pill.key}`}
-                    className="chip whitespace-nowrap"
-                    style={
-                      active
-                        ? {
-                            border: "2px solid var(--accent)",
-                            background: "var(--accent-soft)",
-                            color: "var(--accent-d)",
-                          }
-                        : { border: "1px solid var(--line)", background: "#fff", color: "var(--mut)" }
-                    }
-                  >
-                    T{termNumberFromKey(pill.key)} · {pill.count}
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        )}
 
         <GardenScene termKey={activeTerm} backdrop={backdrop} items={activeItems} />
 
-        <div className="max-w-xl mx-auto">
-          {activeItems.length === 0 && (
-            <p className="mt-4 text-sm text-center" style={{ color: "var(--mut)" }}>
-              No trees grown this term yet — keep practising to plant your first one 🌱
-            </p>
-          )}
-
+        {activeItems.length === 0 && (
           <p className="mt-4 text-sm text-center" style={{ color: "var(--mut)" }}>
-            🌳 {activeCount} this term · {termsGrown} terms grown · {yearCount} this year
+            No trees grown this term yet — keep practising to plant your first one 🌱
           </p>
+        )}
 
-          <p className="mt-3 text-xs text-center" style={{ color: "var(--mut)" }}>
-            <span className="font-semibold" style={{ color: "var(--ink)" }}>
-              Grow Your Garden!
-            </span>{" "}
-            Pass a test on pinyin/short phrase for a tree, long phrases/默写 for a
-            fruit — tap one to see which word grew it!
+        <div className="flex gap-3 mt-6">
+          <div className="card p-4 flex-1 text-center">
+            <p className="text-2xl font-semibold">{activeCount}</p>
+            <p
+              className="text-[11px] font-semibold tracking-wide uppercase mt-0.5"
+              style={{ color: "var(--mut)" }}
+            >
+              This term
+            </p>
+          </div>
+          <div className="card p-4 flex-1 text-center">
+            <p className="text-2xl font-semibold">{termsGrown}</p>
+            <p
+              className="text-[11px] font-semibold tracking-wide uppercase mt-0.5"
+              style={{ color: "var(--mut)" }}
+            >
+              Terms grown
+            </p>
+          </div>
+          <div className="card p-4 flex-1 text-center">
+            <p className="text-2xl font-semibold">{yearCount}</p>
+            <p
+              className="text-[11px] font-semibold tracking-wide uppercase mt-0.5"
+              style={{ color: "var(--mut)" }}
+            >
+              This year
+            </p>
+          </div>
+        </div>
+
+        <div className="card p-5 mt-6 text-center">
+          <p className="text-base font-bold mb-2" style={{ color: "var(--ink)" }}>
+            Grow Your Garden!
           </p>
+          <div className="flex flex-col gap-1.5 text-sm" style={{ color: "var(--mut)" }}>
+            <p>🌳 Pass a test on pinyin/short phrase to grow a tree</p>
+            <p>🍎 Pass a test on long phrases/默写 to grow a fruit</p>
+            <p className="font-semibold" style={{ color: "var(--accent-d)" }}>
+              Tap one to see which word grew it!
+            </p>
+          </div>
         </div>
       </div>
     </main>

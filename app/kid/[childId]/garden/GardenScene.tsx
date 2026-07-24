@@ -47,7 +47,7 @@ export default function GardenScene({
   return (
     <div
       className="card relative overflow-hidden"
-      style={{ height: 340, borderRadius: 18 }}
+      style={{ height: 240, borderRadius: 18 }}
       onClick={() => setActiveTreeId(null)}
     >
       <div
