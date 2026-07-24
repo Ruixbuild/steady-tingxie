@@ -12,7 +12,6 @@ type Props = {
   pinnedIds: string[];
   queueIds: string[];
   surpriseId: string | null;
-  canSkipWatch: boolean;
 };
 
 export default function ChildHomeHero({
@@ -23,7 +22,6 @@ export default function ChildHomeHero({
   pinnedIds,
   queueIds,
   surpriseId,
-  canSkipWatch,
 }: Props) {
   const router = useRouter();
   const [toast, setToast] = useState<string | null>(null);
@@ -119,16 +117,14 @@ export default function ChildHomeHero({
         )}
       </div>
 
-      {canSkipWatch && (
-        <label className="flex items-center gap-2 text-sm" style={{ color: "var(--mut)" }}>
-          <input
-            type="checkbox"
-            checked={skipWatch}
-            onChange={(e) => toggleSkipWatch(e.target.checked)}
-          />
-          Skip Watch — you&apos;re a Level 2 writer now
-        </label>
-      )}
+      <label className="flex items-center gap-2 text-sm" style={{ color: "var(--mut)" }}>
+        <input
+          type="checkbox"
+          checked={skipWatch}
+          onChange={(e) => toggleSkipWatch(e.target.checked)}
+        />
+        Skip Watch — go straight to tracing
+      </label>
 
       {showOverlay && (
         <div
