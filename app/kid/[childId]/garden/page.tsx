@@ -150,11 +150,13 @@ export default async function GardenPage({
           </div>
         </div>
 
-        <p className="mt-3 text-xs text-center" style={{ color: "var(--mut)" }}>
-          🌳 Pass a test on pinyin/short phrase to grow a tree · 🍎 Pass a test on
-          long phrases/默写 to grow a fruit. Click on them to find out which seed
-          grew them.
-        </p>
+        <div className="mt-8 text-xs text-center" style={{ color: "var(--mut)" }}>
+          <p className="font-semibold mb-1" style={{ color: "var(--ink)" }}>
+            Grow Your Garden!
+          </p>
+          <p>🌳 Pass a test on pinyin/short phrase to grow a tree</p>
+          <p>🍎 Pass a test on long phrases/默写 to grow a fruit — tap one to see which word grew it</p>
+        </div>
       </div>
     </main>
   );
