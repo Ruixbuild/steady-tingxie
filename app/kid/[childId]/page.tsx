@@ -143,35 +143,33 @@ export default async function ChildHomePage({
         >
           ← Switch profile
         </Link>
-        <div className="flex items-start justify-between gap-3 mb-2 flex-wrap">
+        <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-4xl">{child.emoji}</span>
-            <div>
-              <h1 className="text-2xl font-semibold">{child.name}</h1>
-              <p style={{ color: "var(--mut)" }}>{child.level}</p>
-            </div>
-            <Link
-              href={`/kid/${childId}/garden`}
-              className="card flex items-center gap-1.5 px-4 py-2"
-            >
-              <span className="text-lg leading-none">🌳</span>
-              <span
-                className="text-sm font-semibold whitespace-nowrap"
-                style={{ color: "var(--accent-d)" }}
-              >
-                Visit garden
+            <h1 className="text-2xl font-semibold">
+              {child.name}{" "}
+              <span className="text-lg font-normal" style={{ color: "var(--mut)" }}>
+                {child.level}
               </span>
-            </Link>
+            </h1>
           </div>
-          <div className="text-right text-sm shrink-0" style={{ color: "var(--mut)" }}>
-            <p>
-              🔥{child.streak} day{child.streak === 1 ? "" : "s"} in a row
-            </p>
-          </div>
+          <Link
+            href={`/kid/${childId}/garden`}
+            className="card flex items-center gap-1.5 px-4 py-2 shrink-0"
+          >
+            <span className="text-lg leading-none">🌳</span>
+            <span
+              className="text-sm font-semibold whitespace-nowrap"
+              style={{ color: "var(--accent-d)" }}
+            >
+              Visit garden
+            </span>
+          </Link>
         </div>
 
         <p className="mb-6 text-sm" style={{ color: "var(--mut)" }}>
-          You&apos;ve written {effortChars} characters this week!
+          🔥{child.streak} day{child.streak === 1 ? "" : "s"} in a row · You&apos;ve
+          written {effortChars} characters this week!
         </p>
 
         {activeListRow && (
