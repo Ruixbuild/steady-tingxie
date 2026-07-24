@@ -132,32 +132,45 @@ export default async function GardenPage({
 
         <div className="flex gap-3 mt-6">
           <div className="card p-4 flex-1 text-center">
-            <p className="text-xl font-semibold">{activeCount}</p>
-            <p className="text-xs" style={{ color: "var(--mut)" }}>
+            <p className="text-2xl font-semibold">{activeCount}</p>
+            <p
+              className="text-[11px] font-semibold tracking-wide uppercase mt-0.5"
+              style={{ color: "var(--mut)" }}
+            >
               This term
             </p>
           </div>
           <div className="card p-4 flex-1 text-center">
-            <p className="text-xl font-semibold">{termsGrown}</p>
-            <p className="text-xs" style={{ color: "var(--mut)" }}>
+            <p className="text-2xl font-semibold">{termsGrown}</p>
+            <p
+              className="text-[11px] font-semibold tracking-wide uppercase mt-0.5"
+              style={{ color: "var(--mut)" }}
+            >
               Terms grown
             </p>
           </div>
           <div className="card p-4 flex-1 text-center">
-            <p className="text-xl font-semibold">{yearCount}</p>
-            <p className="text-xs" style={{ color: "var(--mut)" }}>
+            <p className="text-2xl font-semibold">{yearCount}</p>
+            <p
+              className="text-[11px] font-semibold tracking-wide uppercase mt-0.5"
+              style={{ color: "var(--mut)" }}
+            >
               This year
             </p>
           </div>
         </div>
 
-        <div className="mt-8 text-sm text-center" style={{ color: "var(--mut)" }}>
-          <p className="text-base font-bold mb-1" style={{ color: "var(--ink)" }}>
+        <div className="card p-5 mt-6 text-center">
+          <p className="text-base font-bold mb-2" style={{ color: "var(--ink)" }}>
             Grow Your Garden!
           </p>
-          <p>🌳 Pass a test on pinyin/short phrase to grow a tree</p>
-          <p>🍎 Pass a test on long phrases/默写 to grow a fruit</p>
-          <p>Tap one to see which word grew it!</p>
+          <div className="flex flex-col gap-1.5 text-sm" style={{ color: "var(--mut)" }}>
+            <p>🌳 Pass a test on pinyin/short phrase to grow a tree</p>
+            <p>🍎 Pass a test on long phrases/默写 to grow a fruit</p>
+            <p className="font-semibold" style={{ color: "var(--accent-d)" }}>
+              Tap one to see which word grew it!
+            </p>
+          </div>
         </div>
       </div>
     </main>
