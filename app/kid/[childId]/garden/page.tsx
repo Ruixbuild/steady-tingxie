@@ -74,7 +74,8 @@ export default async function GardenPage({
 
   const backdrop = SEASON_BACKDROP[termNumberFromKey(activeTerm)];
   const activeCount = activeItems.length;
-  const lifetimeCount = growths.length;
+  const activeYear = activeTerm.split("-T")[0];
+  const yearCount = growths.filter((g) => g.term_key.startsWith(`${activeYear}-T`)).length;
   const termsGrown = countByTerm.size;
 
   return (
@@ -131,9 +132,9 @@ export default async function GardenPage({
 
         <div className="flex gap-3 mt-6">
           <div className="card p-4 flex-1 text-center">
-            <p className="text-xl font-semibold">{lifetimeCount}</p>
+            <p className="text-xl font-semibold">{activeCount}</p>
             <p className="text-xs" style={{ color: "var(--mut)" }}>
-              Lifetime tree/fruits
+              This term
             </p>
           </div>
           <div className="card p-4 flex-1 text-center">
@@ -143,19 +144,20 @@ export default async function GardenPage({
             </p>
           </div>
           <div className="card p-4 flex-1 text-center">
-            <p className="text-xl font-semibold">{activeCount}</p>
+            <p className="text-xl font-semibold">{yearCount}</p>
             <p className="text-xs" style={{ color: "var(--mut)" }}>
-              This term
+              This year
             </p>
           </div>
         </div>
 
-        <div className="mt-8 text-xs text-center" style={{ color: "var(--mut)" }}>
-          <p className="font-semibold mb-1" style={{ color: "var(--ink)" }}>
+        <div className="mt-8 text-sm text-center" style={{ color: "var(--mut)" }}>
+          <p className="text-base font-bold mb-1" style={{ color: "var(--ink)" }}>
             Grow Your Garden!
           </p>
           <p>🌳 Pass a test on pinyin/short phrase to grow a tree</p>
-          <p>🍎 Pass a test on long phrases/默写 to grow a fruit — tap one to see which word grew it</p>
+          <p>🍎 Pass a test on long phrases/默写 to grow a fruit</p>
+          <p>Tap one to see which word grew it!</p>
         </div>
       </div>
     </main>

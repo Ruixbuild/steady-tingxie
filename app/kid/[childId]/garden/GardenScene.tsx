@@ -40,7 +40,7 @@ export default function GardenScene({
   const term = termNumberFromKey(termKey);
 
   const layoutByItemId = useMemo(
-    () => treeLayouts(items.map((it) => it.itemId)),
+    () => treeLayouts(items.map((it) => ({ itemId: it.itemId, type: it.type }))),
     [items]
   );
 

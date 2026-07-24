@@ -104,8 +104,11 @@ const ROW_JITTER_PX = 10;
 // stable across renders) and given its own horizontal slot within that
 // row — sized to the row's item count — so trees never land on top of
 // each other while still reading as "scattered" thanks to per-slot jitter.
-export function treeLayouts(itemIds: string[]): Record<string, TreeLayout> {
-  const sorted = [...itemIds].sort();
+export function treeLayouts(
+  items: { itemId: string; type: TreeType }[]
+): Record<string, TreeLayout> {
+  const typeById = new Map(items.map((it) => [it.itemId, it.type]));
+  const sorted = items.map((it) => it.itemId).sort();
   const rows: string[][] = Array.from({ length: ROW_COUNT }, () => []);
   for (const itemId of sorted) {
     rows[hashString(itemId + ":row") % ROW_COUNT].push(itemId);
@@ -127,7 +130,11 @@ export function treeLayouts(itemIds: string[]): Record<string, TreeLayout> {
       const bottomJitter = (hashString(itemId + ":bottom") % (ROW_JITTER_PX * 2 + 1)) - ROW_JITTER_PX;
       const bottomPx = Math.max(10, ROW_BOTTOM_PX[rowIdx] + bottomJitter);
       const sizePx = 16 + (hashString(itemId + ":size") % 25); // 16-40px
-      const rotationDeg = -6 + (hashString(itemId + ":rot") % 13); // -6..+6deg
+      // Fruit emoji (round, often with a stem/leaf) reads as visibly
+      // "wonky" when rotated — unlike a tree, there's no natural pose for a
+      // tilted apple — so only trees get the small scattered lean.
+      const rotationDeg =
+        typeById.get(itemId) === "tree" ? -6 + (hashString(itemId + ":rot") % 13) : 0; // -6..+6deg, trees only
       layouts[itemId] = { leftPct, bottomPx, sizePx, rotationDeg };
     });
   });
