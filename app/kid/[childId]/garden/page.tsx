@@ -160,15 +160,15 @@ export default async function GardenPage({
           </div>
         </div>
 
-        <div className="card p-5 mt-6 text-center">
-          <p className="text-base font-bold mb-2" style={{ color: "var(--ink)" }}>
+        <div className="card p-3 mt-6 text-center">
+          <p className="text-sm font-bold mb-1" style={{ color: "var(--ink)" }}>
             Grow Your Garden!
           </p>
-          <div className="flex flex-col gap-1.5 text-sm" style={{ color: "var(--mut)" }}>
-            <p>🌳 Pass a test on pinyin/short phrase to grow a tree</p>
-            <p>🍎 Pass a test on long phrases/默写 to grow a fruit</p>
+          <div className="flex flex-col gap-0.5 text-xs" style={{ color: "var(--mut)" }}>
+            <p>🌳 Pinyin/short phrase → tree</p>
+            <p>🍎 Long phrase/默写 → fruit</p>
             <p className="font-semibold" style={{ color: "var(--accent-d)" }}>
-              Tap one to see which word grew it!
+              Tap to see which word grew it!
             </p>
           </div>
         </div>
