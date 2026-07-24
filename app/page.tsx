@@ -54,9 +54,11 @@ export default async function ProfilePickerPage() {
               padding: "10px 16px",
             }}
           >
-            <span style={{ fontSize: "2rem" }}>{child.emoji}</span>
-            <span style={{ fontSize: "1.25rem", fontWeight: 800, marginTop: 2 }}>{child.name}</span>
-            <span className="text-sm" style={{ color: "var(--mut)" }}>
+            <div className="flex items-center gap-2">
+              <span style={{ fontSize: "2rem" }}>{child.emoji}</span>
+              <span style={{ fontSize: "1.25rem", fontWeight: 800 }}>{child.name}</span>
+            </div>
+            <span className="text-sm mt-1" style={{ color: "var(--mut)" }}>
               {child.level}
             </span>
           </Link>

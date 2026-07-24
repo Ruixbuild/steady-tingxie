@@ -143,43 +143,31 @@ export default async function ChildHomePage({
         >
           ← Switch profile
         </Link>
-        <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-4xl">{child.emoji}</span>
-            <h1 className="text-2xl font-semibold">
-              {child.name}
-              <span className="text-lg font-normal ml-3" style={{ color: "var(--mut)" }}>
-                {child.level}
-              </span>
-            </h1>
-          </div>
-          <Link
-            href={`/kid/${childId}/garden`}
-            className="card flex items-center gap-1.5 px-4 py-2 shrink-0"
-          >
-            <span className="text-lg leading-none">🌳</span>
-            <span
-              className="text-sm font-semibold whitespace-nowrap"
-              style={{ color: "var(--accent-d)" }}
-            >
-              Visit garden
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-4xl">{child.emoji}</span>
+          <h1 className="text-2xl font-semibold">
+            {child.name}
+            <span className="text-lg font-normal ml-3" style={{ color: "var(--mut)" }}>
+              {child.level}
             </span>
-          </Link>
+          </h1>
         </div>
 
-        <p className="mb-6 text-sm" style={{ color: "var(--mut)" }}>
+        <p className="mt-2 text-sm" style={{ color: "var(--mut)" }}>
           {`🔥${child.streak} day${child.streak === 1 ? "" : "s"} in a row · You've written ${effortChars} characters this week!`}
         </p>
 
         {activeListRow && (
-          <ListSelector
-            childId={childId}
-            lists={activeLists}
-            selectedId={activeListRow.id}
-          />
+          <div className="mt-8">
+            <ListSelector
+              childId={childId}
+              lists={activeLists}
+              selectedId={activeListRow.id}
+            />
+          </div>
         )}
 
-        <div className="mb-8">
+        <div className="mt-8">
           <ChildHomeHero
             childId={childId}
             cheer={child.cheer}
@@ -195,7 +183,24 @@ export default async function ChildHomePage({
           />
         </div>
 
-        <h2 className="text-lg font-semibold mb-3">My lists</h2>
+        <Link
+          href={`/kid/${childId}/garden`}
+          className="card flex items-center justify-between p-5 mt-8"
+          style={{ borderColor: "var(--accent-soft)" }}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl leading-none">🌳</span>
+            <div>
+              <p className="font-semibold">Visit your garden</p>
+              <p className="text-xs" style={{ color: "var(--mut)" }}>
+                See what you&apos;ve grown
+              </p>
+            </div>
+          </div>
+          <span style={{ color: "var(--accent-d)", fontWeight: 700 }}>→</span>
+        </Link>
+
+        <h2 className="text-lg font-semibold mb-3 mt-8">My lists</h2>
         <div className="flex flex-col gap-3">
           {(!lists || lists.length === 0) && (
             <p style={{ color: "var(--mut)" }}>
