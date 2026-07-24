@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   SEASON_BACKDROP,
+  SEASON_NAME,
   termKey as computeTermKey,
   termNumberFromKey,
 } from "@/lib/garden";
@@ -89,7 +90,7 @@ export default async function GardenPage({
 
         <h1 className="text-2xl font-semibold mb-1">{child.name}&apos;s garden</h1>
         <p className="text-sm mb-4" style={{ color: "var(--mut)" }}>
-          My garden · Term {termNumberFromKey(activeTerm)} · {activeCount} trees
+          Term {termNumberFromKey(activeTerm)} · {SEASON_NAME[termNumberFromKey(activeTerm)]} garden
         </p>
 
         {process.env.NODE_ENV !== "production" && <DebugSeedControls childId={childId} />}
@@ -132,7 +133,7 @@ export default async function GardenPage({
           <div className="card p-4 flex-1 text-center">
             <p className="text-xl font-semibold">{lifetimeCount}</p>
             <p className="text-xs" style={{ color: "var(--mut)" }}>
-              Lifetime trees
+              Lifetime tree/fruits
             </p>
           </div>
           <div className="card p-4 flex-1 text-center">
@@ -148,6 +149,12 @@ export default async function GardenPage({
             </p>
           </div>
         </div>
+
+        <p className="mt-3 text-xs text-center" style={{ color: "var(--mut)" }}>
+          🌳 Pass a test on pinyin/short phrase to grow a tree · 🍎 Pass a test on
+          long phrases/默写 to grow a fruit. Click on them to find out which seed
+          grew them.
+        </p>
       </div>
     </main>
   );

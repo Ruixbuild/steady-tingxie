@@ -126,7 +126,7 @@ export function treeLayouts(itemIds: string[]): Record<string, TreeLayout> {
       );
       const bottomJitter = (hashString(itemId + ":bottom") % (ROW_JITTER_PX * 2 + 1)) - ROW_JITTER_PX;
       const bottomPx = Math.max(10, ROW_BOTTOM_PX[rowIdx] + bottomJitter);
-      const sizePx = 12 + (hashString(itemId + ":size") % 23); // 12-34px
+      const sizePx = 16 + (hashString(itemId + ":size") % 25); // 16-40px
       const rotationDeg = -6 + (hashString(itemId + ":rot") % 13); // -6..+6deg
       layouts[itemId] = { leftPct, bottomPx, sizePx, rotationDeg };
     });
@@ -179,6 +179,15 @@ export const SEASON_BACKDROP: Record<Term, SeasonBackdrop> = {
     ambient: ["❄️"],
     icon: "❄️",
   },
+};
+
+// Season names shown as UI text here — distinct from SEASON_BACKDROP's
+// `icon`/`ambient`, which are visual-only and never surfaced as text.
+export const SEASON_NAME: Record<Term, string> = {
+  1: "Spring",
+  2: "Summer",
+  3: "Autumn",
+  4: "Winter",
 };
 
 export function termNumberFromKey(key: string): Term {
