@@ -37,28 +37,33 @@ export default function ChildHomeHero({
     router.push(`/kid/${childId}/list/${activeList.id}/learn?items=${ids.join(",")}`);
   }
 
+  // Computed once and used for both the label and the actual launch, so
+  // they can never disagree — slice() on the real pool already caps at
+  // whatever's actually available, so "N words today" can't overstate a
+  // short list, and the CTA can't launch a different count than it
+  // announced. Previously the label used its own Math.min/defaultWordCount
+  // formula while the launch re-sliced separately, so a list with fewer
+  // words than defaultWordCount (e.g. a P4 list with 2 words, default 5)
+  // showed "5 words today" but only ever launched 2.
+  const wordsToday =
+    pinnedIds.length > 0 ? pinnedIds.slice(0, defaultWordCount) : queueIds.slice(0, defaultWordCount);
+
   async function handleCta() {
-    if (!activeList) return;
-    if (pinnedIds.length > 0) {
-      if (cheer) {
-        setToast(`💌 ${cheer}`);
-        setTimeout(() => setToast(null), 1900);
-        const supabase = createClient();
-        await supabase.from("children").update({ cheer: null }).eq("id", childId);
-      }
-      startLearn(pinnedIds.slice(0, defaultWordCount));
-    } else {
-      startLearn(queueIds.slice(0, defaultWordCount));
+    if (!activeList || wordsToday.length === 0) return;
+    if (pinnedIds.length > 0 && cheer) {
+      setToast(`💌 ${cheer}`);
+      setTimeout(() => setToast(null), 1900);
+      const supabase = createClient();
+      await supabase.from("children").update({ cheer: null }).eq("id", childId);
     }
+    startLearn(wordsToday);
   }
 
   function handleSurprise() {
     if (surpriseId) startLearn([surpriseId]);
   }
 
-  const ctaLabel = `▶ ${
-    pinnedIds.length > 0 ? Math.min(pinnedIds.length, defaultWordCount) : defaultWordCount
-  } words today`;
+  const ctaLabel = `▶ ${wordsToday.length} word${wordsToday.length === 1 ? "" : "s"} today`;
 
   return (
     <div className="flex flex-col gap-4">
