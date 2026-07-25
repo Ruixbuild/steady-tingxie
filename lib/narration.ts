@@ -40,6 +40,11 @@ export type Surface = "learn" | "test" | "reader";
 
 type Pacing = { rate: number; pauseMs: number };
 
+// A ci yu's own rate — deliberately separate from WORD_RATE (which pinyin
+// still uses) so tuning one format's speed can't silently change the
+// other's.
+const CI_YU_RATE = 0.75;
+
 // How fast, and how long a beat after each ，/。.
 //
 // Only mo xie gets the full writing pause: it's the format where the child
@@ -49,7 +54,7 @@ type Pacing = { rate: number; pauseMs: number };
 // unpunctuated text is a single segment regardless, this one row covers all
 // three ci yu shapes (2-char, 4-char, punctuated sentence) with no branching.
 const PACING: Record<ItemKind, Pacing> = {
-  words: { rate: WORD_RATE, pauseMs: 180 },
+  words: { rate: CI_YU_RATE, pauseMs: 120 },
   pinyin: { rate: WORD_RATE, pauseMs: 0 },
   passage: { rate: DICTATION_RATE, pauseMs: 450 },
 };
@@ -59,11 +64,11 @@ const PACING: Record<ItemKind, Pacing> = {
 //
 // The one deliberate `false` among the writing formats is mo xie in Test:
 // that's a blind dictation, so auto-playing it would hand the child the
-// answer. Every other combination announces once on entry. Pinyin in Learn
-// is a browse-and-type drill with its own Listen button, so it stays quiet
-// until asked. Reader is entirely child-driven playback.
+// answer. Every other combination announces once on entry — pinyin
+// announces on arrival in both Learn and Test, matching. Reader is entirely
+// child-driven playback.
 const AUTO_ANNOUNCE: Record<Surface, Record<ItemKind, boolean>> = {
-  learn: { words: true, pinyin: false, passage: true },
+  learn: { words: true, pinyin: true, passage: true },
   test: { words: true, pinyin: true, passage: false },
   reader: { words: false, pinyin: false, passage: false },
 };

@@ -81,7 +81,7 @@ export default function PeekModal({
       <div className="card p-6 flex flex-col gap-4 items-center">
         <div className="flex gap-3">
           <button type="button" onClick={() => replayChar(char)} className="btn btn-sm btn-secondary">
-            🔊 Replay
+            🔊 Say it again
           </button>
           <button type="button" onClick={onClose} className="btn btn-sm btn-secondary">
             Close

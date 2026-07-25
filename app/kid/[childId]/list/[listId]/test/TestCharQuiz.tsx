@@ -13,11 +13,11 @@ type Props = {
   /** The full word this char belongs to — when provided, the whole word is
    * announced once on mount. TestSession only passes this for an item's
    * first character, so the word is heard once per item; later characters
-   * are silent on mount (the child can still tap "Hear it again"). Always
+   * are silent on mount (the child can still tap "Say it again"). Always
    * omitted when silent (PassageSession's blind quiz never narrates
    * automatically, so there's nothing to announce). */
   announceWord?: string;
-  /** The full word this char belongs to, for the "Hear it again" button —
+  /** The full word this char belongs to, for the "Say it again" button —
    * unlike announceWord, this is passed for every character in the word,
    * not just the first, so replaying always speaks the whole word
    * regardless of which character is active. Omitted by PassageSession,
@@ -32,10 +32,10 @@ type Props = {
    * feature's existing usage is unaffected. */
   kind?: ItemKind;
   /** Skip the automatic on-mount pronunciation — the child can still tap
-   * "Hear it again" manually. Used by PassageSession's "first 2 words"
+   * "Say it again" manually. Used by PassageSession's "first 2 words"
    * reveal mode, where later characters shouldn't get an automatic hint. */
   silent?: boolean;
-  /** Hides the "Hear it again" replay button — used by PassageSession's
+  /** Hides the "Say it again" replay button — used by PassageSession's
    * "first 2 words" mode, which supplies its own replay control instead. */
   hideReplayButton?: boolean;
   hardMode: boolean;
@@ -161,7 +161,7 @@ export default function TestCharQuiz({ char, announceWord, word, kind = "words",
             onClick={() => (word ? replayItem(kind, word) : replayChar(char))}
             className="btn btn-secondary"
           >
-            🔊 Hear it again
+            🔊 Say it again
           </button>
         )}
         {isPunctuation && !done && (

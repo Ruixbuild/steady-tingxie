@@ -45,7 +45,7 @@ export default function TestPinyinInput({ hanzi, answer, onDone }: Props) {
           onClick={() => replayItem("pinyin", hanzi)}
           className="btn btn-sm btn-secondary"
         >
-          🔊 Replay
+          🔊 Say it again
         </button>
         <button type="button" onClick={() => finish(false)} disabled={done} className="btn btn-sm btn-secondary">
           ✋ Skip

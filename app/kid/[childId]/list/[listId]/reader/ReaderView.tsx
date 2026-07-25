@@ -40,7 +40,7 @@ export default function ReaderView({
           onClick={() => replayItem("passage", hanzi)}
           className="btn btn-sm btn-secondary"
         >
-          🐢 Read full sentence
+          🔊 Say it again
         </button>
         <button
           type="button"

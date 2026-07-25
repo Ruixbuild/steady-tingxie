@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toMarks, verdict } from "@/lib/pinyin";
-import { replayItem } from "@/lib/narration";
+import { announceOnEntry, replayItem } from "@/lib/narration";
 import PinyinToneInput from "../PinyinToneInput";
 
 type Props = {
@@ -14,6 +14,14 @@ type Props = {
 export default function PinyinDrill({ hanzi, answer, onDone }: Props) {
   const [value, setValue] = useState("");
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+  const spokenRef = useRef(false);
+
+  useEffect(() => {
+    if (!spokenRef.current) {
+      spokenRef.current = true;
+      announceOnEntry("pinyin", "learn", hanzi);
+    }
+  }, [hanzi]);
 
   function check() {
     const result = verdict(value, answer);
@@ -35,7 +43,7 @@ export default function PinyinDrill({ hanzi, answer, onDone }: Props) {
           onClick={() => replayItem("pinyin", hanzi)}
           className="btn btn-sm btn-secondary"
         >
-          🔊 Listen
+          🔊 Say it again
         </button>
       </div>
 
