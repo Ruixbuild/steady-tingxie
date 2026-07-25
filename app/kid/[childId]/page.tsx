@@ -109,8 +109,13 @@ export default async function ChildHomePage({
         .map((m) => m.item_id);
       queueIds = Array.from(new Set([...strugglingSorted, ...untouched]));
 
+      // Falls back to the full pool once everything's mastered, so the
+      // surprise button doesn't just disappear for a child who has
+      // finished the list — that made it look like some profiles had the
+      // feature and others didn't, when it was really a mastery-progress
+      // artifact.
       const nonMastered = rows.filter((m) => m.level < 3).map((m) => m.item_id);
-      surpriseId = pickRandom(nonMastered);
+      surpriseId = pickRandom(nonMastered.length > 0 ? nonMastered : rows.map((m) => m.item_id));
     }
 
     // A parent-pinned 默写 passage doesn't compete for the "N words today"
@@ -177,8 +182,8 @@ export default async function ChildHomePage({
         </p>
 
         {activeListRow && (
-          <div className="mt-8">
-            <p className="text-sm mb-2" style={{ color: "var(--mut)" }}>
+          <div className="mt-8 flex items-center gap-2 flex-wrap">
+            <p className="text-sm" style={{ color: "var(--mut)" }}>
               Choose list:
             </p>
             <ListSelector
@@ -213,18 +218,26 @@ export default async function ChildHomePage({
               No lists yet — ask a grown-up to add one in the parent corner ⚙
             </p>
           )}
-          {lists?.map((list) => (
-            <Link
-              key={list.id}
-              href={`/kid/${childId}/list/${list.id}`}
-              className="card flex items-center justify-between p-5"
-            >
-              <span className="font-semibold">{list.name}</span>
-              <span className="text-sm" style={{ color: "var(--mut)" }}>
-                {list.test_date ?? list.status}
-              </span>
-            </Link>
-          ))}
+          {lists?.map((list) => {
+            const isActive = list.id === activeListRow?.id;
+            return (
+              <Link
+                key={list.id}
+                href={`/kid/${childId}/list/${list.id}`}
+                className="card flex items-center justify-between p-5"
+                style={
+                  isActive
+                    ? { border: "2px solid var(--accent)", background: "var(--accent-soft)" }
+                    : undefined
+                }
+              >
+                <span className="font-semibold">{list.name}</span>
+                <span className="text-sm" style={{ color: "var(--mut)" }}>
+                  {list.test_date ?? list.status}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </main>

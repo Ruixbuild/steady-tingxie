@@ -13,13 +13,24 @@ export default function ListSelector({
 }) {
   const router = useRouter();
 
-  if (lists.length <= 1) return null;
+  if (lists.length === 0) return null;
+
+  if (lists.length === 1) {
+    return (
+      <span
+        className="rounded-full border px-4 py-2 text-sm font-semibold"
+        style={{ borderColor: "var(--line)", color: "var(--ink)" }}
+      >
+        {lists[0].name}
+      </span>
+    );
+  }
 
   return (
     <select
       value={selectedId}
       onChange={(e) => router.push(`/kid/${childId}?list=${e.target.value}`)}
-      className="rounded-full border px-4 py-2 outline-none text-sm mb-4"
+      className="rounded-full border px-4 py-2 outline-none text-sm"
       style={{ borderColor: "var(--line)", color: "var(--ink)" }}
     >
       {lists.map((l) => (
