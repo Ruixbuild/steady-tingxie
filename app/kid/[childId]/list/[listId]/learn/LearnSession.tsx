@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Confetti from "@/components/Confetti";
-import { speak, stopNarration, PRAISE_RATE } from "@/lib/tts";
+import { speakPraise, stopNarration } from "@/lib/tts";
 import { strokeChars } from "@/lib/hanzi";
 import CharLadder from "./CharLadder";
 import PinyinDrill from "./PinyinDrill";
@@ -120,7 +120,7 @@ export default function LearnSession({
     });
     setComplete(true);
     setShowConfetti(true);
-    speak("太棒了", "zh-CN", PRAISE_RATE);
+    speakPraise("太棒了");
   }
 
   if (items.length === 0) {

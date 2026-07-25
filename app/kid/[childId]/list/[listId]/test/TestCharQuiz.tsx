@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader, getCharData } from "@/lib/hanziCache";
-import { speak, CHAR_RATE, WORD_RATE } from "@/lib/tts";
+import { speakChar, speakWord } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
@@ -58,7 +58,7 @@ export default function TestCharQuiz({ char, announceWord, word, silent, hideRep
     setDone(false);
     setLoadError(false);
     if (silent) return;
-    if (announceWord) speak(announceWord, "zh-CN", WORD_RATE);
+    if (announceWord) speakWord(announceWord);
   }, [char, announceWord, silent]);
 
   useEffect(() => {
@@ -152,7 +152,7 @@ export default function TestCharQuiz({ char, announceWord, word, silent, hideRep
         {!hideReplayButton && (
           <button
             type="button"
-            onClick={() => (word ? speak(word, "zh-CN", WORD_RATE) : speak(char, "zh-CN", CHAR_RATE))}
+            onClick={() => (word ? speakWord(word) : speakChar(char))}
             className="btn btn-secondary"
           >
             🔊 Hear it again

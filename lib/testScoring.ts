@@ -1,6 +1,13 @@
 // Flat scoring + prediction, per handoff spec §2.
 
-export const PASSAGE_PUNCTUATION = new Set(["，", "。", "！", "？", "；", "、", "：", "“", "”", "「", "」"]);
+import { PUNCTUATION_CHARS } from "@/lib/hanzi";
+
+/** Punctuation isn't a scoreable character in a passage (and never gets
+ * underlined as "tricky"). Derived from lib/hanzi's canonical
+ * PUNCTUATION_CHARS rather than listed again here — these two used to be
+ * separate hand-maintained lists that had to be edited in lockstep, and
+ * missing this one silently skewed passage scores. */
+export const PASSAGE_PUNCTUATION: ReadonlySet<string> = new Set(PUNCTUATION_CHARS);
 
 /** Global (punctuation-included) positions of the scoreable, non-punctuation chars in a passage. */
 export function passageQuizPositions(hanzi: string): number[] {

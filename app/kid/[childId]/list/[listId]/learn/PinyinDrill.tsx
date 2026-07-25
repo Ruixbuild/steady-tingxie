@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toMarks, verdict } from "@/lib/pinyin";
-import { speak, WORD_RATE } from "@/lib/tts";
+import { speakWord } from "@/lib/tts";
 import PinyinToneInput from "../PinyinToneInput";
 
 type Props = {
@@ -32,7 +32,7 @@ export default function PinyinDrill({ hanzi, answer, onDone }: Props) {
         <span className="hanzi text-4xl">{hanzi}</span>
         <button
           type="button"
-          onClick={() => speak(hanzi, "zh-CN", WORD_RATE)}
+          onClick={() => speakWord(hanzi)}
           className="btn btn-sm btn-secondary"
         >
           🔊 Listen
