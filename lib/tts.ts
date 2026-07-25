@@ -12,6 +12,15 @@ import { isPunctuationChar } from "@/lib/hanzi";
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 let currentAudio: HTMLAudioElement | null = null;
 
+// Bumped by stopCurrent() so any in-flight multi-segment sequence (see
+// playSequenceFrom/playPausedSequenceFrom) can tell it's been superseded.
+// stopCurrent() only knows how to cancel a currently-*playing* <audio>
+// element — it has no way to cancel a pending setTimeout sitting between
+// two segments of a paused sequence, so without this a stale sequence
+// would resume and play its next segment on top of whatever a later
+// narration call started.
+let narrationEpoch = 0;
+
 const PUNCTUATION_NAMES: Record<string, string> = {
   "，": "逗号",
   "。": "句号",
@@ -96,6 +105,7 @@ async function fetchAudioUrl(text: string, lang: string, rate: number): Promise<
 }
 
 function stopCurrent() {
+  narrationEpoch++;
   if (currentAudio) {
     currentAudio.onended = null;
     currentAudio.pause();
@@ -155,9 +165,10 @@ export function speak(text: string, lang = "zh-CN", rate: number = WORD_RATE) {
   playOne(text, lang, rate);
 }
 
-function playSequenceFrom(texts: string[], i: number, lang: string, rate: number) {
+function playSequenceFrom(texts: string[], i: number, lang: string, rate: number, epoch: number) {
+  if (epoch !== narrationEpoch) return;
   if (i >= texts.length) return;
-  playOne(texts[i], lang, rate, () => playSequenceFrom(texts, i + 1, lang, rate));
+  playOne(texts[i], lang, rate, () => playSequenceFrom(texts, i + 1, lang, rate, epoch));
 }
 
 /** Speaks each string in order, only starting the next once the previous
@@ -165,7 +176,7 @@ function playSequenceFrom(texts: string[], i: number, lang: string, rate: number
  * is inserted between them beyond each utterance's own natural pause. */
 export function speakSequence(texts: string[], lang = "zh-CN", rate: number = DICTATION_RATE) {
   stopCurrent();
-  playSequenceFrom(texts, 0, lang, rate);
+  playSequenceFrom(texts, 0, lang, rate, narrationEpoch);
 }
 
 const DICTATION_PAUSE_MS = 450;
@@ -194,11 +205,14 @@ function playPausedSequenceFrom(
   i: number,
   lang: string,
   rate: number,
-  pauseMs: number
+  pauseMs: number,
+  epoch: number
 ) {
+  if (epoch !== narrationEpoch) return;
   if (i >= segments.length) return;
   playOne(segments[i], lang, rate, () => {
-    setTimeout(() => playPausedSequenceFrom(segments, i + 1, lang, rate, pauseMs), pauseMs);
+    if (epoch !== narrationEpoch) return;
+    setTimeout(() => playPausedSequenceFrom(segments, i + 1, lang, rate, pauseMs, epoch), pauseMs);
   });
 }
 
@@ -215,7 +229,7 @@ export function speakDictation(
   pauseMs: number = DICTATION_PAUSE_MS
 ) {
   stopCurrent();
-  playPausedSequenceFrom(segmentByPunctuation(text), 0, lang, rate, pauseMs);
+  playPausedSequenceFrom(segmentByPunctuation(text), 0, lang, rate, pauseMs, narrationEpoch);
 }
 
 /** Synthesizes exactly the first `revealCount` characters as their own
