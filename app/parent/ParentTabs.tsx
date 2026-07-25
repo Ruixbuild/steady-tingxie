@@ -2,9 +2,9 @@ import Link from "next/link";
 
 const TABS = [
   { label: "听写 Focus", href: "/parent", enabled: true },
+  { label: "Reports", href: "/parent/reports", enabled: true },
   { label: "Upload", href: "/parent/upload", enabled: true },
   { label: "Lists", href: "/parent/lists", enabled: true },
-  { label: "Reports", href: "/parent/reports", enabled: true },
   { label: "Settings", href: "/parent/settings", enabled: true },
   { label: "Support", href: "/parent/support", enabled: true },
 ];
