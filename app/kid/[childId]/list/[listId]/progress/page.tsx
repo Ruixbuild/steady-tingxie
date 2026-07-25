@@ -81,7 +81,7 @@ export default async function ProgressPage({
       <div className="w-full max-w-xl">
         <Link
           href={`/kid/${childId}/list/${listId}`}
-          className="mb-4 inline-block"
+          className="mb-4 inline-block text-base"
           style={{ color: "var(--accent)", fontWeight: 700 }}
         >
           ← Back

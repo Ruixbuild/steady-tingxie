@@ -17,7 +17,7 @@ export default function TestPicker({ childId, listId, listName, counts, supervis
       <div className="w-full max-w-xl flex flex-col gap-4">
         <Link
           href={`/kid/${childId}/list/${listId}`}
-          className="inline-block"
+          className="inline-block text-base"
           style={{ color: "var(--accent)", fontWeight: 700 }}
         >
           ← Back

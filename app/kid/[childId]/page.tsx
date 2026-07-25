@@ -137,7 +137,7 @@ export default async function ChildHomePage({
       <div className="w-full max-w-xl">
         <Link
           href="/"
-          className="mb-4 inline-block"
+          className="mb-4 inline-block text-base"
           style={{ color: "var(--accent)", fontWeight: 700 }}
         >
           ← Switch profile

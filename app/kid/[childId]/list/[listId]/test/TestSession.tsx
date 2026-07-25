@@ -172,7 +172,7 @@ export default function TestSession({
         <div className="w-full max-w-xl">
           <Link
             href={`/kid/${childId}/list/${listId}`}
-            className="mb-4 inline-block"
+            className="mb-4 inline-block text-base"
             style={{ color: "var(--accent)", fontWeight: 700 }}
           >
             ✕ End test
@@ -190,7 +190,7 @@ export default function TestSession({
       <div className="w-full max-w-xl flex flex-col gap-6">
         <Link
           href={`/kid/${childId}/list/${listId}`}
-          className="inline-block"
+          className="inline-block text-base"
           style={{ color: "var(--accent)", fontWeight: 700 }}
         >
           ✕ End test
