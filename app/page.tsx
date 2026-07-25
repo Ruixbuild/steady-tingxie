@@ -15,7 +15,7 @@ export default async function ProfilePickerPage() {
 
   const { data: children } = await supabase
     .from("children")
-    .select("id, name, level, emoji")
+    .select("id, name, emoji")
     .order("created_at", { ascending: true });
 
   if (!children || children.length === 0) {
@@ -40,27 +40,22 @@ export default async function ProfilePickerPage() {
 
       <div
         className="w-full max-w-2xl gap-4 mt-6"
-        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}
       >
         {children.map((child) => (
           <Link
             key={child.id}
             href={`/kid/${child.id}`}
-            className="flex flex-col items-center text-center"
+            className="flex items-center justify-center gap-2"
             style={{
               background: "#fff",
               border: "1.5px solid var(--line)",
-              borderRadius: 24,
-              padding: "10px 16px",
+              borderRadius: 20,
+              padding: "14px 18px",
             }}
           >
-            <div className="flex items-center gap-2">
-              <span style={{ fontSize: "2rem" }}>{child.emoji}</span>
-              <span style={{ fontSize: "1.25rem", fontWeight: 800 }}>{child.name}</span>
-            </div>
-            <span className="text-sm mt-1" style={{ color: "var(--mut)" }}>
-              {child.level}
-            </span>
+            <span style={{ fontSize: "1.75rem" }}>{child.emoji}</span>
+            <span style={{ fontSize: "1.15rem", fontWeight: 800 }}>{child.name}</span>
           </Link>
         ))}
       </div>
