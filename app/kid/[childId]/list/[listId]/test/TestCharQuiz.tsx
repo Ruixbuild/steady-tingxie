@@ -151,7 +151,7 @@ export default function TestCharQuiz({ char, announceWord, word, kind = "words",
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm" style={{ color: "var(--mut)" }}>
-        {done ? "Done ✔ — next one…" : isPunctuation ? "Write it, then tap Done" : "Write it from memory"}
+        {done ? "Done ✔ — next one…" : isPunctuation ? "Write it, then tap Next" : "Write it from memory"}
       </p>
 
       <div className="flex gap-3">
@@ -173,7 +173,7 @@ export default function TestCharQuiz({ char, announceWord, word, kind = "words",
             }}
             className="btn btn-primary"
           >
-            ✓ Done
+            Next →
           </button>
         )}
         <button
