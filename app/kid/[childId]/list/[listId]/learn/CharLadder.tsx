@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader } from "@/lib/hanziCache";
-import { speak, WORD_RATE } from "@/lib/tts";
+import { speak, speakDictation, WORD_RATE, DICTATION_RATE } from "@/lib/tts";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
@@ -37,11 +37,24 @@ const DEFAULT_MESSAGE: Record<Stage, string> = {
   copy: "✏ Now from memory — you can do it!",
 };
 
+// A word/phrase containing a real punctuation mark can only be a 默写
+// passage sentence (plain word-list items never embed punctuation) — so
+// this is enough to route it to the slower, punctuation-paused dictation
+// narration instead of a single flat WORD_RATE utterance, without needing
+// to plumb the item's `kind` through as a new prop.
+function announceText(text: string) {
+  if (Array.from(text).some(isPunctuationChar)) {
+    speakDictation(text, "zh-CN", DICTATION_RATE);
+  } else {
+    speak(text, "zh-CN", WORD_RATE);
+  }
+}
+
 export default function CharLadder({ char, word, announceWord, skipWatch, epochRef, onDone }: Props) {
   const isPunctuation = isPunctuationChar(char);
 
   function announceAgain() {
-    speak(word ?? char, "zh-CN", WORD_RATE);
+    announceText(word ?? char);
   }
   const [stage, setStage] = useState<Stage>(skipWatch ? "trace" : "watch");
   const [message, setMessage] = useState(DEFAULT_MESSAGE[skipWatch ? "trace" : "watch"]);
@@ -79,7 +92,7 @@ export default function CharLadder({ char, word, announceWord, skipWatch, epochR
     // characters are silent until the child taps "Say it again".
     if (announcedCharRef.current !== char) {
       announcedCharRef.current = char;
-      if (announceWord) speak(announceWord, "zh-CN", WORD_RATE);
+      if (announceWord) announceText(announceWord);
     }
 
     if (isPunctuation) {

@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import TestCharQuiz from "./TestCharQuiz";
-import { speak, speakSequence, DICTATION_RATE } from "@/lib/tts";
+import { speakDictation, speakFirstChars, DICTATION_RATE } from "@/lib/tts";
 import type { ItemResult } from "@/lib/testTypes";
 
 type QuizChar = { globalIndex: number; char: string };
@@ -11,11 +11,12 @@ type Props = {
   itemId: string;
   hanzi: string;
   hardMode: boolean;
-  /** "full" offers a replay-the-whole-sentence button plus a manual
-   * "Hear it again" per character. "first2" offers only a replay-first-2
-   * button, with no per-character replay — a harder, closer-to-blind
-   * variant. Neither mode auto-plays on entry or per character; playback
-   * is always child-initiated. */
+  /** "full" offers a replay-the-whole-sentence button. "first2" offers
+   * only a replay-first-2 button — a harder, closer-to-blind variant.
+   * Neither mode has a per-character "Hear it again" (removed — a blind
+   * 默写 test shouldn't let the child replay the exact character they're
+   * about to write). Neither mode auto-plays on entry or per character;
+   * playback is always child-initiated. */
   reveal: "full" | "first2";
   epochRef: { current: number };
   onDone: (result: Extract<ItemResult, { kind: "passage" }>) => void;
@@ -60,7 +61,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, reveal, epochR
         {reveal === "full" ? (
           <button
             type="button"
-            onClick={() => speak(hanzi, "zh-CN", DICTATION_RATE)}
+            onClick={() => speakDictation(hanzi, "zh-CN", DICTATION_RATE)}
             className="btn btn-sm btn-secondary"
           >
             🐢 Read full sentence
@@ -68,7 +69,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, reveal, epochR
         ) : (
           <button
             type="button"
-            onClick={() => speakSequence(quizChars.slice(0, 2).map((c) => c.char), "zh-CN", DICTATION_RATE)}
+            onClick={() => speakFirstChars(hanzi, 2, "zh-CN", DICTATION_RATE)}
             className="btn btn-sm btn-secondary"
           >
             🔊 Read first 2 words
@@ -104,7 +105,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, reveal, epochR
         key={current.globalIndex}
         char={current.char}
         silent
-        hideReplayButton={reveal === "first2"}
+        hideReplayButton
         hardMode={hardMode}
         epochRef={epochRef}
         onDone={handleCharDone}

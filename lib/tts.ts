@@ -3,6 +3,8 @@
 // if that request fails (offline, TTS misconfigured, etc.) — callers never
 // need to know which path actually spoke.
 
+import { isPunctuationChar } from "@/lib/hanzi";
+
 // Chrome garbage-collects a SpeechSynthesisUtterance that has no surviving
 // reference, which cuts audio off mid-word. Keeping the latest one alive
 // here prevents that (fallback path only).
@@ -17,6 +19,11 @@ const PUNCTUATION_NAMES: Record<string, string> = {
   "？": "问号",
   "；": "分号",
   "、": "顿号",
+  "：": "冒号",
+  "“": "前引号",
+  "”": "后引号",
+  "「": "前引号",
+  "」": "后引号",
 };
 
 /** Punctuation marks embedded mid-utterance are frequently swallowed
@@ -159,6 +166,98 @@ function playSequenceFrom(texts: string[], i: number, lang: string, rate: number
 export function speakSequence(texts: string[], lang = "zh-CN", rate: number = DICTATION_RATE) {
   stopCurrent();
   playSequenceFrom(texts, 0, lang, rate);
+}
+
+const DICTATION_PAUSE_MS = 450;
+
+/** Splits at every punctuation mark, keeping the run of hanzi before it
+ * attached (so words/clauses are still spoken together, not character by
+ * character — only the punctuation boundary gets a deliberate gap). Each
+ * segment still contains its own punctuation char; playOne's
+ * namePunctuation() call speaks it by name as usual. */
+function segmentByPunctuation(text: string): string[] {
+  const segments: string[] = [];
+  let current = "";
+  for (const ch of Array.from(text)) {
+    current += ch;
+    if (isPunctuationChar(ch)) {
+      segments.push(current);
+      current = "";
+    }
+  }
+  if (current) segments.push(current);
+  return segments;
+}
+
+function playPausedSequenceFrom(
+  segments: string[],
+  i: number,
+  lang: string,
+  rate: number,
+  pauseMs: number
+) {
+  if (i >= segments.length) return;
+  playOne(segments[i], lang, rate, () => {
+    setTimeout(() => playPausedSequenceFrom(segments, i + 1, lang, rate, pauseMs), pauseMs);
+  });
+}
+
+/** Like speak(), but for a full 默写 sentence: splits at punctuation
+ * boundaries and inserts a real (setTimeout) pause after each one, so the
+ * child has time to actually write the comma/period before the next
+ * clause starts — SSML <break> was tried for this and silently distorts
+ * or truncates audio on this API (see namePunctuation's comment), so the
+ * pause has to be a genuine gap between separate audio clips instead. */
+export function speakDictation(
+  text: string,
+  lang = "zh-CN",
+  rate: number = DICTATION_RATE,
+  pauseMs: number = DICTATION_PAUSE_MS
+) {
+  stopCurrent();
+  playPausedSequenceFrom(segmentByPunctuation(text), 0, lang, rate, pauseMs);
+}
+
+/** Synthesizes and plays the *whole* sentence — so Google TTS resolves
+ * pronunciation/prosody from full context instead of an isolated
+ * fragment — but stops playback shortly after the first `revealCount`
+ * characters' worth of audio, estimated as a proportion of the whole
+ * clip's duration. This is an approximation (assumes roughly even pacing
+ * per character) traded deliberately for natural-sounding speech: reading
+ * just the first N characters in isolation solves the same "how much do I
+ * reveal" problem but sounds robotic/mispronounced without the rest of
+ * the sentence for context. Falls back to speaking only the raw first
+ * `revealCount` characters if audio duration can't be read (offline/Web
+ * Speech fallback path has no reliable mid-clip stop). */
+export function speakFirstChars(
+  text: string,
+  revealCount: number,
+  lang = "zh-CN",
+  rate: number = DICTATION_RATE
+) {
+  stopCurrent();
+  const chars = Array.from(text);
+  const fraction = Math.min(1, revealCount / Math.max(1, chars.length));
+  const spoken = namePunctuation(text);
+
+  fetchAudioUrl(spoken, lang, rate)
+    .then((url) => {
+      const audio = new Audio(url);
+      currentAudio = audio;
+      audio.onended = () => {
+        if (currentAudio === audio) currentAudio = null;
+      };
+      audio.onerror = () => fallbackSpeak(chars.slice(0, revealCount).join(""), lang, rate);
+      audio.addEventListener("loadedmetadata", () => {
+        if (currentAudio !== audio || !isFinite(audio.duration)) return;
+        const cutoffMs = audio.duration * fraction * 1000;
+        setTimeout(() => {
+          if (currentAudio === audio) audio.pause();
+        }, cutoffMs);
+      });
+      audio.play().catch(() => fallbackSpeak(chars.slice(0, revealCount).join(""), lang, rate));
+    })
+    .catch(() => fallbackSpeak(chars.slice(0, revealCount).join(""), lang, rate));
 }
 
 /** Stops whatever is currently narrating (Google TTS audio or the Web

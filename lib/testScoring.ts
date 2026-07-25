@@ -1,6 +1,6 @@
 // Flat scoring + prediction, per handoff spec §2.
 
-export const PASSAGE_PUNCTUATION = new Set(["，", "。", "！", "？", "；", "、"]);
+export const PASSAGE_PUNCTUATION = new Set(["，", "。", "！", "？", "；", "、", "：", "“", "”", "「", "」"]);
 
 /** Global (punctuation-included) positions of the scoreable, non-punctuation chars in a passage. */
 export function passageQuizPositions(hanzi: string): number[] {

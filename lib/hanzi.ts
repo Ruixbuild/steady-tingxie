@@ -5,7 +5,7 @@ const CJK_RE = /[一-鿿]/;
 // load for it and would crash the ladder/quiz if asked to. It's still a
 // scoreable "character" in learn/test (per §punctuation), just rendered as
 // a plain recognize-and-continue step instead of a stroke writer.
-export const PUNCTUATION_RE = /[，。！？；、]/;
+export const PUNCTUATION_RE = /[，。！？；、：“”「」]/;
 
 export function isPunctuationChar(char: string): boolean {
   return PUNCTUATION_RE.test(char);
