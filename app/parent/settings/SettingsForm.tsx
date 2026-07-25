@@ -113,26 +113,6 @@ export default function SettingsForm({
         })}
       </div>
 
-      <div className="card p-5 flex items-center justify-between">
-        <div>
-          <p className="font-semibold">Weekly email digest</p>
-          <p className="text-sm" style={{ color: "var(--mut)" }}>
-            A short Sunday-evening summary of each child&apos;s progress. Coming soon.
-          </p>
-        </div>
-        <span
-          className="btn btn-sm"
-          style={{
-            background: "#fff",
-            color: "var(--mut)",
-            border: "1px solid var(--line)",
-            cursor: "default",
-          }}
-        >
-          Off
-        </span>
-      </div>
-
       {children.filter((c) => atLeastP3(c.level)).length > 0 && (
         <div className="card p-5 flex flex-col gap-3">
           <p className="font-semibold">Hard mode</p>

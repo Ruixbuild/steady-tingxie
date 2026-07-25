@@ -212,7 +212,7 @@ export default async function ParentPage() {
             + Add child
           </Link>
         </div>
-        <ParentTabs active="Focus" />
+        <ParentTabs active="听写 Focus" />
         {focusData.length === 0 && (
           <p style={{ color: "var(--mut)" }}>No children yet.</p>
         )}

@@ -1,17 +1,18 @@
 import Link from "next/link";
 
 const TABS = [
-  { label: "Focus", href: "/parent", enabled: true },
+  { label: "听写 Focus", href: "/parent", enabled: true },
   { label: "Upload", href: "/parent/upload", enabled: true },
   { label: "Lists", href: "/parent/lists", enabled: true },
   { label: "Reports", href: "/parent/reports", enabled: true },
   { label: "Settings", href: "/parent/settings", enabled: true },
+  { label: "Support", href: "/parent/support", enabled: true },
 ];
 
 export default function ParentTabs({
   active,
 }: {
-  active: "Focus" | "Upload" | "Lists" | "Reports" | "Settings";
+  active: "听写 Focus" | "Upload" | "Lists" | "Reports" | "Settings" | "Support";
 }) {
   return (
     <div className="flex flex-wrap gap-2 mb-6">

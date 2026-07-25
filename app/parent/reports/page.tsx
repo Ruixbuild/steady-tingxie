@@ -15,6 +15,12 @@ type ItemRow = { hanzi: string; kind: "words" | "pinyin"; level: number; misses:
 type PassageRow = { hanzi: string; level: number; totalChars: number; trickyChars: string[] };
 type WordsCharRow = { hanzi: string; trickyChars: string[] };
 
+// Mirrors the child-facing "My word garden" progress page's own level
+// labels (app/kid/[childId]/list/[listId]/progress/GardenClient.tsx) —
+// same 0-3 mastery.level values, just written out here too so this page
+// doesn't depend on that file's internals.
+const LEVEL_LABEL = ["New", "Learning", "Almost", "Mastered"] as const;
+
 export default async function ReportsPage() {
   const supabase = await createServerSupabaseClient();
   const {
@@ -202,7 +208,7 @@ export default async function ReportsPage() {
                           <tr key={i} style={{ borderTop: "1px solid var(--line)" }}>
                             <td className="hanzi py-1">{it.hanzi}</td>
                             <td className="py-1">{it.kind}</td>
-                            <td className="py-1">{it.level}</td>
+                            <td className="py-1">{LEVEL_LABEL[it.level] ?? "New"}</td>
                             <td className="py-1">
                               {isTricky(it.kind, it.level, it.misses) ? (
                                 <span style={{ color: "#B8600B" }}>{it.misses}</span>
@@ -245,7 +251,7 @@ export default async function ReportsPage() {
                       <div key={i} className="flex flex-col gap-1">
                         <p className="hanzi">{p.hanzi}</p>
                         <p className="text-sm" style={{ color: "var(--mut)" }}>
-                          Level {p.level} · {p.totalChars - p.trickyChars.length}/{p.totalChars} characters solid
+                          {LEVEL_LABEL[p.level] ?? "New"} · {p.totalChars - p.trickyChars.length}/{p.totalChars} characters solid
                         </p>
                         {p.trickyChars.length > 0 && (
                           <p className="text-sm">
