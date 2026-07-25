@@ -142,21 +142,18 @@ export default async function ChildHomePage({
         >
           ← Switch profile
         </Link>
-        <p
-          className="text-sm font-semibold uppercase tracking-wide mb-1"
-          style={{ color: "var(--accent-d)" }}
-        >
+        <h1 className="text-2xl font-semibold mb-1" style={{ color: "var(--accent-d)" }}>
           听写
-        </p>
+        </h1>
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-4xl">{child.emoji}</span>
-            <h1 className="text-2xl font-semibold">
+            <span className="text-lg">{child.emoji}</span>
+            <p className="text-lg font-semibold">
               {child.name}
               <span className="text-lg font-normal ml-3" style={{ color: "var(--mut)" }}>
                 {child.level}
               </span>
-            </h1>
+            </p>
           </div>
           <Link
             href={`/kid/${childId}/garden`}
