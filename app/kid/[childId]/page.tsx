@@ -142,6 +142,12 @@ export default async function ChildHomePage({
         >
           ← Switch profile
         </Link>
+        <p
+          className="text-sm font-semibold uppercase tracking-wide mb-1"
+          style={{ color: "var(--accent-d)" }}
+        >
+          听写
+        </p>
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-4xl">{child.emoji}</span>

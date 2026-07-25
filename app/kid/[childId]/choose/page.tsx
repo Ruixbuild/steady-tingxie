@@ -35,9 +35,9 @@ export default async function ChooseModulePage({
         <p style={{ color: "var(--mut)" }}>What would you like to practise today?</p>
 
         <Link href={`/kid/${childId}`} className="card p-5 flex flex-col gap-1">
-          <span className="font-semibold">✍️ Ting Xie 听写</span>
+          <span className="font-semibold">✍️ 听写</span>
           <span className="text-sm" style={{ color: "var(--mut)" }}>
-            Stroke writing, pinyin drills, and dictation tests
+            Pinyin, stroke drills, spelling and dictation tests
           </span>
         </Link>
 
