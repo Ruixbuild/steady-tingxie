@@ -132,6 +132,8 @@ export default async function ChildHomePage({
   const effortChars =
     child.chars_week_start === currentMondaySGT() ? child.chars_written_week : 0;
   const daysToTest = activeListRow?.test_date ? daysUntil(activeListRow.test_date) : null;
+  const grade = Number(child.level?.slice(1)) || 6;
+  const defaultWordCount = grade <= 3 ? 3 : 5;
 
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
@@ -168,11 +170,17 @@ export default async function ChildHomePage({
         </div>
 
         <p className="mt-2 text-sm" style={{ color: "var(--mut)" }}>
-          {`🔥${child.streak} day${child.streak === 1 ? "" : "s"} in a row · You've written ${effortChars} characters this week!`}
+          {`🔥${child.streak} day${child.streak === 1 ? "" : "s"} in a row`}
+        </p>
+        <p className="text-sm" style={{ color: "var(--mut)" }}>
+          {`You've written ${effortChars} characters this week!`}
         </p>
 
         {activeListRow && (
           <div className="mt-8">
+            <p className="text-sm mb-2" style={{ color: "var(--mut)" }}>
+              Choose list:
+            </p>
             <ListSelector
               childId={childId}
               lists={activeLists}
@@ -194,6 +202,7 @@ export default async function ChildHomePage({
             pinnedIds={pinnedIds}
             queueIds={queueIds}
             surpriseId={surpriseId}
+            defaultWordCount={defaultWordCount}
           />
         </div>
 

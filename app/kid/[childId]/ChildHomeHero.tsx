@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -12,6 +12,11 @@ type Props = {
   pinnedIds: string[];
   queueIds: string[];
   surpriseId: string | null;
+  /** How many words the day's practice defaults to when nothing is
+   * parent-pinned — 3 for P1-P3, 5 for P4-P6 (see grade calc in
+   * app/kid/[childId]/page.tsx). queueIds is already priority-sorted
+   * (struggling items first), so slicing it gives the weakest words. */
+  defaultWordCount: number;
 };
 
 export default function ChildHomeHero({
@@ -22,23 +27,10 @@ export default function ChildHomeHero({
   pinnedIds,
   queueIds,
   surpriseId,
+  defaultWordCount,
 }: Props) {
   const router = useRouter();
   const [toast, setToast] = useState<string | null>(null);
-  const [showOverlay, setShowOverlay] = useState(false);
-  const [skipWatch, setSkipWatchState] = useState(false);
-
-  useEffect(() => {
-    // localStorage is only available client-side; this is the standard
-    // hydration-safe pattern for reading it once after mount.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSkipWatchState(localStorage.getItem(`skipWatch:${childId}`) === "true");
-  }, [childId]);
-
-  function toggleSkipWatch(next: boolean) {
-    setSkipWatchState(next);
-    localStorage.setItem(`skipWatch:${childId}`, String(next));
-  }
 
   function startLearn(ids: string[]) {
     if (!activeList || ids.length === 0) return;
@@ -54,9 +46,9 @@ export default function ChildHomeHero({
         const supabase = createClient();
         await supabase.from("children").update({ cheer: null }).eq("id", childId);
       }
-      startLearn(pinnedIds.slice(0, 5));
+      startLearn(pinnedIds.slice(0, defaultWordCount));
     } else {
-      setShowOverlay(true);
+      startLearn(queueIds.slice(0, defaultWordCount));
     }
   }
 
@@ -64,8 +56,9 @@ export default function ChildHomeHero({
     if (surpriseId) startLearn([surpriseId]);
   }
 
-  const ctaLabel =
-    pinnedIds.length > 0 ? `▶ ${Math.min(pinnedIds.length, 5)} words today` : "▶ 3 words today";
+  const ctaLabel = `▶ ${
+    pinnedIds.length > 0 ? Math.min(pinnedIds.length, defaultWordCount) : defaultWordCount
+  } words today`;
 
   return (
     <div className="flex flex-col gap-4">
@@ -90,7 +83,6 @@ export default function ChildHomeHero({
             <p className="text-sm opacity-90">
               {activeList.name}
               {daysToTest !== null ? ` · ${daysToTest}d to test` : ""}
-              {pinnedIds.length > 0 ? " · ⭐ picked for you" : ""}
             </p>
             <div className="flex gap-3 flex-wrap">
               <button type="button" onClick={handleCta} className="btn btn-primary">
@@ -116,46 +108,6 @@ export default function ChildHomeHero({
           <p className="text-sm opacity-90">Create a list to start practising.</p>
         )}
       </div>
-
-      <label className="flex items-center gap-2 text-sm" style={{ color: "var(--mut)" }}>
-        <input
-          type="checkbox"
-          checked={skipWatch}
-          onChange={(e) => toggleSkipWatch(e.target.checked)}
-        />
-        Skip Watch — go straight to tracing
-      </label>
-
-      {showOverlay && (
-        <div
-          className="fixed inset-0 flex items-center justify-center"
-          style={{ background: "rgba(29,42,51,.4)", zIndex: 80 }}
-        >
-          <div className="card p-6 flex flex-col gap-4 max-w-xs w-full">
-            <p className="font-semibold text-center">How many words today?</p>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => {
-                setShowOverlay(false);
-                startLearn(queueIds.slice(0, 3));
-              }}
-            >
-              🎯 Quick 3
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => {
-                setShowOverlay(false);
-                startLearn(queueIds.slice(0, 5));
-              }}
-            >
-              💪 Big 5
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

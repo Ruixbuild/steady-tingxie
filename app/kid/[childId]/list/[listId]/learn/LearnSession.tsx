@@ -36,7 +36,6 @@ export default function LearnSession({
   const epochRef = useRef(0);
   const xpRef = useRef(initialXp);
 
-  const [skipWatch, setSkipWatch] = useState(false);
   const [queueIndex, setQueueIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [writtenSoFar, setWrittenSoFar] = useState(0);
@@ -44,13 +43,6 @@ export default function LearnSession({
   const [toast, setToast] = useState<string | null>(null);
   const [complete, setComplete] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-
-  useEffect(() => {
-    // localStorage is only available client-side; this is the standard
-    // hydration-safe pattern for reading it once after mount.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSkipWatch(localStorage.getItem(`skipWatch:${childId}`) === "true");
-  }, [childId]);
 
   useEffect(() => stopNarration, []);
 
@@ -219,7 +211,7 @@ export default function LearnSession({
           char={strokeChars(currentItem.hanzi)[charIndex]}
           announceWord={charIndex === 0 ? currentItem.hanzi : undefined}
           word={currentItem.hanzi}
-          skipWatch={skipWatch}
+          skipWatch={false}
           epochRef={epochRef}
           onDone={handleCharDone}
         />
