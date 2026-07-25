@@ -11,7 +11,6 @@ type Props = {
   daysToTest: number | null;
   pinnedIds: string[];
   queueIds: string[];
-  surpriseId: string | null;
   /** How many words the day's practice defaults to when nothing is
    * parent-pinned — 3 for P1-P3, 5 for P4-P6 (see grade calc in
    * app/kid/[childId]/page.tsx). queueIds is already priority-sorted
@@ -26,7 +25,6 @@ export default function ChildHomeHero({
   daysToTest,
   pinnedIds,
   queueIds,
-  surpriseId,
   defaultWordCount,
 }: Props) {
   const router = useRouter();
@@ -59,10 +57,6 @@ export default function ChildHomeHero({
     startLearn(wordsToday);
   }
 
-  function handleSurprise() {
-    if (surpriseId) startLearn([surpriseId]);
-  }
-
   const ctaLabel = `▶ ${wordsToday.length} word${wordsToday.length === 1 ? "" : "s"} today`;
 
   return (
@@ -89,27 +83,13 @@ export default function ChildHomeHero({
               {activeList.name}
               {daysToTest !== null ? ` · ${daysToTest}d to test` : ""}
             </p>
-            {wordsToday.length === 0 && !surpriseId && (
+            {wordsToday.length === 0 && (
               <p className="text-sm opacity-90">🎉 All caught up for today!</p>
             )}
             <div className="flex gap-3 flex-wrap">
               {wordsToday.length > 0 && (
                 <button type="button" onClick={handleCta} className="btn btn-primary">
                   {ctaLabel}
-                </button>
-              )}
-              {surpriseId && (
-                <button
-                  type="button"
-                  onClick={handleSurprise}
-                  className="btn"
-                  style={{
-                    background: "rgba(255,255,255,.2)",
-                    color: "#fff",
-                    border: "1px solid rgba(255,255,255,.4)",
-                  }}
-                >
-                  🎲 Surprise word
                 </button>
               )}
             </div>

@@ -7,11 +7,6 @@ import { daysUntil } from "@/lib/dates";
 import ChildHomeHero from "./ChildHomeHero";
 import ListSelector from "./ListSelector";
 
-function pickRandom<T>(arr: T[]): T | null {
-  if (arr.length === 0) return null;
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
 function currentMondaySGT(): string {
   const sgtShifted = new Date(Date.now() + 8 * 60 * 60 * 1000);
   const day = sgtShifted.getUTCDay(); // 0=Sun..6=Sat
@@ -73,7 +68,6 @@ export default async function ChildHomePage({
 
   let pinnedIds: string[] = [];
   let queueIds: string[] = [];
-  let surpriseId: string | null = null;
 
   if (activeListRow) {
     const { data: sectionsRaw } = await supabase
@@ -114,14 +108,6 @@ export default async function ChildHomePage({
         .filter((m) => m.level === 0 && m.misses === 0)
         .map((m) => m.item_id);
       queueIds = Array.from(new Set([...strugglingSorted, ...untouched]));
-
-      // Falls back to the full pool once everything's mastered, so the
-      // surprise button doesn't just disappear for a child who has
-      // finished the list — that made it look like some profiles had the
-      // feature and others didn't, when it was really a mastery-progress
-      // artifact.
-      const nonMastered = rows.filter((m) => m.level < 3).map((m) => m.item_id);
-      surpriseId = pickRandom(nonMastered.length > 0 ? nonMastered : rows.map((m) => m.item_id));
     }
 
     // A parent-pinned 默写 passage doesn't compete for the "N words today"
@@ -212,7 +198,6 @@ export default async function ChildHomePage({
             daysToTest={daysToTest}
             pinnedIds={pinnedIds}
             queueIds={queueIds}
-            surpriseId={surpriseId}
             defaultWordCount={defaultWordCount}
           />
         </div>
