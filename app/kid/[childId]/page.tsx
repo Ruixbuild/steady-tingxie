@@ -177,7 +177,7 @@ export default async function ChildHomePage({
         </p>
 
         {activeListRow && (
-          <div className="mt-8 flex items-center gap-2 flex-wrap">
+          <div className="mt-6 flex items-center gap-2 flex-wrap">
             <p className="text-sm" style={{ color: "var(--mut)" }}>
               Choose list:
             </p>
@@ -189,7 +189,7 @@ export default async function ChildHomePage({
           </div>
         )}
 
-        <div className="mt-8">
+        <div className="mt-4">
           <ChildHomeHero
             childId={childId}
             cheer={child.cheer}
@@ -205,7 +205,7 @@ export default async function ChildHomePage({
           />
         </div>
 
-        <h2 className="text-lg font-semibold mb-3 mt-8">My lists</h2>
+        <h2 className="text-lg font-semibold mb-3 mt-6">My lists</h2>
         <div className="flex flex-col gap-3">
           {(!lists || lists.length === 0) && (
             <p style={{ color: "var(--mut)" }}>

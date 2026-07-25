@@ -71,7 +71,7 @@ export default function ChildHomeHero({
       )}
 
       <div
-        className="rounded-[26px] p-6 text-white flex flex-col gap-3"
+        className="rounded-2xl px-5 py-4 text-white flex items-center justify-between gap-3 flex-wrap"
         style={{
           background: "linear-gradient(135deg,#2C82C9,#5AA7DC)",
           boxShadow: "0 8px 24px rgba(44,130,201,.18)",
@@ -82,17 +82,13 @@ export default function ChildHomeHero({
             <p className="text-sm opacity-90">
               {activeList.name}
               {daysToTest !== null ? ` · ${daysToTest}d to test` : ""}
+              {wordsToday.length === 0 && " · 🎉 All caught up for today!"}
             </p>
-            {wordsToday.length === 0 && (
-              <p className="text-sm opacity-90">🎉 All caught up for today!</p>
+            {wordsToday.length > 0 && (
+              <button type="button" onClick={handleCta} className="btn btn-primary btn-sm shrink-0">
+                {ctaLabel}
+              </button>
             )}
-            <div className="flex gap-3 flex-wrap">
-              {wordsToday.length > 0 && (
-                <button type="button" onClick={handleCta} className="btn btn-primary">
-                  {ctaLabel}
-                </button>
-              )}
-            </div>
           </>
         ) : (
           <p className="text-sm opacity-90">Create a list to start practising.</p>
