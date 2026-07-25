@@ -3,8 +3,6 @@
 // if that request fails (offline, TTS misconfigured, etc.) — callers never
 // need to know which path actually spoke.
 
-import { isPunctuationChar } from "@/lib/hanzi";
-
 // Chrome garbage-collects a SpeechSynthesisUtterance that has no surviving
 // reference, which cuts audio off mid-word. Keeping the latest one alive
 // here prevents that (fallback path only).
@@ -181,23 +179,41 @@ export function speakSequence(texts: string[], lang = "zh-CN", rate: number = DI
 
 const DICTATION_PAUSE_MS = 450;
 
-/** Splits at every punctuation mark, keeping the run of hanzi before it
- * attached (so words/clauses are still spoken together, not character by
- * character — only the punctuation boundary gets a deliberate gap). Each
- * segment still contains its own punctuation char; playOne's
- * namePunctuation() call speaks it by name as usual. */
+// Only a comma or full stop earns a deliberate pause — a child needs time
+// to actually write that character before the next clause starts. Other
+// marks (colon, dialogue quotes, etc.) are still spoken (namePunctuation
+// names them by voice) but don't interrupt the flow of the sentence, since
+// grammatically they don't mark a place to pause writing.
+const PAUSE_PUNCTUATION = new Set(["，", "。"]);
+
+/** Splits only at a comma/full-stop, keeping everything before it attached
+ * (so words/clauses, and any non-pausing punctuation inside them, are still
+ * spoken together as one utterance — only a ，/。 boundary gets a
+ * deliberate gap). Each segment still contains its own trailing punctuation
+ * char; playOne's namePunctuation() call speaks it by name as usual. */
 function segmentByPunctuation(text: string): string[] {
   const segments: string[] = [];
   let current = "";
   for (const ch of Array.from(text)) {
     current += ch;
-    if (isPunctuationChar(ch)) {
+    if (PAUSE_PUNCTUATION.has(ch)) {
       segments.push(current);
       current = "";
     }
   }
   if (current) segments.push(current);
   return segments;
+}
+
+// Kicks off the network fetch for a segment's audio without awaiting or
+// playing it — called for the *next* segment as soon as the current one
+// starts, so its clip is already cached by the time the pause between them
+// ends. Without this, playOne's fetchAudioUrl() call for each segment only
+// starts after the previous segment finishes, and on a real network that
+// round-trip can easily outlast the fixed pause — reading as narration
+// having stopped rather than merely buffering the next clip.
+function prefetchSegment(text: string, lang: string, rate: number) {
+  fetchAudioUrl(namePunctuation(text), lang, rate).catch(() => {});
 }
 
 function playPausedSequenceFrom(
@@ -210,6 +226,7 @@ function playPausedSequenceFrom(
 ) {
   if (epoch !== narrationEpoch) return;
   if (i >= segments.length) return;
+  if (i + 1 < segments.length) prefetchSegment(segments[i + 1], lang, rate);
   playOne(segments[i], lang, rate, () => {
     if (epoch !== narrationEpoch) return;
     setTimeout(() => playPausedSequenceFrom(segments, i + 1, lang, rate, pauseMs, epoch), pauseMs);
