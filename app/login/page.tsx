@@ -80,6 +80,9 @@ function LoginPageContent() {
             >
               {status === "sending" ? "Sending…" : "Send me a link"}
             </button>
+            <p className="text-sm text-center" style={{ color: "var(--mut)" }}>
+              Free access for a limited period.
+            </p>
             {status === "error" && (
               <p className="text-sm text-center" style={{ color: "var(--miss)" }}>
                 {errorMessage}
