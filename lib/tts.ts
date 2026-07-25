@@ -218,46 +218,29 @@ export function speakDictation(
   playPausedSequenceFrom(segmentByPunctuation(text), 0, lang, rate, pauseMs);
 }
 
-/** Synthesizes and plays the *whole* sentence — so Google TTS resolves
- * pronunciation/prosody from full context instead of an isolated
- * fragment — but stops playback shortly after the first `revealCount`
- * characters' worth of audio, estimated as a proportion of the whole
- * clip's duration. This is an approximation (assumes roughly even pacing
- * per character) traded deliberately for natural-sounding speech: reading
- * just the first N characters in isolation solves the same "how much do I
- * reveal" problem but sounds robotic/mispronounced without the rest of
- * the sentence for context. Falls back to speaking only the raw first
- * `revealCount` characters if audio duration can't be read (offline/Web
- * Speech fallback path has no reliable mid-clip stop). */
+/** Synthesizes exactly the first `revealCount` characters as their own
+ * utterance, so playback ends naturally (real trailing decay, no cut-off
+ * mid-syllable) instead of guessing a cutoff point.
+ *
+ * An earlier version synthesized the *whole* sentence for full-context
+ * pronunciation and then paused mid-clip at an estimated
+ * duration-proportion — that made the audio stop abruptly (sometimes
+ * mid-syllable) since the estimate assumes even pacing per character,
+ * which isn't how speech actually paces. Synthesizing just the reveal
+ * substring trades a small amount of cross-sentence prosodic context for
+ * a clip that starts and ends cleanly — the same tradeoff the original
+ * per-character sequence made, just as one combined utterance instead of
+ * N separate ones (so the two characters are still spoken together
+ * naturally, not choppily one-by-one). */
 export function speakFirstChars(
   text: string,
   revealCount: number,
   lang = "zh-CN",
   rate: number = DICTATION_RATE
 ) {
+  const firstChars = Array.from(text).slice(0, revealCount).join("");
   stopCurrent();
-  const chars = Array.from(text);
-  const fraction = Math.min(1, revealCount / Math.max(1, chars.length));
-  const spoken = namePunctuation(text);
-
-  fetchAudioUrl(spoken, lang, rate)
-    .then((url) => {
-      const audio = new Audio(url);
-      currentAudio = audio;
-      audio.onended = () => {
-        if (currentAudio === audio) currentAudio = null;
-      };
-      audio.onerror = () => fallbackSpeak(chars.slice(0, revealCount).join(""), lang, rate);
-      audio.addEventListener("loadedmetadata", () => {
-        if (currentAudio !== audio || !isFinite(audio.duration)) return;
-        const cutoffMs = audio.duration * fraction * 1000;
-        setTimeout(() => {
-          if (currentAudio === audio) audio.pause();
-        }, cutoffMs);
-      });
-      audio.play().catch(() => fallbackSpeak(chars.slice(0, revealCount).join(""), lang, rate));
-    })
-    .catch(() => fallbackSpeak(chars.slice(0, revealCount).join(""), lang, rate));
+  playOne(firstChars, lang, rate);
 }
 
 /** Stops whatever is currently narrating (Google TTS audio or the Web
