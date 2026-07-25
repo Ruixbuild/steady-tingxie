@@ -26,8 +26,8 @@ export default async function SupportPage() {
         <div className="card p-5">
           <p>
             If you have any feedback or support you require, please email{" "}
-            <a href="mailto:support-steadytingxie@kidsgrow.sg" style={{ color: "var(--accent)", fontWeight: 700 }}>
-              support-steadytingxie@kidsgrow.sg
+            <a href="mailto:support-tingxie@kidsgrow.sg" style={{ color: "var(--accent)", fontWeight: 700 }}>
+              support-tingxie@kidsgrow.sg
             </a>
             .
           </p>
