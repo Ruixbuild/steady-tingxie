@@ -47,6 +47,7 @@ export default async function ParentPage() {
       weakTop5: [],
       weakByKind: { words: [], pinyin: [], passage: [] },
       weakPassageChars: [],
+      weakWordsChars: [],
     };
 
     if (!activeList) {
@@ -70,7 +71,7 @@ export default async function ParentPage() {
       nonPassageItemIds.length > 0
         ? await supabase
             .from("mastery")
-            .select("item_id, level, misses")
+            .select("item_id, level, misses, char_misses")
             .eq("child_id", child.id)
             .in("item_id", nonPassageItemIds)
         : { data: [] };
@@ -81,6 +82,7 @@ export default async function ParentPage() {
     const passageCharMissed: boolean[] = [];
     const weakPassageChars: string[] = [];
     const weakPassageItemIds: string[] = [];
+    const weakWordsChars: string[] = [];
     for (const s of sections ?? []) {
       if (s.kind === "passage") {
         // predicted% needs passage char_misses too
@@ -107,6 +109,20 @@ export default async function ParentPage() {
       } else {
         for (const it of s.items ?? []) {
           nonPassageLevels.push(masteryByItem.get(it.id)?.level ?? 0);
+
+          // A ci yu can itself be a long sentence on an upper-primary list,
+          // so which specific character was missed is as useful here as it
+          // is for 默写 — mirrors the passage branch above, just sourced
+          // from the batch mastery query instead of a per-item lookup
+          // (words items don't need predicted%'s per-char weighting, so
+          // there's no reason to pay passage's N+1 query pattern here too).
+          if (s.kind === "words") {
+            const misses = (masteryByItem.get(it.id)?.char_misses ?? {}) as Record<string, number>;
+            const chars = Array.from(it.hanzi);
+            for (const pos of passageQuizPositions(it.hanzi)) {
+              if ((misses[String(pos)] ?? 0) > 0) weakWordsChars.push(chars[pos]);
+            }
+          }
         }
       }
     }
@@ -179,6 +195,7 @@ export default async function ParentPage() {
       weakTop5,
       weakByKind,
       weakPassageChars,
+      weakWordsChars,
       wordsPerDay,
     });
   }

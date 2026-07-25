@@ -13,6 +13,7 @@ type SectionRaw = {
 
 type ItemRow = { hanzi: string; kind: "words" | "pinyin"; level: number; misses: number };
 type PassageRow = { hanzi: string; level: number; totalChars: number; trickyChars: string[] };
+type WordsCharRow = { hanzi: string; trickyChars: string[] };
 
 export default async function ReportsPage() {
   const supabase = await createServerSupabaseClient();
@@ -57,13 +58,14 @@ export default async function ReportsPage() {
       nonPassageItemIds.length > 0
         ? await supabase
             .from("mastery")
-            .select("item_id, level, misses")
+            .select("item_id, level, misses, char_misses")
             .eq("child_id", child.id)
             .in("item_id", nonPassageItemIds)
         : { data: [] };
     const masteryByItem = new Map((masteryRows ?? []).map((m) => [m.item_id, m]));
 
     const itemRows: ItemRow[] = [];
+    const wordsCharRows: WordsCharRow[] = [];
     for (const s of sections ?? []) {
       if (s.kind === "passage") continue;
       for (const it of s.items ?? []) {
@@ -74,6 +76,19 @@ export default async function ReportsPage() {
           level: m?.level ?? 0,
           misses: m?.misses ?? 0,
         });
+
+        // A ci yu can itself be a long sentence on an upper-primary list —
+        // mirrors passageRows below, just only listed when it actually has
+        // a weak character, so a plain 2-4 character word with no misses
+        // doesn't clutter the report with an empty row.
+        if (s.kind === "words") {
+          const charMisses = (m?.char_misses ?? {}) as Record<string, number>;
+          const chars = Array.from(it.hanzi);
+          const trickyChars = passageQuizPositions(it.hanzi)
+            .filter((pos) => (charMisses[String(pos)] ?? 0) > 0)
+            .map((pos) => chars[pos]);
+          if (trickyChars.length > 0) wordsCharRows.push({ hanzi: it.hanzi, trickyChars });
+        }
       }
     }
     itemRows.sort((a, b) => b.misses - a.misses || a.level - b.level);
@@ -128,6 +143,7 @@ export default async function ReportsPage() {
         actualTotal: list.actual_total,
       },
       itemRows,
+      wordsCharRows,
       passageRows,
       attempts,
     });
@@ -198,6 +214,25 @@ export default async function ReportsPage() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+
+                {(r.wordsCharRows?.length ?? 0) > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm" style={{ color: "var(--mut)" }}>
+                      词语 — characters needing practice
+                    </p>
+                    {r.wordsCharRows!.map((w, i) => (
+                      <div key={i} className="flex flex-col gap-1">
+                        <p className="hanzi">{w.hanzi}</p>
+                        <p className="text-sm">
+                          Needs practice:{" "}
+                          <span className="hanzi" style={{ color: "#B8600B" }}>
+                            {w.trickyChars.join(" ")}
+                          </span>
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 )}
 

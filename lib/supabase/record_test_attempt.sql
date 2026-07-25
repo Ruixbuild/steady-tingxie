@@ -25,6 +25,16 @@
 -- as tricky forever after even a single miss, no matter how many times it
 -- was mastered afterward. Doesn't retroactively fix rows already stuck this
 -- way — see this file's usage note for a one-time backfill.
+-- 'words' items now ALSO record per-character char_misses, the same way
+-- 'passage' always has — upper-primary ci yu can themselves be long
+-- sentences, so "which character in this word" is as useful there as it is
+-- for mo xie. Purely additive: the item-level pass/fail, level, and misses
+-- logic for 'words' is unchanged, this only adds the per-position tracking
+-- alongside it. Position is the character's 0-based index into the client's
+-- `chars` array for that item, which — since TestSession quizzes a word's
+-- characters strictly in order — is the same indexing passage already uses
+-- (Array.from(hanzi) position), no separate globalIndex needed from the
+-- client for 'words' the way passage sends one explicitly.
 drop function if exists record_test_attempt(uuid, uuid, text, boolean, int, int, jsonb);
 
 create or replace function record_test_attempt(
@@ -65,6 +75,7 @@ declare
   v_best_before int;
   v_parent_id uuid;
   v_char jsonb;
+  v_char_row record;
   v_strokes int;
   v_total_mistakes int;
   v_base int;
@@ -129,13 +140,21 @@ begin
 
     elsif v_kind = 'words' then
       v_passed := true;
-      for v_char in select * from jsonb_array_elements(coalesce(v_item->'chars', '[]'::jsonb)) loop
-        v_strokes := coalesce((v_char->>'strokes')::int, 10);
-        v_total_mistakes := coalesce((v_char->>'totalMistakes')::int, 999);
+      v_missed := '[]'::jsonb;
+      v_missed_count := 0;
+
+      for v_char_row in
+        select value as char_data, ordinality - 1 as pos
+        from jsonb_array_elements(coalesce(v_item->'chars', '[]'::jsonb)) with ordinality as t(value, ordinality)
+      loop
+        v_strokes := coalesce((v_char_row.char_data->>'strokes')::int, 10);
+        v_total_mistakes := coalesce((v_char_row.char_data->>'totalMistakes')::int, 999);
         v_base := greatest(2, ceil(v_strokes * 0.4));
         v_threshold := case when record_test_attempt.hard_mode then ceil(v_base * 0.25) else v_base end;
         if v_total_mistakes > v_threshold then
           v_passed := false;
+          v_missed := v_missed || to_jsonb(v_char_row.pos);
+          v_missed_count := v_missed_count + 1;
         end if;
       end loop;
 
@@ -143,6 +162,22 @@ begin
       if v_passed then v_score := v_score + 1; end if;
       v_words_total := v_words_total + 1;
       if v_passed then v_words_score := v_words_score + 1; end if;
+
+      if not record_test_attempt.supervised and v_missed_count > 0 then
+        select m.char_misses into v_char_misses from mastery m
+          where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
+        v_char_misses := coalesce(v_char_misses, '{}'::jsonb);
+
+        for v_pos in select jsonb_array_elements_text(v_missed) loop
+          v_char_misses := jsonb_set(
+            v_char_misses, array[v_pos],
+            to_jsonb(coalesce((v_char_misses->>v_pos)::int, 0) + 1)
+          );
+        end loop;
+
+        update mastery m set char_misses = v_char_misses
+          where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
+      end if;
 
       if not record_test_attempt.supervised then
         select m.prev_fail into v_prev_fail from mastery m

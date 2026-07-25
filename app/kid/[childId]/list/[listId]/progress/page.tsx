@@ -68,7 +68,10 @@ export default async function ProgressPage({
         hanzi: it.hanzi,
         level: m?.level ?? 0,
         misses: m?.misses ?? 0,
-        charMisses: s.kind === "passage" ? ((m?.char_misses ?? {}) as Record<string, number>) : undefined,
+        charMisses:
+          s.kind === "passage" || s.kind === "words"
+            ? ((m?.char_misses ?? {}) as Record<string, number>)
+            : undefined,
       };
     }),
   }));

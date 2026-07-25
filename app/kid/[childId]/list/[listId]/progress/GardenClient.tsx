@@ -50,7 +50,8 @@ export default function GardenClient({
     .filter(
       (it) =>
         isTricky(it.kind, it.level, it.misses) ||
-        (it.kind === "passage" && Object.values(it.charMisses ?? {}).some((n) => n > 0))
+        ((it.kind === "passage" || it.kind === "words") &&
+          Object.values(it.charMisses ?? {}).some((n) => n > 0))
     )
     .map((it) => it.id);
 
@@ -90,7 +91,7 @@ export default function GardenClient({
           <p className="text-sm mb-2" style={{ color: "var(--mut)" }}>
             {KIND_LABEL[section.kind]}
           </p>
-          {section.kind === "passage" ? (
+          {section.kind !== "pinyin" ? (
             <div className="flex flex-col gap-3">
               {section.items.map((item) => {
                 const emoji =

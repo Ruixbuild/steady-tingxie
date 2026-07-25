@@ -85,7 +85,8 @@ export default async function LearnPage({
         hanzi: it.hanzi,
         pinyin: it.pinyin,
         kind,
-        charMisses: kind === "passage" ? masteryByItem.get(it.id)?.char_misses : undefined,
+        charMisses:
+          kind === "passage" || kind === "words" ? masteryByItem.get(it.id)?.char_misses : undefined,
       }));
     allItems = allItems.concat(sectionItems);
   }

@@ -15,8 +15,10 @@ export type LearnItem = {
   pinyin: string | null;
   kind: "words" | "pinyin" | "passage";
   /** Per-character miss counts (keyed by Array.from(hanzi) position) from
-   * past 默写 tests — used to flag which characters in the passage need
-   * more practice. Only ever set for kind "passage". */
+   * past tests — used to flag which characters need more practice. Set for
+   * kind "passage" (always) and "words" (a ci yu can itself be a long
+   * sentence on an upper-primary list, so per-character tracking matters
+   * there too) — never for "pinyin", which has no per-character concept. */
   charMisses?: Record<string, number>;
 };
 
@@ -167,7 +169,7 @@ export default function LearnSession({
         ✓ I know this
       </button>
 
-      {currentItem.kind === "passage" && (
+      {currentItem.kind !== "pinyin" && strokeChars(currentItem.hanzi).length > 1 && (
         <p className="text-sm text-center" style={{ color: "var(--mut)" }}>
           💡 Tap any word below to jump straight to it — brown-bordered ones need more practice
         </p>
@@ -178,7 +180,7 @@ export default function LearnSession({
           {strokeChars(currentItem.hanzi).map((c, i) => {
             const done = i < charIndex;
             const on = i === charIndex;
-            const clickable = currentItem.kind === "passage" && i !== charIndex;
+            const clickable = i !== charIndex;
             const tricky = (currentItem.charMisses?.[String(i)] ?? 0) > 0;
             return (
               <span
