@@ -3,7 +3,7 @@
 // if that request fails (offline, TTS misconfigured, etc.) — callers never
 // need to know which path actually spoke.
 
-import { hasPunctuation, type PunctuationChar } from "@/lib/hanzi";
+import { type PunctuationChar } from "@/lib/hanzi";
 
 // Chrome garbage-collects a SpeechSynthesisUtterance that has no surviving
 // reference, which cuts audio off mid-word. Keeping the latest one alive
@@ -160,14 +160,12 @@ async function playOne(text: string, lang: string, rate: number, onend?: () => v
 /** Low-level escape hatch: speaks `text` flat at whatever `rate` is given,
  * with no punctuation segmentation. Only the Revision feature calls this
  * directly (as `speak(hanzi)`, taking the default rate). New TingXie code
- * should use the intent functions at the bottom of this file instead —
- * they pick the rate and pacing for you, which is the whole point. */
+ * should go through lib/narration instead, which picks the rate and pause
+ * length from the item's format — that's the whole point. */
 export function speak(text: string, lang = "zh-CN", rate: number = WORD_RATE) {
   stopCurrent();
   playOne(text, lang, rate);
 }
-
-const DICTATION_PAUSE_MS = 450;
 
 // Only a comma or full stop earns a deliberate pause — a child needs time
 // to actually write that character before the next clause starts. Other
@@ -224,25 +222,19 @@ function playPausedSequenceFrom(
 }
 
 // ---------------------------------------------------------------------------
-// Intent-based API — prefer these over the primitives above.
+// Playback mechanism. This module deliberately knows NOTHING about item
+// kinds (pinyin / ci yu / mo xie) or screens — it only knows how to speak
+// text at a given rate with a given pause after each ，/。.
 //
-// Call sites should say WHAT they're narrating, not how. The rate and the
-// punctuation/segmentation policy for each kind of content are decided once,
-// here, so the same kind of content is always spoken the same way on every
-// screen.
+// Which rate and which pause length a given kind of item gets on a given
+// screen is policy, and lives in exactly one place: lib/narration.ts. App
+// code should import from there, not from here.
 //
-// This exists because the policy used to be re-decided at each of ~11 call
-// sites, and they drifted: the Reader ("Dictation") screen was reading full
-// punctuated sentences with the flat speak() — no writing pauses — while
-// Learn and Test used the paused speakDictation() for the identical content,
-// and Reader's "read first 2" used the choppy per-character speakSequence()
-// long after Test had moved to a single clean clip. Both were the same bug
-// reported twice on two screens. Routing through these functions makes that
-// class of drift impossible: fix the pacing here and every surface follows.
-//
-// The primitives above (speak/speakDictation/speakSequence/speakFirstChars)
-// keep their signatures for the Revision feature's existing call sites — new
-// TingXie code should reach for the intent functions instead.
+// That split exists because policy used to be re-decided at each of ~11
+// call sites and they drifted — and because the first attempt to fix it
+// inferred the item's kind by sniffing the text for punctuation, which is
+// invalid: a ci yu can itself be a full punctuated sentence, so sniffing
+// misread those as mo xie and gave them dictation pacing.
 // ---------------------------------------------------------------------------
 
 /** A single character in isolation — e.g. tapping one char to hear it. */
@@ -251,40 +243,22 @@ export function speakChar(char: string) {
   playOne(char, "zh-CN", CHAR_RATE);
 }
 
-/** A word or short phrase prompt (word list, pinyin drill, test prompt).
- * Automatically upgrades to punctuation-paused narration when the text
- * turns out to be a 默写 passage sentence rather than a plain word — only
- * passages ever embed punctuation, so no caller needs to pass `kind`. */
-export function speakWord(text: string) {
-  if (hasPunctuation(text)) {
-    speakPassage(text);
-    return;
-  }
-  stopCurrent();
-  playOne(text, "zh-CN", WORD_RATE);
-}
-
-/** A full 默写 sentence, read at dictation pace with a real pause after
- * every ，/。 so the child has time to write it before the next clause
- * starts.
+/** Speaks `text` at `rate`, inserting a real `pauseMs` gap after every
+ * ，/。 so the child can write that character before the next clause. A
+ * `pauseMs` of 0 still works — unpunctuated text is a single segment
+ * either way, so one code path covers a 2-character ci yu, a punctuated
+ * ci yu sentence, and a full mo xie passage.
  *
  * The pause is a genuine gap between separate audio clips, not markup:
  * SSML <break> was tried for this and silently distorts or truncates audio
  * on this API (see namePunctuation's comment above). */
-export function speakPassage(text: string) {
+export function speakPaced(text: string, rate: number, pauseMs: number) {
   stopCurrent();
-  playPausedSequenceFrom(
-    segmentByPunctuation(text),
-    0,
-    "zh-CN",
-    DICTATION_RATE,
-    DICTATION_PAUSE_MS,
-    narrationEpoch
-  );
+  playPausedSequenceFrom(segmentByPunctuation(text), 0, "zh-CN", rate, pauseMs, narrationEpoch);
 }
 
-/** Just the opening `count` characters of a passage, synthesized as one
- * clip — the "read first 2 words" hint.
+/** Just the opening `count` characters, synthesized as one clip — the
+ * "read first 2 words" hint.
  *
  * Two rejected alternatives, both of which shipped and were reported as
  * bugs: (a) synthesizing the whole sentence and pausing mid-clip at an
@@ -294,10 +268,20 @@ export function speakPassage(text: string) {
  * which sounds choppy and robotic. Synthesizing exactly the opening
  * substring trades a little cross-sentence prosody for a clip that starts
  * and ends cleanly, with the characters still spoken together naturally. */
-export function speakPassageOpening(text: string, count: number) {
-  const opening = Array.from(text).slice(0, count).join("");
+export function speakOpening(text: string, count: number, rate: number) {
   stopCurrent();
-  playOne(opening, "zh-CN", DICTATION_RATE);
+  playOne(Array.from(text).slice(0, count).join(""), "zh-CN", rate);
+}
+
+/** Warms the audio cache for text that hasn't been asked for yet, so the
+ * first tap plays instantly instead of paying a cold /api/tts round-trip.
+ * Only the first segment is fetched: that's what determines perceived
+ * latency, and playPausedSequenceFrom already warms each following segment
+ * while the current one plays. Fire-and-forget — never throws, never
+ * interrupts whatever is currently playing. */
+export function prefetchPaced(text: string, rate: number) {
+  const [first] = segmentByPunctuation(text);
+  if (first) prefetchSegment(first, "zh-CN", rate);
 }
 
 /** Celebration/encouragement line, spoken at conversational speed. */

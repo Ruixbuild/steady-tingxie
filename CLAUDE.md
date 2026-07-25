@@ -50,9 +50,14 @@ Anything that touches more than one table atomically is a `plpgsql` function in 
 
 `lib/hanziCache.ts` wraps `hanzi-writer`'s character data loader with caching. Components that render a stroke quiz/animation (`CharLadder.tsx` in Learn, the char components in Test, `components/FreehandPad.tsx`) all follow an **epoch-guard pattern**: a mutable `epochRef.current` counter is bumped on unmount/char-change, and any async callback (stroke-load, quiz-complete) checks it's still current before touching state — this prevents a stale callback from a just-replaced character firing into the wrong component instance.
 
-### TTS (`lib/tts.ts`)
+### Narration: policy (`lib/narration.ts`) vs mechanism (`lib/tts.ts`)
 
-Thin wrapper over the Web Speech API (`speak`/`speakSequence`), not a third-party TTS service. Deliberately defers `speechSynthesis.speak()` one tick past `.cancel()` and calls `.resume()` first — Chrome can silently drop a `speak()` issued in the same tick as `cancel()`, and separately auto-pauses the queue after ~15s idle. Don't call the raw `window.speechSynthesis` API directly elsewhere; use this wrapper.
+Split deliberately, and the split matters:
+
+- **`lib/narration.ts` is the single source of truth for how each item format sounds on each screen.** Two tables — `PACING` (rate + pause length per `ItemKind`) and `AUTO_ANNOUNCE` (does it speak on arrival, per surface × kind) — cover all nine combinations of `words`/`pinyin`/`passage` × `learn`/`test`/`reader`. **App code imports from here, never straight from `lib/tts`.** To change narration behaviour, edit one cell; every screen follows. This exists because the policy was previously restated at ~11 call sites and drifted, so feedback about one format or one screen got fixed there while the others silently stayed behind.
+- **Never infer the item's format from its text.** A `words` item (ci yu 词语) may be a 2-character word, a 4-character phrase, *or* a full sentence with punctuation — so "contains punctuation ⇒ it's a `passage`" is wrong and silently misclassified real items as mo xie. Pass the section `kind` down instead; `CharLadder`/`TestCharQuiz` take it as an optional prop (defaulting to `"words"`, which keeps the Revision feature's usage unaffected).
+- **`lib/tts.ts` is mechanism only** and knows nothing about item kinds or screens: `speakPaced(text, rate, pauseMs)`, `speakOpening`, `speakChar`, `speakPraise`, `prefetchPaced`. It fetches real neural speech from Google Cloud TTS via `/api/tts` and falls back to the Web Speech API only if that request fails. Don't call `window.speechSynthesis` directly — the wrapper defers `speak()` one tick past `.cancel()` and calls `.resume()` first, because Chrome silently drops a `speak()` issued in the same tick as `cancel()` and auto-pauses the queue after ~15s idle.
+- **Pacing is `speakingRate` plus real gaps between separate audio clips — never SSML.** Every SSML feature tried for Mandarin on this API (`<break>`, `<say-as>`, `<phoneme>`) either distorted the audio or was silently ignored.
 
 ### OCR intake (`lib/ocr.ts`, `lib/ocrSchema.ts`)
 

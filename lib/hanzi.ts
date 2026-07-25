@@ -30,12 +30,11 @@ export function isPunctuationChar(char: string): boolean {
   return PUNCTUATION_SET.has(char);
 }
 
-/** True if the text contains any punctuation mark — i.e. it can only be a
- * 默写 passage sentence, since plain word-list items never embed
- * punctuation. Used to route narration (see lib/tts's speakWord). */
-export function hasPunctuation(text: string): boolean {
-  return Array.from(text).some(isPunctuationChar);
-}
+// Deliberately NOT provided here: a "does this text contain punctuation?"
+// helper. It reads like a way to detect a mo xie passage, and was used that
+// way to pick narration pacing — but a ci yu can itself be a full punctuated
+// sentence, so that inference silently misclassified real items. Narration
+// pacing is chosen from the item's section kind instead; see lib/narration.
 
 export function isStrokeChar(char: string): boolean {
   return CJK_RE.test(char) || isPunctuationChar(char);

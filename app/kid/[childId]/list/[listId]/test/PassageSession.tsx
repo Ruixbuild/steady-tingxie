@@ -1,8 +1,13 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import TestCharQuiz from "./TestCharQuiz";
-import { speakPassage, speakPassageOpening } from "@/lib/tts";
+import {
+  isSilentOnEntry,
+  prefetchItem,
+  replayItem,
+  replayItemOpening,
+} from "@/lib/narration";
 import type { ItemResult } from "@/lib/testTypes";
 
 type QuizChar = { globalIndex: number; char: string };
@@ -36,6 +41,14 @@ export default function PassageSession({ itemId, hanzi, hardMode, reveal, epochR
   const [qIndex, setQIndex] = useState(0);
   const charsRef = useRef<{ globalIndex: number; strokes: number; totalMistakes: number }[]>([]);
 
+  // A blind mo xie test never auto-plays, but the child almost always taps
+  // one of the read buttons within a second or two — and that first tap
+  // otherwise pays a full cold /api/tts round-trip. Warming the clip on
+  // entry moves that wait into time the child spends reading the screen.
+  useEffect(() => {
+    prefetchItem("passage", "test", hanzi);
+  }, [hanzi]);
+
   const current = quizChars[qIndex];
 
   function handleCharDone(result: { strokes: number; totalMistakes: number }) {
@@ -61,7 +74,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, reveal, epochR
         {reveal === "full" ? (
           <button
             type="button"
-            onClick={() => speakPassage(hanzi)}
+            onClick={() => replayItem("passage", hanzi)}
             className="btn btn-sm btn-secondary"
           >
             🐢 Read full sentence
@@ -69,7 +82,7 @@ export default function PassageSession({ itemId, hanzi, hardMode, reveal, epochR
         ) : (
           <button
             type="button"
-            onClick={() => speakPassageOpening(hanzi, 2)}
+            onClick={() => replayItemOpening("passage", hanzi, 2)}
             className="btn btn-sm btn-secondary"
           >
             🔊 Read first 2 words
@@ -104,7 +117,11 @@ export default function PassageSession({ itemId, hanzi, hardMode, reveal, epochR
       <TestCharQuiz
         key={current.globalIndex}
         char={current.char}
-        silent
+        kind="passage"
+        // Derived from the narration policy table rather than hardcoded, so
+        // "is mo xie silent during a test?" has exactly one answer in one
+        // place instead of living as a bare prop here.
+        silent={isSilentOnEntry("passage", "test")}
         hideReplayButton
         hardMode={hardMode}
         epochRef={epochRef}

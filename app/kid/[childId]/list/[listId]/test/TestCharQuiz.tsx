@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader, getCharData } from "@/lib/hanziCache";
-import { speakChar, speakWord } from "@/lib/tts";
+import { announceOnEntry, replayChar, replayItem, type ItemKind } from "@/lib/narration";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
@@ -25,6 +25,12 @@ type Props = {
    * defeat the blind-dictation design — there, replay falls back to just
    * the bare character. */
   word?: string;
+  /** The item's section kind, which decides narration rate and pause length
+   * (see lib/narration's PACING table) — notably keeping a ci yu that
+   * happens to be a punctuated sentence at phrase pace rather than slow mo
+   * xie dictation pace. Optional and defaulting to "words" so the Revision
+   * feature's existing usage is unaffected. */
+  kind?: ItemKind;
   /** Skip the automatic on-mount pronunciation — the child can still tap
    * "Hear it again" manually. Used by PassageSession's "first 2 words"
    * reveal mode, where later characters shouldn't get an automatic hint. */
@@ -43,7 +49,7 @@ type Props = {
 // the client. Epoch-guarded the same way as Learn's CharLadder even though
 // there's only one stage here — the hazard (a stale onComplete firing after
 // Skip or the 10-min-cap exit) is the same regardless of stage count.
-export default function TestCharQuiz({ char, announceWord, word, silent, hideReplayButton, hardMode, epochRef, onDone }: Props) {
+export default function TestCharQuiz({ char, announceWord, word, kind = "words", silent, hideReplayButton, hardMode, epochRef, onDone }: Props) {
   const isPunctuation = isPunctuationChar(char);
   const [done, setDone] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -58,8 +64,8 @@ export default function TestCharQuiz({ char, announceWord, word, silent, hideRep
     setDone(false);
     setLoadError(false);
     if (silent) return;
-    if (announceWord) speakWord(announceWord);
-  }, [char, announceWord, silent]);
+    if (announceWord) announceOnEntry(kind, "test", announceWord);
+  }, [char, announceWord, silent, kind]);
 
   useEffect(() => {
     if (isPunctuation) {
@@ -152,7 +158,7 @@ export default function TestCharQuiz({ char, announceWord, word, silent, hideRep
         {!hideReplayButton && (
           <button
             type="button"
-            onClick={() => (word ? speakWord(word) : speakChar(char))}
+            onClick={() => (word ? replayItem(kind, word) : replayChar(char))}
             className="btn btn-secondary"
           >
             🔊 Hear it again

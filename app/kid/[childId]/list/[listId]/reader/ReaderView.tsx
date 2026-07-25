@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { PASSAGE_PUNCTUATION } from "@/lib/testScoring";
-import { speakPassage, speakPassageOpening, stopNarration } from "@/lib/tts";
+import { prefetchItem, replayItem, replayItemOpening } from "@/lib/narration";
+import { stopNarration } from "@/lib/tts";
 import PeekModal from "./PeekModal";
 import TrickyCharPractice from "./TrickyCharPractice";
 
@@ -18,6 +19,12 @@ export default function ReaderView({
 
   useEffect(() => stopNarration, []);
 
+  // Playback here is entirely child-driven, so nothing plays until they tap
+  // — warm the clip up front so that tap is instant.
+  useEffect(() => {
+    prefetchItem("passage", "reader", hanzi);
+  }, [hanzi]);
+
   const chars = Array.from(hanzi);
   const trickyChars = chars.filter((ch, i) => !PASSAGE_PUNCTUATION.has(ch) && (charMisses[String(i)] ?? 0) > 0);
 
@@ -30,14 +37,14 @@ export default function ReaderView({
       <div className="flex gap-3 flex-wrap">
         <button
           type="button"
-          onClick={() => speakPassage(hanzi)}
+          onClick={() => replayItem("passage", hanzi)}
           className="btn btn-sm btn-secondary"
         >
           🐢 Read full sentence
         </button>
         <button
           type="button"
-          onClick={() => speakPassageOpening(hanzi, 2)}
+          onClick={() => replayItemOpening("passage", hanzi, 2)}
           className="btn btn-sm btn-secondary"
         >
           🔊 Read first 2 words

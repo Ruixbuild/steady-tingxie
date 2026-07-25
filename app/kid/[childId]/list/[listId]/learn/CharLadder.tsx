@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import HanziWriter from "hanzi-writer";
 import { charDataLoader } from "@/lib/hanziCache";
-import { speakWord } from "@/lib/tts";
+import { announceOnEntry, replayItem, type ItemKind } from "@/lib/narration";
 import { isPunctuationChar } from "@/lib/hanzi";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
@@ -20,6 +20,13 @@ type Props = {
    * one-time phrase announcement (see the announce-once-per-item effect
    * below) so it plays once per item, not once per character. */
   announceWord?: string;
+  /** The item's section kind, which decides narration rate and pause
+   * length (see lib/narration's PACING table). Never inferred from the
+   * text: a ci yu can itself be a punctuated sentence, so sniffing for
+   * punctuation misreads those as mo xie. Optional and defaulting to
+   * "words" so the Revision feature's existing usage is unaffected — its
+   * items are vocabulary, which is exactly the "words" row. */
+  kind?: ItemKind;
   skipWatch: boolean;
   epochRef: { current: number };
   onDone: (result: { written: boolean; traceSvg: string | null }) => void;
@@ -37,13 +44,19 @@ const DEFAULT_MESSAGE: Record<Stage, string> = {
   copy: "✏ Now from memory — you can do it!",
 };
 
-export default function CharLadder({ char, word, announceWord, skipWatch, epochRef, onDone }: Props) {
+export default function CharLadder({
+  char,
+  word,
+  announceWord,
+  kind = "words",
+  skipWatch,
+  epochRef,
+  onDone,
+}: Props) {
   const isPunctuation = isPunctuationChar(char);
 
   function announceAgain() {
-    // speakWord() routes a punctuation-bearing phrase (only ever a 默写
-    // passage) to paused dictation pacing on its own.
-    speakWord(word ?? char);
+    replayItem(kind, word ?? char);
   }
   const [stage, setStage] = useState<Stage>(skipWatch ? "trace" : "watch");
   const [message, setMessage] = useState(DEFAULT_MESSAGE[skipWatch ? "trace" : "watch"]);
@@ -81,7 +94,7 @@ export default function CharLadder({ char, word, announceWord, skipWatch, epochR
     // characters are silent until the child taps "Say it again".
     if (announcedCharRef.current !== char) {
       announcedCharRef.current = char;
-      if (announceWord) speakWord(announceWord);
+      if (announceWord) announceOnEntry(kind, "learn", announceWord);
     }
 
     if (isPunctuation) {
