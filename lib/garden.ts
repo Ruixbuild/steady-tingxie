@@ -76,7 +76,10 @@ export function gardenTier(level: Level, kind: SectionKind, hanzi: string): Tree
 // contradict that meaning. Which candidate renders is picked
 // deterministically per item, purely for scatter variety.
 const TREE_CANDIDATES = ["🌳", "🌲"];
-const SEASON_FRUIT: Record<Term, string[]> = {
+// Exported so callers that want a single representative "this season's
+// fruit" icon (e.g. the garden tips card) don't have to duplicate this
+// table — pick SEASON_FRUIT[term][0].
+export const SEASON_FRUIT: Record<Term, string[]> = {
   1: ["🍓", "🍒"], // spring: strawberry, cherry
   2: ["🍉", "🍑"], // summer: watermelon, peach
   3: ["🍎", "🍐"], // autumn: apple, pear

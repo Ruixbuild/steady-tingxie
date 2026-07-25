@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   SEASON_BACKDROP,
+  SEASON_FRUIT,
   SEASON_NAME,
   termKey as computeTermKey,
   termNumberFromKey,
@@ -72,7 +73,12 @@ export default async function GardenPage({
       grownAt: g.grown_at,
     }));
 
-  const backdrop = SEASON_BACKDROP[termNumberFromKey(activeTerm)];
+  const activeTermNumber = termNumberFromKey(activeTerm);
+  const backdrop = SEASON_BACKDROP[activeTermNumber];
+  // Tree stays the plain, season-agnostic 🌳 (see lib/garden.ts) — only
+  // fruit varies by season, so that's the one icon worth matching to what's
+  // actually growing right now rather than always showing autumn's 🍎.
+  const seasonFruitIcon = SEASON_FRUIT[activeTermNumber][0];
   const activeCount = activeItems.length;
   const activeYear = activeTerm.split("-T")[0];
   const yearCount = growths.filter((g) => g.term_key.startsWith(`${activeYear}-T`)).length;
@@ -91,7 +97,7 @@ export default async function GardenPage({
 
         <h1 className="text-2xl font-semibold mb-1">{child.name}&apos;s garden</h1>
         <p className="text-sm mb-4" style={{ color: "var(--mut)" }}>
-          Term {termNumberFromKey(activeTerm)} · {SEASON_NAME[termNumberFromKey(activeTerm)]} garden
+          Term {activeTermNumber} · {SEASON_NAME[activeTermNumber]} garden
         </p>
 
         {process.env.NODE_ENV !== "production" && <DebugSeedControls childId={childId} />}
@@ -165,8 +171,8 @@ export default async function GardenPage({
             Grow Your Garden!
           </p>
           <div className="flex flex-col gap-0.5 text-xs" style={{ color: "var(--mut)" }}>
-            <p>🌳 Pinyin/short phrase → tree</p>
-            <p>🍎 Long phrase/默写 → fruit</p>
+            <p>🌳 Master pinyin/short phrase</p>
+            <p>{seasonFruitIcon} Master Long phrase/默写</p>
             <p className="font-semibold" style={{ color: "var(--accent-d)" }}>
               Tap to see which word grew it!
             </p>
