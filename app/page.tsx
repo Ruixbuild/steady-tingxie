@@ -45,7 +45,7 @@ export default async function ProfilePickerPage() {
         {children.map((child) => (
           <Link
             key={child.id}
-            href={`/kid/${child.id}`}
+            href={`/kid/${child.id}/choose`}
             className="flex items-center justify-center gap-2"
             style={{
               background: "#fff",
