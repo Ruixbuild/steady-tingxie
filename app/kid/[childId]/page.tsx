@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { SectionKind } from "@/lib/supabase/types";
@@ -28,6 +29,8 @@ export default async function ChildHomePage({
 }) {
   const { childId } = await params;
   const { list: requestedListId } = await searchParams;
+  const cookieStore = await cookies();
+  const lastListId = cookieStore.get(`lastList_${childId}`)?.value;
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -63,7 +66,10 @@ export default async function ChildHomePage({
     .order("created_at", { ascending: false });
   const activeLists = activeListsRaw ?? [];
   const activeListRow =
-    activeLists.find((l) => l.id === requestedListId) ?? activeLists[0] ?? null;
+    activeLists.find((l) => l.id === requestedListId) ??
+    activeLists.find((l) => l.id === lastListId) ??
+    activeLists[0] ??
+    null;
 
   let pinnedIds: string[] = [];
   let queueIds: string[] = [];

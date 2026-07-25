@@ -29,7 +29,13 @@ export default function ListSelector({
   return (
     <select
       value={selectedId}
-      onChange={(e) => router.push(`/kid/${childId}?list=${e.target.value}`)}
+      onChange={(e) => {
+        const listId = e.target.value;
+        // Remembered so the home page defaults to this list on the child's
+        // next visit, instead of always falling back to the newest list.
+        document.cookie = `lastList_${childId}=${listId}; path=/; max-age=${60 * 60 * 24 * 180}`;
+        router.push(`/kid/${childId}?list=${listId}`);
+      }}
       className="rounded-full border px-4 py-2 outline-none text-sm"
       style={{ borderColor: "var(--line)", color: "var(--ink)" }}
     >
