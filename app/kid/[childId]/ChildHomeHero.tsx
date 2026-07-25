@@ -89,10 +89,15 @@ export default function ChildHomeHero({
               {activeList.name}
               {daysToTest !== null ? ` · ${daysToTest}d to test` : ""}
             </p>
+            {wordsToday.length === 0 && !surpriseId && (
+              <p className="text-sm opacity-90">🎉 All caught up for today!</p>
+            )}
             <div className="flex gap-3 flex-wrap">
-              <button type="button" onClick={handleCta} className="btn btn-primary">
-                {ctaLabel}
-              </button>
+              {wordsToday.length > 0 && (
+                <button type="button" onClick={handleCta} className="btn btn-primary">
+                  {ctaLabel}
+                </button>
+              )}
               {surpriseId && (
                 <button
                   type="button"
