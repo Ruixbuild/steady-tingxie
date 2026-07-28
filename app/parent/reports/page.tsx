@@ -156,13 +156,7 @@ export default async function ReportsPage() {
   }
 
   return (
-    <main
-      className="flex flex-1 flex-col items-center px-6 py-12"
-      style={{ ["--mut" as string]: "#7B8794" }}
-    >
-      {/* Parent Reports is intentionally excluded from the design refresh —
-          this page keeps its original --mut value regardless of the app-wide
-          token update in app/globals.css. See design handoff README. */}
+    <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-2xl flex flex-col gap-8">
         <Link href="/" className="inline-block text-base" style={{ color: "var(--accent)", fontWeight: 700 }}>
           ← Exit parent corner
@@ -179,12 +173,12 @@ export default async function ReportsPage() {
           <div key={r.childId} className="card p-5 flex flex-col gap-4">
             <h2 className="text-lg font-semibold">{r.childName}</h2>
             {!r.list ? (
-              <p className="text-sm" style={{ color: "var(--mut)" }}>
+              <p className="text-base" style={{ color: "var(--mut)" }}>
                 No lists yet.
               </p>
             ) : (
               <>
-                <p className="text-sm" style={{ color: "var(--mut)" }}>
+                <p className="text-base" style={{ color: "var(--mut)" }}>
                   {r.list.name}
                   {r.list.testDate ? ` · test ${r.list.testDate}` : ""}
                 </p>
@@ -217,7 +211,7 @@ export default async function ReportsPage() {
                             <td className="py-1">{LEVEL_LABEL[it.level] ?? "New"}</td>
                             <td className="py-1">
                               {isTricky(it.kind, it.level, it.misses) ? (
-                                <span style={{ color: "#B8600B" }}>{it.misses}</span>
+                                <span style={{ color: "#96551E" }}>{it.misses}</span>
                               ) : (
                                 it.misses
                               )}
@@ -231,7 +225,7 @@ export default async function ReportsPage() {
 
                 {(r.wordsCharRows?.length ?? 0) > 0 && (
                   <div className="flex flex-col gap-2">
-                    <p className="text-sm" style={{ color: "var(--mut)" }}>
+                    <p className="text-base" style={{ color: "var(--mut)" }}>
                       词语 — characters needing practice
                     </p>
                     {r.wordsCharRows!.map((w, i) => (
@@ -239,7 +233,7 @@ export default async function ReportsPage() {
                         <p className="hanzi">{w.hanzi}</p>
                         <p className="text-sm">
                           Needs practice:{" "}
-                          <span className="hanzi" style={{ color: "#B8600B" }}>
+                          <span className="hanzi" style={{ color: "#96551E" }}>
                             {w.trickyChars.join(" ")}
                           </span>
                         </p>
@@ -250,19 +244,19 @@ export default async function ReportsPage() {
 
                 {(r.passageRows?.length ?? 0) > 0 && (
                   <div className="flex flex-col gap-3">
-                    <p className="text-sm" style={{ color: "var(--mut)" }}>
+                    <p className="text-base" style={{ color: "var(--mut)" }}>
                       默写
                     </p>
                     {r.passageRows!.map((p, i) => (
                       <div key={i} className="flex flex-col gap-1">
                         <p className="hanzi">{p.hanzi}</p>
-                        <p className="text-sm" style={{ color: "var(--mut)" }}>
+                        <p className="text-base" style={{ color: "var(--mut)" }}>
                           {LEVEL_LABEL[p.level] ?? "New"} · {p.totalChars - p.trickyChars.length}/{p.totalChars} characters solid
                         </p>
                         {p.trickyChars.length > 0 && (
-                          <p className="text-sm">
+                          <p className="text-base">
                             Needs practice:{" "}
-                            <span className="hanzi" style={{ color: "#B8600B" }}>
+                            <span className="hanzi" style={{ color: "#96551E" }}>
                               {p.trickyChars.join(" ")}
                             </span>
                           </p>
