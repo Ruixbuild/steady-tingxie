@@ -86,10 +86,10 @@ export default function ChildFocusCard({ data }: { data: FocusData }) {
 
       {data.weakWordsChars.length > 0 && (
         <div className="flex flex-col gap-1">
-          <p className="text-xs" style={{ color: "var(--mut)" }}>
+          <p style={{ fontSize: "0.8125rem", color: "var(--mut)" }}>
             词语 — needs practice
           </p>
-          <p className="hanzi" style={{ color: "#B8600B" }}>
+          <p className="hanzi" style={{ color: "#96551E" }}>
             {data.weakWordsChars.join(" ")}
           </p>
         </div>
@@ -97,10 +97,10 @@ export default function ChildFocusCard({ data }: { data: FocusData }) {
 
       {data.weakPassageChars.length > 0 && (
         <div className="flex flex-col gap-1">
-          <p className="text-xs" style={{ color: "var(--mut)" }}>
+          <p style={{ fontSize: "0.8125rem", color: "var(--mut)" }}>
             默写 — needs practice
           </p>
-          <p className="hanzi" style={{ color: "#B8600B" }}>
+          <p className="hanzi" style={{ color: "#96551E" }}>
             {data.weakPassageChars.join(" ")}
           </p>
         </div>
@@ -108,7 +108,7 @@ export default function ChildFocusCard({ data }: { data: FocusData }) {
 
       {data.weakTop5.length > 0 && (
         <div className="flex flex-col gap-2">
-          <p className="text-xs" style={{ color: "var(--mut)" }}>
+          <p style={{ fontSize: "0.8125rem", color: "var(--mut)" }}>
             Pins appear as &quot;today&apos;s set&quot;.
           </p>
           {data.weakTop5.map((item) => {

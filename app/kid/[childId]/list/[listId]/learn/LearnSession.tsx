@@ -155,10 +155,10 @@ export default function LearnSession({
       )}
 
       <div className="text-center">
-        <p className="text-sm" style={{ color: "var(--mut)" }}>
+        <p className="text-base" style={{ color: "var(--mut)" }}>
           Item {queueIndex + 1} of {items.length} · today&apos;s set
         </p>
-        <h1 className="hanzi text-3xl mt-1">{currentItem.hanzi}</h1>
+        <h1 className="hanzi text-3xl font-extrabold mt-1">{currentItem.hanzi}</h1>
       </div>
 
       <button
@@ -170,7 +170,7 @@ export default function LearnSession({
       </button>
 
       {currentItem.kind !== "pinyin" && strokeChars(currentItem.hanzi).length > 1 && (
-        <p className="text-sm text-center" style={{ color: "var(--mut)" }}>
+        <p className="text-base text-center" style={{ color: "var(--mut)" }}>
           💡 Tap any word below to jump straight to it — brown-bordered ones need more practice
         </p>
       )}

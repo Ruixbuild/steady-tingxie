@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function ListSelector({
@@ -12,6 +13,19 @@ export default function ListSelector({
   selectedId: string;
 }) {
   const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
 
   if (lists.length === 0) return null;
 
@@ -26,24 +40,43 @@ export default function ListSelector({
     );
   }
 
+  const selected = lists.find((l) => l.id === selectedId);
+
   return (
-    <select
-      value={selectedId}
-      onChange={(e) => {
-        const listId = e.target.value;
-        // Remembered so the home page defaults to this list on the child's
-        // next visit, instead of always falling back to the newest list.
-        document.cookie = `lastList_${childId}=${listId}; path=/; max-age=${60 * 60 * 24 * 180}`;
-        router.push(`/kid/${childId}?list=${listId}`);
-      }}
-      className="rounded-full border px-4 py-2 outline-none text-sm"
-      style={{ borderColor: "var(--line)", color: "var(--ink)" }}
-    >
-      {lists.map((l) => (
-        <option key={l.id} value={l.id}>
-          {l.name}
-        </option>
-      ))}
-    </select>
+    <div ref={containerRef} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="picker-trigger"
+      >
+        <span>{selected ? selected.name : "Choose list"}</span>
+        <span style={{ color: "var(--mut)", fontSize: "0.8rem" }}>{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div
+          className="picker-menu"
+          style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, minWidth: 220, zIndex: 10 }}
+        >
+          {lists.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              onClick={() => {
+                // Remembered so the home page defaults to this list on the
+                // child's next visit, instead of always falling back to the
+                // newest list.
+                document.cookie = `lastList_${childId}=${l.id}; path=/; max-age=${60 * 60 * 24 * 180}`;
+                setOpen(false);
+                router.push(`/kid/${childId}?list=${l.id}`);
+              }}
+              data-selected={l.id === selectedId}
+              className="picker-option"
+            >
+              {l.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

@@ -233,7 +233,7 @@ export default function CharLadder({
   return (
     <div className="flex flex-col gap-4">
       <p
-        className="text-sm text-center"
+        className="text-base text-center"
         style={{ color: "var(--accent)", fontWeight: 600, minHeight: "1.4em" }}
       >
         {message}
@@ -249,7 +249,7 @@ export default function CharLadder({
           disabled={!stageComplete}
           className="btn btn-sm btn-primary"
         >
-          Next →
+          {stageComplete ? "Next →" : "🔒 Next →"}
         </button>
         {stage === "watch" && !isPunctuation && (
           <button type="button" onClick={handleKnowIt} className="btn btn-sm btn-secondary">
@@ -316,8 +316,8 @@ export default function CharLadder({
                     }}
                   />
                   <span
-                    className="text-xs"
                     style={{
+                      fontSize: "0.8125rem",
                       fontWeight: on ? 700 : 500,
                       color: on ? "var(--accent)" : done ? "#1D6E47" : "var(--mut)",
                       whiteSpace: "nowrap",

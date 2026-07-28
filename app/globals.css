@@ -4,20 +4,34 @@
   --bg: #FAFAF8;
   --card: #fff;
   --ink: #1D2A33;
-  --mut: #7B8794;
+  --mut: #5C6B78;          /* updated, was #7B8794 — old value failed 4.5:1 on white */
   --line: #E8EDF1;
   --accent: #2C82C9;
   --accent-d: #1F639C;
   --accent-soft: #E7F5FA;
-  --go: #C18552;
-  --go-d: #A96F42;
-  --ok: #4E9968;
+
+  --go-cta: #A26A3A;       /* primary CTA fill, 4.51:1 on white */
+  --go-cta-d: #8B5A30;     /* CTA hover/active */
+  --go: #C18552;           /* tints/badges only — never text or CTA fill */
+
+  --ok: #2F7A49;           /* updated, was #4E9968 */
   --ok-soft: #EAF5EE;
-  --warn: #FDB913;
+  --warn: #FDB913;         /* backgrounds/dashed lines only, never text */
   --warn-soft: #FFF6E0;
-  --miss: #D96B5B;
+  --miss: #C1442E;         /* updated, was #D96B5B */
   --miss-soft: #FCEFEC;
-  --r: 18px;
+
+  --r: 18px;               /* card radius */
+  --r-pill: 980px;         /* pill radius: buttons/chips/toast */
+  --r-sm: 12px;            /* small tiles: char state chips */
+
+  --tap-min: 44px;         /* minimum tappable control size */
+
+  --shadow-card: 0 2px 8px rgba(29, 42, 51, 0.05);
+  --shadow-cta: 0 6px 16px rgba(162, 106, 58, 0.3);
+  --shadow-accent: 0 8px 24px rgba(44, 130, 201, 0.18);
+  --shadow-dropdown: 0 8px 24px rgba(29, 42, 51, 0.12);
+  --shadow-modal: 0 20px 48px rgba(29, 42, 51, 0.2);
 }
 
 @theme inline {
@@ -45,6 +59,21 @@ h1, h2, h3, h4 {
 
 .hanzi {
   font-family: "Kaiti SC", "STKaiti", "KaiTi", serif;
+  letter-spacing: normal; /* never inherit the -0.022em heading tracking */
+}
+
+/* Type scale */
+.text-hanzi-headline { font-size: 1.875rem; font-weight: 800; } /* 30px */
+.text-h1 { font-size: 1.5rem; font-weight: 800; }                /* 24px */
+.text-h2 { font-size: 1.125rem; font-weight: 700; }               /* 18px */
+.text-label { font-size: 1rem; font-weight: 600; }                /* 16px */
+.text-body { font-size: 1rem; font-weight: 400; }                  /* 16px, was 14px */
+.text-stat-label {                                                /* 13px, was 12px */
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--mut);
 }
 
 /* Pill buttons */
@@ -66,19 +95,14 @@ h1, h2, h3, h4 {
   transform: scale(0.98);
 }
 
-.btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
 .btn-primary {
-  background: var(--go);
+  background: var(--go-cta);
   color: #fff;
-  box-shadow: 0 6px 16px rgba(193, 133, 82, 0.3);
+  box-shadow: var(--shadow-cta);
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--go-d);
+.btn-primary:hover:not(:disabled):not([data-locked]) {
+  background: var(--go-cta-d);
 }
 
 .btn-secondary {
@@ -93,11 +117,25 @@ h1, h2, h3, h4 {
 
 /* Compact pill — same shape/weight/color rules as .btn, for dense
    secondary controls (table row actions, inline toggles, tab bars)
-   where a full 52px primary CTA would be too large. */
+   where a full 52px primary CTA would be too large. Still meets the
+   44px minimum tap target. */
 .btn-sm {
-  min-height: 40px;
+  min-height: var(--tap-min);
   padding: 0 18px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+}
+
+/* Locked/disabled — explicit lock icon + muted look, not just opacity
+   (opacity-only disabled reads as "still loading" to young kids).
+   Markup: <button disabled>🔒 Next →</button> */
+.btn[disabled],
+.btn[data-locked] {
+  background: #F3F5F7;
+  color: var(--mut);
+  border: 1px solid var(--line);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 /* Cards */
@@ -105,7 +143,7 @@ h1, h2, h3, h4 {
   background: var(--card);
   border-radius: var(--r);
   border: 1px solid var(--line);
-  box-shadow: 0 2px 8px rgba(29, 42, 51, 0.05);
+  box-shadow: var(--shadow-card);
 }
 
 /* Chip — small status pill, e.g. per-section result badges */
@@ -113,8 +151,8 @@ h1, h2, h3, h4 {
   display: inline-flex;
   align-items: center;
   padding: 4px 14px;
-  border-radius: 980px;
-  font-size: 0.85rem;
+  border-radius: var(--r-pill);
+  font-size: 0.9rem;
   font-weight: 600;
   background: var(--accent-soft);
   color: var(--accent-d);
@@ -122,10 +160,68 @@ h1, h2, h3, h4 {
 
 /* Toast */
 .toast {
-  background: var(--go);
+  background: var(--go-cta);
   color: #fff;
-  border-radius: 980px;
+  border-radius: var(--r-pill);
   padding: 10px 22px;
   font-weight: 600;
-  box-shadow: 0 6px 16px rgba(193, 133, 82, 0.3);
+  box-shadow: var(--shadow-cta);
+}
+
+/* Per-character state chip (hanzi progress tiles) */
+.char-chip {
+  font-family: "Kaiti SC", "STKaiti", "KaiTi", serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-min);
+  height: var(--tap-min);
+  font-size: 1.3rem;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--line);
+  background: #fff;
+}
+.char-chip[data-state="active"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-d); }
+.char-chip[data-state="mastered"] { border-color: var(--ok); background: var(--ok-soft); }
+.char-chip[data-state="needs-practice"] { border-width: 2.5px; border-color: var(--go); }
+
+/* Pill trigger + dropdown list picker (replaces native <select>) */
+.picker-trigger {
+  min-height: var(--tap-min);
+  padding: 0 18px;
+  border-radius: var(--r-pill);
+  font-weight: 600;
+  font-size: 0.95rem;
+  background: #fff;
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.picker-menu {
+  background: #fff;
+  border: 1.5px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: var(--shadow-dropdown);
+}
+.picker-option {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 18px;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-align: left;
+  background: #fff;
+  color: var(--ink);
+}
+.picker-option:last-child {
+  border-bottom: none;
+}
+.picker-option[data-selected="true"] {
+  background: var(--accent-soft);
+  color: var(--accent-d);
 }

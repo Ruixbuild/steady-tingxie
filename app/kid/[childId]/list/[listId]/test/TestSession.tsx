@@ -196,16 +196,20 @@ export default function TestSession({
           ✕ End test
         </Link>
 
-        <div
-          className="rounded-2xl px-5 py-3 font-semibold text-center"
-          style={{ background: "var(--warn-soft)", color: "#8A6412" }}
+        <span
+          className="chip self-center"
+          style={
+            supervised
+              ? { background: "var(--warn-soft)", color: "#8A6412" }
+              : undefined
+          }
         >
           {supervised
             ? "👨‍👩‍👧 Practised together — doesn't count toward mastery"
             : "✏️ Test time — no hints, just try your best!"}
-        </div>
+        </span>
 
-        <p className="text-sm" style={{ color: "var(--mut)" }}>
+        <p className="text-base" style={{ color: "var(--mut)" }}>
           Item {queueIndex + 1} / {items.length}
         </p>
 
@@ -256,8 +260,8 @@ export default function TestSession({
             </div>
           )}
           {wordItemDone ? (
-            <div className="flex flex-col items-center gap-4 py-6">
-              <p className="text-sm" style={{ color: "var(--mut)" }}>
+            <div className="card flex flex-col items-center gap-4 py-6">
+              <p className="text-base" style={{ color: "var(--mut)" }}>
                 Done ✔ — {currentItem.hanzi}
               </p>
               <button type="button" className="btn btn-primary" onClick={advance}>

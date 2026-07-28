@@ -156,7 +156,13 @@ export default async function ReportsPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center px-6 py-12">
+    <main
+      className="flex flex-1 flex-col items-center px-6 py-12"
+      style={{ ["--mut" as string]: "#7B8794" }}
+    >
+      {/* Parent Reports is intentionally excluded from the design refresh —
+          this page keeps its original --mut value regardless of the app-wide
+          token update in app/globals.css. See design handoff README. */}
       <div className="w-full max-w-2xl flex flex-col gap-8">
         <Link href="/" className="inline-block text-base" style={{ color: "var(--accent)", fontWeight: 700 }}>
           ← Exit parent corner
