@@ -1,45 +1,84 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
+import { isFlagged, masteryMapFromRows, STAGE_EMOJI, wordStage } from "@/lib/revision/mastery";
 
-// Stub for Phase 1 (schema + landing only) — replaced with the real word
-// grid + stroke-practice screens in the Learn phase.
-export default async function VocabLearnStubPage({
+const EDITION = "huanlehuoban-2025";
+
+export default async function VocabLearnGridPage({
   params,
 }: {
   params: Promise<{ childId: string; chapterNumber: string }>;
 }) {
-  const { childId, chapterNumber } = await params;
+  const { childId, chapterNumber: chapterNumberParam } = await params;
+  const chapterNumber = Number(chapterNumberParam);
+
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: child } = await supabase
+  const childResult = await supabase
     .from("children")
-    .select("id, name")
+    .select("id, level, higher_chinese")
     .eq("id", childId)
     .maybeSingle();
+  const child = childResult.data as unknown as Pick<RevisionChildRow, "id" | "level" | "higher_chinese"> | null;
   if (!child) notFound();
+
+  const { data: vocabRaw } = await supabase
+    .from("revision_vocab")
+    .select(
+      "id, primary_level, edition, chapter_number, chapter_title, sort, hanzi, pinyin, english, skill, is_higher_chinese, cn_definition, sentence_1, sentence_2, pairing_1, pairing_2, pairing_3, pairing_4"
+    )
+    .eq("primary_level", child.level)
+    .eq("edition", EDITION)
+    .eq("chapter_number", chapterNumber)
+    .order("sort");
+  const words = ((vocabRaw ?? []) as unknown as RevisionVocab[]).filter(
+    (w) => child.higher_chinese || !w.is_higher_chinese
+  );
+  if (words.length === 0) notFound();
+  const chapterTitle = words[0].chapter_title;
+
+  const { data: masteryRaw } = await supabase
+    .from("revision_mastery")
+    .select("child_id, vocab_id, skill, level, misses, prev_fail, improved, flagged, last_seen")
+    .eq("child_id", childId)
+    .in(
+      "vocab_id",
+      words.map((w) => w.id)
+    );
+  const masteryByKey = masteryMapFromRows((masteryRaw ?? []) as unknown as RevisionMastery[]);
+
+  const base = `/kid/${childId}/vocab/${chapterNumber}`;
 
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
-      <div className="w-full max-w-xl flex flex-col gap-4">
-        <Link
-          href={`/kid/${childId}/vocab/${chapterNumber}`}
-          className="inline-block text-base"
-          style={{ color: "var(--accent)", fontWeight: 700 }}
-        >
+      <div className="w-full max-w-xl">
+        <Link href={base} className="mb-4 inline-block text-base" style={{ color: "var(--accent)", fontWeight: 700 }}>
           ← Back
         </Link>
+        <h1 className="hanzi text-2xl font-semibold mb-1">{chapterTitle}</h1>
+        <p className="mb-6" style={{ color: "var(--mut)" }}>
+          Learn · tap a word to practise
+        </p>
 
-        <div className="card p-8 flex flex-col items-center text-center gap-3">
-          <span className="text-5xl">📖</span>
-          <h1 className="text-2xl font-semibold">Learn</h1>
-          <p style={{ color: "var(--mut)" }}>
-            {child.name}, word-by-word practice is coming soon — check back later!
-          </p>
+        <div className="flex flex-wrap gap-2">
+          {words.map((w) => (
+            <Link
+              key={w.id}
+              href={`${base}/learn/${w.id}`}
+              className="hanzi flex items-center gap-1 rounded-2xl px-3 py-2 text-lg"
+              style={{ background: "#fff", border: "1.5px solid var(--line)" }}
+            >
+              {isFlagged(w.id, masteryByKey) && <span className="text-sm">🚩</span>}
+              {w.hanzi}
+              <span className="text-sm">{STAGE_EMOJI[wordStage(w, masteryByKey)]}</span>
+            </Link>
+          ))}
         </div>
       </div>
     </main>
