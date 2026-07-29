@@ -1,14 +1,20 @@
 -- revision_seed_p4.sql
 -- APPLY MANUALLY in Supabase SQL Editor, after revision_schema.sql.
 -- Seeds the full P4 huanlehuoban-2025 vocabulary list: all 16 chapters,
--- 371 words, transcribed from Vocab List/P4_Vocab.csv (replaces the earlier
--- 12-chapter/272-word seed). sentence_1/sentence_2/cn_definition are NOT
--- NULL in the schema, so an empty CSV cell there becomes '' -- only the
--- pairing_1..4 columns (nullable) map empty to null.
+-- 370 words, transcribed from Vocab List/P4_Vocab.csv (replaces the earlier
+-- 371-word seed -- chapter 1's anomalous row 5, 预测, was removed from the
+-- source and everything after it renumbered down by one). sentence_1/
+-- sentence_2/cn_definition are NOT NULL in the schema, so an empty CSV
+-- cell there becomes '' -- only the pairing_1..4 columns (nullable) map
+-- empty to null.
 --
 -- Re-running this file is safe: on conflict (primary_level, edition,
 -- chapter_number, sort) it upserts (not just skips) so a later re-run
 -- with corrected CSV data actually fixes previously-seeded rows too.
+-- The trailing delete removes rows orphaned by a word being REMOVED
+-- from a chapter (and everything after it renumbered down) between
+-- transcriptions -- upsert alone can't do this since nothing in a
+-- fresh insert ever targets the old, now-unused higher sort value.
 
 insert into revision_vocab
   (primary_level, edition, chapter_number, chapter_title, sort, hanzi, pinyin, english, skill, is_higher_chinese, cn_definition, sentence_1, sentence_2, pairing_1, pairing_2, pairing_3, pairing_4)
@@ -17,25 +23,24 @@ values
   ('P4','huanlehuoban-2025',1,'一起看电视',2,'了解','liǎo jiě','understand','read',true,'明白；清楚。','张主任刚上任不久，对工厂的情况还不了解。','妈妈经常和张老师联系，了解我在学校的学习情况。','了解事情','了解情况','无法了解',null),
   ('P4','huanlehuoban-2025',1,'一起看电视',3,'内外','nèi wài','inside and outside','both',false,'内部和外部；里面和外面。','这个地区出产的椰子味道鲜甜，远销国内外。','本次会议十分隆重，邀请了国内外著名的学者出席。','内外勾结','国家内外',null,null),
   ('P4','huanlehuoban-2025',1,'一起看电视',4,'预报','yù bào','forecast','read',false,'先报告；预先告知。','天气预报说明天有雨，所以我们取消了出游的计划。','我忘记看天气预报，不知道明天是阴天还是晴天。',null,null,null,null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',5,'预测','yù cè','predict / forecast','read',false,'预先推测。','今年端午龙舟竞赛，每一队都势力相当，谁能夺得冠军目前真无法预测。','','天气预报','地震预报','气象预报',null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',6,'全岛','quán dǎo','whole island','write',false,'整个岛。','看电视台的新闻报告，我们可以知道全岛发生的事情。','经过多年的努力，全岛都种满了树，到处一片绿色。','全岛情况','传遍全岛',null,null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',7,'情况','qíng kuàng','situation','read',false,'情形；形势；状况。','这名病人的情况不好，医生不让他出院。','妈妈一见到我就问我今天考试的情况。','天气情况','了解情况','问起情况','考试情况'),
-  ('P4','huanlehuoban-2025',1,'一起看电视',8,'观众','guān zhòng','spectator; audience','both',false,'观看表演或观看比赛的人。','爷爷喜欢看军事报道，是军事频道的忠实观众。','舞蹈家柔美的舞姿，博得观众的阵阵掌声。',null,null,null,null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',9,'播放','bō fàng','broadcast','read',false,'通过广播或电视放送音响或影像。','电视里正在播放足球比赛，爸爸目不转睛地看着。','爷爷闭目坐在院子里，听着电台播放的民间乐曲。','播放音乐','播放唱片','播放视频','播放比赛'),
-  ('P4','huanlehuoban-2025',1,'一起看电视',10,'连续剧','lián xù jù','soap opera','read',false,'分若干集，情节连贯的戏剧、影视等。','大家围绕在一起，讨论昨天电视台播放的连续剧。','这部连续剧共有五十集，要播放几个月才能播完。',null,null,null,null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',11,'共','gòng','altogether','write',false,'表示合在一起；一共；总计。','这本书共收小说十五篇。','这部电视连续剧共有五十集。',null,null,null,null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',12,'集','jí','quantifier','read',false,'量词。用在较长影视段落。如：这部连续剧共有三十集。','这部连续剧共有一百多集，妈妈花了两个月从头看到尾。','这本小说很流行，片商有意把它拍成几十集的连续剧。',null,null,null,null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',13,'精彩','jīng cǎi','exciting; brilliant','both',false,'（表演、展览、言论、文章等）优美、出色。','今天的比赛竞争激烈，十分精彩。','台上演员的表演很精彩，获得台下热烈的掌声。','精彩节目','球赛精彩','故事精彩','节目精彩'),
-  ('P4','huanlehuoban-2025',1,'一起看电视',14,'换成','huàn chéng','change','read',false,'事物的一种形式或内容变换为另一种。','你把他的黄色球衣换成蓝色的，他肯定不要！','你把他的名牌球鞋换成这种普通的胶鞋，他哪里肯接受？',null,null,null,null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',15,'方言','fāng yán','dialect','read',false,'地方的语言。','虽然是在同一个国家，但各地区的方言却千差万别。','在写作文时，我们要避免使用方言，尽量使用规范的语言。','方言戏剧','地方方言','古老方言',null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',16,'忍不住','rěn bu zhù','cannot help (doing something)','write',false,'控制不住了。','妹妹跌倒了，痛得她忍不住哭了起来。','妈妈看弟弟不听话，忍不住骂了他几句。',null,null,null,null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',17,'投篮','tóu lán','shoot at the basket','read',false,'打篮球时向球架上的铁圈投球。','李大明的篮球打得真棒，投篮每投必中。','林文强是学校篮球队队长，他投篮几乎是百发百中。','投篮不中','投篮得分','瞄准投篮',null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',18,'手掌','shǒu zhǎng','palm','read',false,'人手的手指基部与腕部之间稍凹的部分。','演唱会的场面十分火爆，许多人把手掌都拍红了。','小朋友看了表演，个个高兴得拍着手掌。','拍着手掌',null,null,null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',19,'刚','gāng','just; only a short while ago','write',false,'表示行动或情况发生在不久以前。','天刚亮，妈妈就起床了。','哥哥在家，他刚从学校回来。',null,null,null,null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',20,'疲倦','pí juàn','exhausted','read',false,'疲乏；疲劳；困倦。','他确实太疲倦了，一躺在沙发上便睡着了。','我做了一整天的工，感到很疲倦。','感到疲倦','十分疲倦','身体疲倦',null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',21,'建议','jiàn yì','suggest','both',true,'向人提出自己的主张。','大强建议去图书馆看书，大家都表示赞成。','假期的露营活动，老师要同学们提出建议。','提出建议','合理建议','接受建议',null),
-  ('P4','huanlehuoban-2025',1,'一起看电视',22,'舞蹈','wǔ dǎo','dance','both',false,'以有节奏的动作为表现手段的艺术形式，一般用音乐伴奏。','这种舞蹈节奏太快，不适合老人参加。','我不会跳舞，但我喜欢看舞蹈表演。','舞蹈表演','看看舞蹈','欣赏舞蹈','观看舞蹈'),
-  ('P4','huanlehuoban-2025',1,'一起看电视',23,'秘密','mì mì','secret','both',false,'有所隐藏，不让人知道的事情。','小华把我拉过一旁，说有个秘密要告诉我。','这是秘密，你千万别说出去。','秘密会议','秘密武器','秘密进行','秘密任务'),
+  ('P4','huanlehuoban-2025',1,'一起看电视',5,'全岛','quán dǎo','whole island','write',false,'整个岛。','看电视台的新闻报告，我们可以知道全岛发生的事情。','经过多年的努力，全岛都种满了树，到处一片绿色。','全岛情况','传遍全岛',null,null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',6,'情况','qíng kuàng','situation','read',false,'情形；形势；状况。','这名病人的情况不好，医生不让他出院。','妈妈一见到我就问我今天考试的情况。','天气情况','了解情况','问起情况','考试情况'),
+  ('P4','huanlehuoban-2025',1,'一起看电视',7,'观众','guān zhòng','spectator; audience','both',false,'观看表演或观看比赛的人。','爷爷喜欢看军事报道，是军事频道的忠实观众。','舞蹈家柔美的舞姿，博得观众的阵阵掌声。',null,null,null,null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',8,'播放','bō fàng','broadcast','read',false,'通过广播或电视放送音响或影像。','电视里正在播放足球比赛，爸爸目不转睛地看着。','爷爷闭目坐在院子里，听着电台播放的民间乐曲。','播放音乐','播放唱片','播放视频','播放比赛'),
+  ('P4','huanlehuoban-2025',1,'一起看电视',9,'连续剧','lián xù jù','soap opera','read',false,'分若干集，情节连贯的戏剧、影视等。','大家围绕在一起，讨论昨天电视台播放的连续剧。','这部连续剧共有五十集，要播放几个月才能播完。',null,null,null,null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',10,'共','gòng','altogether','write',false,'表示合在一起；一共；总计。','这本书共收小说十五篇。','这部电视连续剧共有五十集。',null,null,null,null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',11,'集','jí','quantifier','read',false,'量词。用在较长影视段落。如：这部连续剧共有三十集。','这部连续剧共有一百多集，妈妈花了两个月从头看到尾。','这本小说很流行，片商有意把它拍成几十集的连续剧。',null,null,null,null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',12,'精彩','jīng cǎi','exciting; brilliant','both',false,'（表演、展览、言论、文章等）优美、出色。','今天的比赛竞争激烈，十分精彩。','台上演员的表演很精彩，获得台下热烈的掌声。','精彩节目','球赛精彩','故事精彩','节目精彩'),
+  ('P4','huanlehuoban-2025',1,'一起看电视',13,'换成','huàn chéng','change','read',false,'事物的一种形式或内容变换为另一种。','你把他的黄色球衣换成蓝色的，他肯定不要！','你把他的名牌球鞋换成这种普通的胶鞋，他哪里肯接受？',null,null,null,null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',14,'方言','fāng yán','dialect','read',false,'地方的语言。','虽然是在同一个国家，但各地区的方言却千差万别。','在写作文时，我们要避免使用方言，尽量使用规范的语言。','方言戏剧','地方方言','古老方言',null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',15,'忍不住','rěn bu zhù','cannot help (doing something)','write',false,'控制不住了。','妹妹跌倒了，痛得她忍不住哭了起来。','妈妈看弟弟不听话，忍不住骂了他几句。',null,null,null,null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',16,'投篮','tóu lán','shoot at the basket','read',false,'打篮球时向球架上的铁圈投球。','李大明的篮球打得真棒，投篮每投必中。','林文强是学校篮球队队长，他投篮几乎是百发百中。','投篮不中','投篮得分','瞄准投篮',null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',17,'手掌','shǒu zhǎng','palm','read',false,'人手的手指基部与腕部之间稍凹的部分。','演唱会的场面十分火爆，许多人把手掌都拍红了。','小朋友看了表演，个个高兴得拍着手掌。','拍着手掌',null,null,null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',18,'刚','gāng','just; only a short while ago','write',false,'表示行动或情况发生在不久以前。','天刚亮，妈妈就起床了。','哥哥在家，他刚从学校回来。',null,null,null,null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',19,'疲倦','pí juàn','exhausted','read',false,'疲乏；疲劳；困倦。','他确实太疲倦了，一躺在沙发上便睡着了。','我做了一整天的工，感到很疲倦。','感到疲倦','十分疲倦','身体疲倦',null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',20,'建议','jiàn yì','suggest','both',true,'向人提出自己的主张。','大强建议去图书馆看书，大家都表示赞成。','假期的露营活动，老师要同学们提出建议。','提出建议','合理建议','接受建议',null),
+  ('P4','huanlehuoban-2025',1,'一起看电视',21,'舞蹈','wǔ dǎo','dance','both',false,'以有节奏的动作为表现手段的艺术形式，一般用音乐伴奏。','这种舞蹈节奏太快，不适合老人参加。','我不会跳舞，但我喜欢看舞蹈表演。','舞蹈表演','看看舞蹈','欣赏舞蹈','观看舞蹈'),
+  ('P4','huanlehuoban-2025',1,'一起看电视',22,'秘密','mì mì','secret','both',false,'有所隐藏，不让人知道的事情。','小华把我拉过一旁，说有个秘密要告诉我。','这是秘密，你千万别说出去。','秘密会议','秘密武器','秘密进行','秘密任务'),
   ('P4','huanlehuoban-2025',2,'我们是兄弟姐妹',1,'苹果','píng guǒ','apple','write',false,'一种常见水果，圆形，红色或青色。','妈妈今天买了一袋红苹果。','我们一家人都爱吃苹果。','吃着苹果','爱吃苹果',null,null),
   ('P4','huanlehuoban-2025',2,'我们是兄弟姐妹',2,'词语','cí yǔ','words and expressions','read',false,'词和短语；语言里最小的，可以运用的单位。','王小文很聪明，学过的词语都懂得灵活运用。','张小华在作文中运用了很多优美的词语，所以获得了高分。','词语手册','讨论词语','运用词语','使用词语'),
   ('P4','huanlehuoban-2025',2,'我们是兄弟姐妹',3,'鱼丸','yú wán','fish ball','write',false,'将鱼肉剁成碎末，加上调料而制成的食物。','这家小吃店卖的鱼丸很美味，每天都挤满了顾客。','弟弟吵着要吃鱼丸，妈妈只好买了一串给他吃。','一串鱼丸','烹饪鱼丸','制作鱼丸',null),
@@ -398,3 +403,28 @@ on conflict (primary_level, edition, chapter_number, sort) do update set
   pairing_2 = excluded.pairing_2,
   pairing_3 = excluded.pairing_3,
   pairing_4 = excluded.pairing_4;
+
+-- Trim orphaned rows past each chapter's current word count.
+delete from revision_vocab v
+using (values
+  (1,22),
+  (2,21),
+  (3,20),
+  (4,25),
+  (5,23),
+  (6,23),
+  (7,23),
+  (8,22),
+  (9,23),
+  (10,21),
+  (11,25),
+  (12,23),
+  (13,29),
+  (14,23),
+  (15,25),
+  (16,22)
+) as maxsort(chapter_number, max_sort)
+where v.primary_level = 'P4'
+  and v.edition = 'huanlehuoban-2025'
+  and v.chapter_number = maxsort.chapter_number
+  and v.sort > maxsort.max_sort;
