@@ -9,9 +9,23 @@
 // text to speak() or to CharLadder's word/announceWord props.
 
 import { PUNCTUATION_CHARS } from "@/lib/hanzi";
+import { speak } from "@/lib/tts";
 
 const STRIP_RE = new RegExp(`[${PUNCTUATION_CHARS.join("")}]`, "g");
 
 export function stripPunctuation(text: string): string {
   return text.replace(STRIP_RE, "");
+}
+
+/** Revision's one narration entry point — a control surface deliberately
+ * separate from lib/narration.ts's PACING/AUTO_ANNOUNCE tables. Those exist
+ * to slow speech down and insert artificial inter-clause pauses for TingXie's
+ * dictation tests, where a child needs time to physically write each
+ * character before the next one is read. Revision's audio (word/definition/
+ * sentence playback) is read for comprehension, not transcribed under test
+ * conditions, so there's no reason to fight the TTS engine's own prosody —
+ * this plays at rate 1 (native pace, see lib/tts's CHAR_RATE) with no
+ * manual segmentation/pausing, letting Google's phrasing sound natural. */
+export function speakRevision(text: string): void {
+  speak(stripPunctuation(text), "zh-CN", 1);
 }

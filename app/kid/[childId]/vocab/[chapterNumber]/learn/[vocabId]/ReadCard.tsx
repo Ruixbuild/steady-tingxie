@@ -2,16 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { speak } from "@/lib/tts";
 import { touchMastery } from "@/lib/revision/masteryActions";
-import { stripPunctuation } from "@/lib/revision/narration";
+import { speakRevision } from "@/lib/revision/narration";
 import type { RevisionVocab } from "@/lib/revision/types";
 
 function SpeakButton({ text }: { text: string }) {
   return (
     <button
       type="button"
-      onClick={() => speak(stripPunctuation(text))}
+      onClick={() => speakRevision(text)}
       aria-label={`Play ${text}`}
       className="inline-flex items-center justify-center"
       style={{

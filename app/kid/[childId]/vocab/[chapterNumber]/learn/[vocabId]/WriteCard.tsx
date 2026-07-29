@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import CharLadder from "@/app/kid/[childId]/list/[listId]/learn/CharLadder";
+import StrokeLadder from "@/app/kid/[childId]/vocab/StrokeLadder";
 import { strokeChars } from "@/lib/hanzi";
 import { STAGE_EMOJI } from "@/lib/revision/mastery";
 import { touchMastery } from "@/lib/revision/masteryActions";
@@ -106,12 +106,11 @@ export default function WriteCard({
             </div>
           )}
 
-          <CharLadder
+          <StrokeLadder
             key={`${word.id}-${charIndex}`}
             char={chars[charIndex]}
             announceWord={charIndex === 0 ? stripPunctuation(word.hanzi) : undefined}
             word={stripPunctuation(word.hanzi)}
-            kind="words"
             skipWatch={false}
             epochRef={epochRef}
             onDone={handleCharDone}
