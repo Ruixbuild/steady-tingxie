@@ -7,7 +7,6 @@
 // this feature stays as plain as TestSession's chrome minus that banner.
 
 import { useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import StrokeTestQuiz from "@/app/kid/[childId]/vocab/StrokeTestQuiz";
 import TestReadQuiz, { type ReadQuizOption } from "@/app/kid/[childId]/vocab/TestReadQuiz";
 import ResultsScreen, { type WordResult } from "./ResultsScreen";
@@ -23,14 +22,21 @@ const TITLE: Record<"read" | "write", Record<1 | 2, string>> = {
 
 export default function TestRunner({
   childId,
-  base,
+  chapterHref,
+  onExit,
   skill,
   level,
   words,
   chapterWords,
 }: {
   childId: string;
-  base: string;
+  /** Real navigation target for the results screen's "Back to chapter" —
+   * a genuinely different URL, so an ordinary Link is fine there. */
+  chapterHref: string;
+  /** Mid-session abandon ("✕ End test") returns to the picker via the
+   * parent's local state instead of navigating — TestHost renders picker
+   * and runner on the same URL, so a Link back to "this" URL is a no-op. */
+  onExit: () => void;
   skill: "read" | "write";
   level: 1 | 2;
   words: RevisionVocab[];
@@ -100,7 +106,7 @@ export default function TestRunner({
   }
 
   if (index >= queue.length) {
-    return <ResultsScreen skill={skill} level={level} results={results} backHref={base} />;
+    return <ResultsScreen skill={skill} level={level} results={results} backHref={chapterHref} />;
   }
 
   const readOptions: ReadQuizOption[] =
@@ -121,10 +127,6 @@ export default function TestRunner({
           Item {index + 1} of {queue.length}
         </p>
       </div>
-
-      <Link href={base} className="text-sm self-center" style={{ color: "var(--mut)" }}>
-        ✕ End test
-      </Link>
 
       {skill === "read" && level === 1 && (
         <TestReadQuiz
@@ -163,6 +165,10 @@ export default function TestRunner({
           />
         </>
       )}
+
+      <button type="button" onClick={onExit} className="text-sm self-center" style={{ color: "var(--mut)" }}>
+        ✕ End test
+      </button>
     </div>
   );
 }

@@ -137,6 +137,10 @@ export default function WriteCard({
           <p className="text-lg">{word.english}</p>
           {word.cn_definition && <p style={{ color: "var(--mut)" }}>{word.cn_definition}</p>}
 
+          {word.cn_definition && (word.sentence_1 || word.sentence_2 || pairings.length > 0) && (
+            <div aria-hidden style={{ borderTop: "1px solid var(--line)" }} />
+          )}
+
           {(word.sentence_1 || word.sentence_2 || pairings.length > 0) && (
             <>
               <button

@@ -64,7 +64,29 @@ export default function ReadCard({
           ← Back
         </Link>
 
-        <div className="card p-6 flex flex-col gap-3">
+        <div className="card p-6 flex flex-col gap-3" style={{ position: "relative" }}>
+          <button
+            type="button"
+            onClick={toggleFlag}
+            aria-label={flagged ? "Unflag" : "Flag"}
+            title={flagged ? "Unflag" : "Flag"}
+            className="inline-flex items-center gap-1"
+            style={{
+              position: "absolute",
+              top: 14,
+              right: 14,
+              borderRadius: 999,
+              padding: "5px 10px",
+              border: `1.5px solid ${flagged ? "var(--warn)" : "var(--line)"}`,
+              background: flagged ? "var(--warn-soft)" : "#fff",
+              color: flagged ? "#8A6412" : "var(--mut)",
+              fontSize: "0.8125rem",
+              fontWeight: 600,
+            }}
+          >
+            ⚑ {flagged ? "Flagged" : "Flag"}
+          </button>
+
           <span
             className="text-sm font-semibold rounded-full px-3 py-1 self-start"
             style={{ background: "var(--accent-soft)", color: "var(--accent-d)" }}
@@ -84,6 +106,10 @@ export default function ReadCard({
               <p style={{ color: "var(--mut)" }}>{word.cn_definition}</p>
               <SpeakButton text={word.cn_definition} />
             </div>
+          )}
+
+          {word.cn_definition && pairings.length > 0 && (
+            <div aria-hidden style={{ borderTop: "1px solid var(--line)" }} />
           )}
 
           {pairings.length > 0 && (
@@ -126,14 +152,6 @@ export default function ReadCard({
             </div>
           )}
         </div>
-
-        <button
-          type="button"
-          onClick={toggleFlag}
-          className="btn btn-sm btn-secondary self-start"
-        >
-          {flagged ? "✓ 已加强 · 取消标记" : "🚩 标记待加强"}
-        </button>
       </div>
     </main>
   );

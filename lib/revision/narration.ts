@@ -19,7 +19,21 @@
 // (the same class of issue that broke word-to-word auto-play in the Test
 // feature). One single clip per call sidesteps that fragility completely.
 
-let currentAudio: HTMLAudioElement | null = null;
+// One persistent <audio> element, reused for every call, rather than a
+// fresh `new Audio()` each time. Browsers are markedly more willing to let
+// play() proceed on an element that has already successfully played once
+// as a direct result of a user gesture — even from a later timer/effect
+// callback with no fresh gesture of its own — than they are for a
+// brand-new element created at that later point. Reusing one element is
+// what makes word-to-word auto-play in the Test feature hold up instead of
+// only ever working for the very first, gesture-adjacent word.
+let audioEl: HTMLAudioElement | null = null;
+function getAudioEl(): HTMLAudioElement | null {
+  if (typeof window === "undefined") return null;
+  if (!audioEl) audioEl = new Audio();
+  return audioEl;
+}
+
 const audioCache = new Map<string, Promise<string>>();
 
 const REVISION_RATE = 0.8;
@@ -44,10 +58,9 @@ async function fetchClip(text: string): Promise<string> {
 }
 
 function stopCurrent() {
-  if (currentAudio) {
-    currentAudio.onended = null;
-    currentAudio.pause();
-    currentAudio = null;
+  if (audioEl) {
+    audioEl.onerror = null;
+    audioEl.pause();
   }
   if (typeof window !== "undefined" && window.speechSynthesis) {
     window.speechSynthesis.cancel();
@@ -67,13 +80,15 @@ function fallbackSpeak(text: string) {
 }
 
 /** Revision's one narration entry point — one clip per call, real Chinese
- * punctuation left intact for Google's own natural phrasing. */
+ * punctuation left intact for Google's own natural phrasing, played on a
+ * single reused <audio> element (see getAudioEl above). */
 export function speakRevision(text: string): void {
   stopCurrent();
   fetchClip(text)
     .then((url) => {
-      const audio = new Audio(url);
-      currentAudio = audio;
+      const audio = getAudioEl();
+      if (!audio) return;
+      audio.src = url;
       audio.onerror = () => fallbackSpeak(text);
       audio.play().catch(() => fallbackSpeak(text));
     })

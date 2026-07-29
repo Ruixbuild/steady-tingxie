@@ -47,7 +47,10 @@ export default function TestReadQuiz({ targetId, options, promptAudio, promptTex
       )}
       {promptText && <p className="hanzi text-3xl font-extrabold text-center">{promptText}</p>}
 
-      <div className="flex flex-wrap gap-3 justify-center mt-2">
+      <div
+        className="w-full mt-2"
+        style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(options.length, 1)}, 1fr)`, gap: 8 }}
+      >
         {options.map((opt) => {
           const isSelected = selectedId === opt.id;
           const isCorrect = opt.id === targetId;
@@ -68,8 +71,16 @@ export default function TestReadQuiz({ targetId, options, promptAudio, promptTex
               type="button"
               disabled={revealed}
               onClick={() => handlePick(opt.id)}
-              className="hanzi text-xl font-semibold"
-              style={{ ...style, borderRadius: 16, padding: "14px 22px" }}
+              className="hanzi font-semibold"
+              style={{
+                ...style,
+                borderRadius: 14,
+                padding: "10px 4px",
+                fontSize: "1.05rem",
+                lineHeight: 1.3,
+                minWidth: 0,
+                wordBreak: "keep-all",
+              }}
             >
               {opt.hanzi}
             </button>

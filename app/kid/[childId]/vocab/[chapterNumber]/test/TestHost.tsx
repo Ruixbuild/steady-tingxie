@@ -45,7 +45,8 @@ export default function TestHost({
         <div className="w-full max-w-xl">
           <TestRunner
             childId={childId}
-            base={`${base}/test`}
+            chapterHref={base}
+            onExit={() => setActive(null)}
             skill={active.skill}
             level={active.level}
             words={runWords}
