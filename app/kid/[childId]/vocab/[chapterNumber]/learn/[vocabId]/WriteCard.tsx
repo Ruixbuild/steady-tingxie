@@ -9,12 +9,6 @@ import { touchMastery } from "@/lib/revision/masteryActions";
 import { stripPunctuation } from "@/lib/revision/narration";
 import type { RevisionVocab } from "@/lib/revision/types";
 
-const SKILL_LABEL: Record<RevisionVocab["skill"], string> = {
-  read: "识读",
-  write: "识写",
-  both: "识读 · 识写",
-};
-
 export default function WriteCard({
   childId,
   gridHref,
@@ -133,7 +127,7 @@ export default function WriteCard({
               className="text-sm font-semibold rounded-full px-3 py-1"
               style={{ background: "var(--accent-soft)", color: "var(--accent-d)" }}
             >
-              {SKILL_LABEL[word.skill]}
+              识写
             </span>
             <span className="text-lg">{STAGE_EMOJI[Math.min(initialLevel, 3)]}</span>
           </div>
@@ -153,22 +147,37 @@ export default function WriteCard({
                 {expanded ? "收起" : "造句 · 搭配"}
               </button>
               {expanded && (
-                <div className="flex flex-col gap-2 mt-1">
+                <div className="flex flex-col gap-3 mt-1">
                   {pairings.length > 0 && (
-                    <div>
-                      <p className="text-sm font-semibold mb-1" style={{ color: "var(--mut)" }}>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm font-semibold" style={{ color: "var(--mut)" }}>
                         搭配
                       </p>
-                      <p className="hanzi">{pairings.join(" · ")}</p>
+                      <p className="hanzi" style={{ lineHeight: 1.7 }}>
+                        {pairings.join(" · ")}
+                      </p>
                     </div>
                   )}
+                  {pairings.length > 0 && (word.sentence_1 || word.sentence_2) && (
+                    <div aria-hidden style={{ borderTop: "1px solid var(--line)" }} />
+                  )}
                   {(word.sentence_1 || word.sentence_2) && (
-                    <div>
-                      <p className="text-sm font-semibold mb-1" style={{ color: "var(--mut)" }}>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm font-semibold" style={{ color: "var(--mut)" }}>
                         造句
                       </p>
-                      {word.sentence_1 && <p className="hanzi">{word.sentence_1}</p>}
-                      {word.sentence_2 && <p className="hanzi">{word.sentence_2}</p>}
+                      <div className="flex flex-col gap-2">
+                        {word.sentence_1 && (
+                          <p className="hanzi" style={{ lineHeight: 1.7 }}>
+                            {word.sentence_1}
+                          </p>
+                        )}
+                        {word.sentence_2 && (
+                          <p className="hanzi" style={{ lineHeight: 1.7 }}>
+                            {word.sentence_2}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

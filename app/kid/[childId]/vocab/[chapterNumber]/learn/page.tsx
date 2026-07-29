@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
-import { isFlagged, masteryMapFromRows, STAGE_EMOJI, wordStage } from "@/lib/revision/mastery";
+import { isSkillFlagged, masteryMapFromRows, skillLevel, STAGE_EMOJI, tracksFor } from "@/lib/revision/mastery";
 
 const EDITION = "huanlehuoban-2025";
 
@@ -55,10 +55,12 @@ export default async function VocabLearnGridPage({
 
   const base = `/kid/${childId}/vocab/${chapterNumber}`;
 
-  const groups: { label: string; words: RevisionVocab[] }[] = [
-    { label: "识读", words: words.filter((w) => w.skill === "read") },
-    { label: "识写", words: words.filter((w) => w.skill === "write") },
-    { label: "识读 · 识写", words: words.filter((w) => w.skill === "both") },
+  // No combined "both" group — a word requiring both skills appears once
+  // under 识读 and once under 识写, each entry linking to that specific
+  // skill's practice and showing that track's own mastery independently.
+  const groups: { label: string; skill: "read" | "write"; words: RevisionVocab[] }[] = [
+    { label: "识读", skill: "read" as const, words: words.filter((w) => tracksFor(w.skill).includes("read")) },
+    { label: "识写", skill: "write" as const, words: words.filter((w) => tracksFor(w.skill).includes("write")) },
   ].filter((g) => g.words.length > 0);
 
   return (
@@ -81,14 +83,14 @@ export default async function VocabLearnGridPage({
               <div className="flex flex-wrap gap-2">
                 {g.words.map((w) => (
                   <Link
-                    key={w.id}
-                    href={`${base}/learn/${w.id}`}
+                    key={`${g.skill}-${w.id}`}
+                    href={`${base}/learn/${w.id}?skill=${g.skill}`}
                     className="hanzi flex items-center gap-1 rounded-2xl px-3 py-2 text-lg"
                     style={{ background: "#fff", border: "1.5px solid var(--line)" }}
                   >
-                    {isFlagged(w.id, masteryByKey) && <span className="text-sm">🚩</span>}
+                    {isSkillFlagged(w.id, g.skill, masteryByKey) && <span className="text-sm">🚩</span>}
                     {w.hanzi}
-                    <span className="text-sm">{STAGE_EMOJI[wordStage(w, masteryByKey)]}</span>
+                    <span className="text-sm">{STAGE_EMOJI[skillLevel(w.id, g.skill, masteryByKey)]}</span>
                   </Link>
                 ))}
               </div>

@@ -87,30 +87,42 @@ export default function ReadCard({
           )}
 
           {pairings.length > 0 && (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2">
               <p className="text-sm font-semibold" style={{ color: "var(--mut)" }}>
                 搭配
               </p>
-              {pairings.map((p, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <p className="hanzi">{p}</p>
-                  <SpeakButton text={p} />
-                </div>
-              ))}
+              <div className="flex flex-col gap-2">
+                {pairings.map((p, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <p className="hanzi" style={{ lineHeight: 1.7 }}>
+                      {p}
+                    </p>
+                    <SpeakButton text={p} />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
+          {pairings.length > 0 && (word.sentence_1 || word.sentence_2) && (
+            <div aria-hidden style={{ borderTop: "1px solid var(--line)" }} />
+          )}
+
           {(word.sentence_1 || word.sentence_2) && (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2">
               <p className="text-sm font-semibold" style={{ color: "var(--mut)" }}>
                 造句
               </p>
-              {[word.sentence_1, word.sentence_2].filter(Boolean).map((s, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <p className="hanzi">{s}</p>
-                  <SpeakButton text={s as string} />
-                </div>
-              ))}
+              <div className="flex flex-col gap-3">
+                {[word.sentence_1, word.sentence_2].filter(Boolean).map((s, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <p className="hanzi" style={{ lineHeight: 1.7 }}>
+                      {s}
+                    </p>
+                    <SpeakButton text={s as string} />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

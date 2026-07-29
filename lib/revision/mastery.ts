@@ -57,6 +57,17 @@ export function isFlagged(
   );
 }
 
+/** Flag for one specific track only — used where a "both"-skill word shows
+ * up as two separate entries (one under 识读, one under 识写), each needing
+ * its own flag state rather than isFlagged's either-track OR. */
+export function isSkillFlagged(
+  vocabId: string,
+  skill: "read" | "write",
+  masteryByKey: Map<MasteryKey, RevisionMastery>
+): boolean {
+  return masteryByKey.get(masteryKey(vocabId, skill))?.flagged ?? false;
+}
+
 /** Chapter-level stage badge: fraction of this chapter's words that are
  * individually mastered (every required track at level 3), bucketed into
  * the same 4-stage set as a single word — 0% -> 🌱, <50% -> 🌿, <100% -> 🌸,

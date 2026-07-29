@@ -8,10 +8,13 @@ const EDITION = "huanlehuoban-2025";
 
 export default async function VocabLearnWordPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ childId: string; chapterNumber: string; vocabId: string }>;
+  searchParams: Promise<{ skill?: string }>;
 }) {
   const { childId, chapterNumber: chapterNumberParam, vocabId } = await params;
+  const { skill: skillParam } = await searchParams;
   const chapterNumber = Number(chapterNumberParam);
 
   const supabase = await createServerSupabaseClient();
@@ -54,7 +57,14 @@ export default async function VocabLearnWordPage({
 
   const base = `/kid/${childId}/vocab/${chapterNumber}`;
 
-  if (word.skill === "read") {
+  // A "both"-skill word can be reached via either its 识读 or 识写 grid
+  // entry — the query param disambiguates which mode to show. Falls back
+  // to the word's own (non-"both") skill for a direct/bookmarked link with
+  // no param, and to "read" as a last resort for a "both" word with none.
+  const effectiveSkill: "read" | "write" =
+    skillParam === "read" || skillParam === "write" ? skillParam : word.skill === "write" ? "write" : "read";
+
+  if (effectiveSkill === "read") {
     return (
       <ReadCard
         childId={childId}
