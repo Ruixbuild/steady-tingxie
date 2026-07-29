@@ -3,9 +3,12 @@
 
 import type { RevisionMastery, RevisionSkill, RevisionVocab } from "./types";
 
-/** Same 4-stage set HubWordList.tsx uses for TingXie — duplicated rather
- * than imported, since that file is TingXie's own, not a shared export. */
-export const STAGE_EMOJI = ["🌱", "🌿", "🌸", "🌳"] as const;
+/** Revision's own 4-stage mastery symbol set — deliberately different from
+ * TingXie's plant stages (HubWordList.tsx/GardenClient.tsx's 🌱🌿🌸🌳), per
+ * the "different mastery symbol in vocab revision vs tingxie" design call:
+ * egg -> hatched egg -> chick -> chicken, matching the 🦁-zoo framing
+ * without depending on that mascot itself for the day-to-day level badge. */
+export const STAGE_EMOJI = ["🥚", "🐣", "🐥", "🐔"] as const;
 
 export type MasteryKey = `${string}:${"read" | "write"}`;
 export function masteryKey(vocabId: string, skill: "read" | "write"): MasteryKey {
@@ -70,8 +73,8 @@ export function isSkillFlagged(
 
 /** Chapter-level stage badge: fraction of this chapter's words that are
  * individually mastered (every required track at level 3), bucketed into
- * the same 4-stage set as a single word — 0% -> 🌱, <50% -> 🌿, <100% -> 🌸,
- * 100% -> 🌳. Mirrors the "mastered = passed Level 2" rule from the design
+ * the same 4-stage set as a single word — 0% -> 🥚, <50% -> 🐣, <100% -> 🐥,
+ * 100% -> 🐔. Mirrors the "mastered = passed Level 2" rule from the design
  * review rather than averaging raw per-track percentages, which would
  * overstate a chapter where every word is half-done on one track only. */
 export function chapterStage(words: RevisionVocab[], masteryByKey: Map<MasteryKey, RevisionMastery>): number {

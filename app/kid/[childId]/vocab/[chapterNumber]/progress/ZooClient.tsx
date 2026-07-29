@@ -6,6 +6,11 @@
 // than a garden per the chapter hub's existing "🦁 my vocab zoo" framing.
 // Deliberately a new component rather than reusing GardenClient, which is
 // TingXie's own and keyed on TingXie's mastery/char_misses schema.
+//
+// The mastery stage symbols themselves (STAGE_EMOJI) are also
+// Revision-specific -- egg/hatched egg/chick/chicken, not TingXie's plant
+// set -- per the "different mastery symbol in vocab revision vs tingxie"
+// design call.
 
 import Link from "next/link";
 import {
@@ -19,12 +24,6 @@ import {
 } from "@/lib/revision/mastery";
 import type { RevisionAttempt, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
 
-// The zoo page is Revision's own naming/chrome for this screen (🦁 mascot,
-// "my vocab zoo" caption on the chapter hub), but the actual mastery stage
-// indicator per word/track stays the same 🌱🌿🌸🌳 plant set used everywhere
-// else in Revision (Learn grid, chapter hub chips) and mirroring TingXie's
-// own mastery-stage convention -- one stage vocabulary across the whole
-// app, not a zoo-specific reskin.
 const STAGE_LABEL = ["New", "Learning", "Almost", "Mastered"];
 
 export default function ZooClient({
@@ -107,7 +106,7 @@ export default function ZooClient({
           <div style={{ width: `${pct}%`, background: "var(--ok)", height: "100%" }} />
         </div>
         <p className="text-xs" style={{ color: "var(--mut)" }}>
-          🌱 new → 🌿 learning → 🌸 almost → 🌳 mastered · tests grow words fastest
+          🥚 new → 🐣 learning → 🐥 almost → 🐔 mastered · tests grow words fastest
         </p>
       </div>
 

@@ -88,8 +88,18 @@ export function speakRevision(text: string): void {
     .then((url) => {
       const audio = getAudioEl();
       if (!audio) return;
-      audio.src = url;
       audio.onerror = () => fallbackSpeak(text);
+      // "Say it again"/replaying the same word reuses this element's
+      // current src verbatim -- reassigning `.src` to an identical blob:
+      // URL still makes the browser reload/re-buffer it, producing a
+      // brief silent gap before playback actually starts. Skipping the
+      // reassignment when it's already the right clip removes that gap;
+      // rewinding via currentTime is enough to replay from the start.
+      if (audio.src === url) {
+        audio.currentTime = 0;
+      } else {
+        audio.src = url;
+      }
       audio.play().catch(() => fallbackSpeak(text));
     })
     .catch(() => fallbackSpeak(text));

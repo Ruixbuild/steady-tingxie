@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
 import { chapterStage, masteryMapFromRows, STAGE_EMOJI, weeklyReviewedCount } from "@/lib/revision/mastery";
 import ChapterSelector from "./ChapterSelector";
+import PrimaryLevelSelector from "./PrimaryLevelSelector";
 
 const EDITION = "huanlehuoban-2025";
 
@@ -13,12 +14,13 @@ export default async function VocabRevisionPage({
   searchParams,
 }: {
   params: Promise<{ childId: string }>;
-  searchParams: Promise<{ chapter?: string }>;
+  searchParams: Promise<{ chapter?: string; level?: string }>;
 }) {
   const { childId } = await params;
-  const { chapter: requestedChapter } = await searchParams;
+  const { chapter: requestedChapter, level: requestedLevel } = await searchParams;
   const cookieStore = await cookies();
   const lastChapterCookie = cookieStore.get(`lastChapter_${childId}`)?.value;
+  const lastPrimaryLevelCookie = cookieStore.get(`lastPrimaryLevel_${childId}`)?.value;
 
   const supabase = await createServerSupabaseClient();
   const {
@@ -34,12 +36,27 @@ export default async function VocabRevisionPage({
   const child = childResult.data as unknown as RevisionChildRow | null;
   if (!child) notFound();
 
+  // A child can revise a different grade's vocab than their own registered
+  // level (e.g. reviewing an earlier grade, or previewing ahead) -- the
+  // level picker below lets them switch; this just discovers which levels
+  // actually have seeded content for the current edition.
+  const { data: levelRowsRaw } = await supabase.from("revision_vocab").select("primary_level").eq("edition", EDITION);
+  const availableLevels = Array.from(
+    new Set(((levelRowsRaw ?? []) as unknown as { primary_level: string }[]).map((r) => r.primary_level))
+  ).sort();
+  const selectedLevel: string =
+    (requestedLevel && availableLevels.includes(requestedLevel) ? requestedLevel : null) ??
+    (lastPrimaryLevelCookie && availableLevels.includes(lastPrimaryLevelCookie) ? lastPrimaryLevelCookie : null) ??
+    (availableLevels.includes(child.level) ? child.level : null) ??
+    availableLevels[0] ??
+    child.level;
+
   const { data: vocabRaw } = await supabase
     .from("revision_vocab")
     .select(
       "id, primary_level, edition, chapter_number, chapter_title, sort, hanzi, pinyin, english, skill, is_higher_chinese, cn_definition, sentence_1, sentence_2, pairing_1, pairing_2, pairing_3, pairing_4"
     )
-    .eq("primary_level", child.level)
+    .eq("primary_level", selectedLevel)
     .eq("edition", EDITION)
     .order("chapter_number")
     .order("sort");
@@ -84,11 +101,11 @@ export default async function VocabRevisionPage({
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl">
         <Link
-          href="/"
+          href={`/kid/${childId}/choose`}
           className="mb-4 inline-block text-base"
           style={{ color: "var(--accent)", fontWeight: 700 }}
         >
-          ← Switch profile
+          ← Back
         </Link>
         <h1 className="text-2xl font-semibold mb-1" style={{ color: "var(--accent-d)" }}>
           词语复习
@@ -98,7 +115,7 @@ export default async function VocabRevisionPage({
           <p className="text-lg font-semibold">
             {child.name}
             <span className="text-lg font-normal ml-3" style={{ color: "var(--mut)" }}>
-              {child.level}
+              {selectedLevel}
             </span>
           </p>
         </div>
@@ -110,8 +127,15 @@ export default async function VocabRevisionPage({
           {`You've reviewed ${reviewedThisWeek} word${reviewedThisWeek === 1 ? "" : "s"} this week!`}
         </p>
 
+        <div className="mt-8 flex items-center gap-2 flex-wrap">
+          <p className="text-sm" style={{ color: "var(--mut)" }}>
+            Choose primary level:
+          </p>
+          <PrimaryLevelSelector childId={childId} levels={availableLevels} selectedLevel={selectedLevel} />
+        </div>
+
         {activeChapter && (
-          <div className="mt-8 flex items-center gap-2 flex-wrap">
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
             <p className="text-sm" style={{ color: "var(--mut)" }}>
               Choose chapter:
             </p>
@@ -154,7 +178,7 @@ export default async function VocabRevisionPage({
         <div className="flex flex-col gap-3">
           {chapters.length === 0 && (
             <p style={{ color: "var(--mut)" }}>
-              No chapters for {child.level} yet — check back once they&apos;re added.
+              No chapters for {selectedLevel} yet — check back once they&apos;re added.
             </p>
           )}
           {chapters.map((c) => {

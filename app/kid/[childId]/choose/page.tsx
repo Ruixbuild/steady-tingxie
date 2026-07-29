@@ -42,9 +42,9 @@ export default async function ChooseModulePage({
         </Link>
 
         <Link href={`/kid/${childId}/vocab`} className="card p-5 flex flex-col gap-1">
-          <span className="font-semibold">📖 Vocabulary Revision</span>
+          <span className="font-semibold">📖 词语复习</span>
           <span className="text-sm" style={{ color: "var(--mut)" }}>
-            Fixed vocab lists, split by 识读/识写
+            MOE-aligned 识读，识写 vocabulary
           </span>
         </Link>
       </div>

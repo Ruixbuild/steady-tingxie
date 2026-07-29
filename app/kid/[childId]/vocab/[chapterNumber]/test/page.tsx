@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
@@ -27,12 +28,16 @@ export default async function VocabTestPage({
   const child = childResult.data as unknown as Pick<RevisionChildRow, "id" | "level" | "higher_chinese"> | null;
   if (!child) notFound();
 
+  const cookieStore = await cookies();
+  const levelCookie = cookieStore.get(`lastPrimaryLevel_${childId}`)?.value;
+  const effectiveLevel = levelCookie || child.level;
+
   const { data: vocabRaw } = await supabase
     .from("revision_vocab")
     .select(
       "id, primary_level, edition, chapter_number, chapter_title, sort, hanzi, pinyin, english, skill, is_higher_chinese, cn_definition, sentence_1, sentence_2, pairing_1, pairing_2, pairing_3, pairing_4"
     )
-    .eq("primary_level", child.level)
+    .eq("primary_level", effectiveLevel)
     .eq("edition", EDITION)
     .eq("chapter_number", chapterNumber)
     .order("sort");

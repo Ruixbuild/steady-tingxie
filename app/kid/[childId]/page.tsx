@@ -136,11 +136,11 @@ export default async function ChildHomePage({
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl">
         <Link
-          href="/"
+          href={`/kid/${childId}/choose`}
           className="mb-4 inline-block text-base"
           style={{ color: "var(--accent)", fontWeight: 700 }}
         >
-          ← Switch profile
+          ← Back
         </Link>
         <h1 className="text-2xl font-semibold mb-1" style={{ color: "var(--accent-d)" }}>
           听写

@@ -30,7 +30,7 @@ export default function ChapterSelector({
     >
       {chapters.map((c) => (
         <option key={c.number} value={c.number}>
-          {c.title}
+          Chapter {c.number}
         </option>
       ))}
     </select>
