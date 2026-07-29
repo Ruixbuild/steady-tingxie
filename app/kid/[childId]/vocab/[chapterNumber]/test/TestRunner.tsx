@@ -1,0 +1,160 @@
+"use client";
+
+// Orchestrates one skill+level test run: builds the word queue, delegates
+// each word to the right quiz component, submits each attempt via
+// submitWordAttempt, and shows ResultsScreen at the end. Deliberately no
+// "test time"/hint banner and no progress bar — per the wireframe review,
+// this feature stays as plain as TestSession's chrome minus that banner.
+
+import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import StrokeTestQuiz from "@/app/kid/[childId]/vocab/StrokeTestQuiz";
+import TestReadQuiz, { type ReadQuizOption } from "@/app/kid/[childId]/vocab/TestReadQuiz";
+import ResultsScreen, { type WordResult } from "./ResultsScreen";
+import { strokeChars } from "@/lib/hanzi";
+import { submitWordAttempt, type CharResult } from "@/lib/revision/testActions";
+import { blankPairing, findPairingWithWord, pickDistractors, shuffle } from "@/lib/revision/testScoring";
+import type { RevisionVocab } from "@/lib/revision/types";
+
+const TITLE: Record<"read" | "write", Record<1 | 2, string>> = {
+  read: { 1: "识读 Level 1 — listen & pick", 2: "识读 Level 2 — match the phrase" },
+  write: { 1: "识写 Level 1 — write from memory", 2: "识写 Level 2 — fill in the blank" },
+};
+
+export default function TestRunner({
+  childId,
+  base,
+  skill,
+  level,
+  words,
+  chapterWords,
+}: {
+  childId: string;
+  base: string;
+  skill: "read" | "write";
+  level: 1 | 2;
+  words: RevisionVocab[];
+  chapterWords: RevisionVocab[];
+}) {
+  // Level 2 needs a pairing containing the word to blank out — words
+  // without one are skipped from that level's queue.
+  const queue = useMemo(
+    () => (level === 1 ? words : words.filter((w) => findPairingWithWord(w) !== null)),
+    [words, level]
+  );
+
+  const [index, setIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [results, setResults] = useState<WordResult[]>([]);
+  const epochRef = useRef(0);
+  const charResultsRef = useRef<CharResult[]>([]);
+
+  const current = queue[index];
+
+  async function handleReadDone(passed: boolean) {
+    try {
+      await submitWordAttempt(childId, current.id, "read", level, { passed });
+    } catch {
+      // Best-effort — the session stays usable even if one write hiccups;
+      // that word just won't have this attempt recorded.
+    }
+    setResults((r) => [...r, { hanzi: current.hanzi, passed }]);
+    setIndex((i) => i + 1);
+  }
+
+  async function handleStrokeCharDone(result: { strokes: number; totalMistakes: number }) {
+    charResultsRef.current.push({ strokes: result.strokes, total_mistakes: result.totalMistakes });
+    const chars = strokeChars(current.hanzi);
+    if (charIndex + 1 < chars.length) {
+      setCharIndex((i) => i + 1);
+      return;
+    }
+    const charResults = charResultsRef.current;
+    let passed = false;
+    try {
+      const res = await submitWordAttempt(childId, current.id, "write", level, { charResults });
+      passed = res.item_passed;
+    } catch {
+      // best-effort, see handleReadDone
+    }
+    setResults((r) => [...r, { hanzi: current.hanzi, passed }]);
+    charResultsRef.current = [];
+    setCharIndex(0);
+    setIndex((i) => i + 1);
+  }
+
+  if (queue.length === 0) {
+    return (
+      <div className="card p-8 text-center" style={{ color: "var(--mut)" }}>
+        Nothing to test here yet.
+      </div>
+    );
+  }
+
+  if (index >= queue.length) {
+    return <ResultsScreen skill={skill} level={level} results={results} backHref={base} />;
+  }
+
+  const readOptions: ReadQuizOption[] =
+    skill === "read"
+      ? shuffle([
+          { id: current.id, hanzi: current.hanzi },
+          ...pickDistractors(current, chapterWords, 3).map((w) => ({ id: w.id, hanzi: w.hanzi })),
+        ])
+      : [];
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="text-center">
+        <p className="text-base" style={{ color: "var(--mut)" }}>
+          {TITLE[skill][level]}
+        </p>
+        <p className="text-sm mt-1" style={{ color: "var(--mut)" }}>
+          Item {index + 1} of {queue.length}
+        </p>
+      </div>
+
+      <Link href={base} className="text-sm self-center" style={{ color: "var(--mut)" }}>
+        ✕ End test
+      </Link>
+
+      {skill === "read" && level === 1 && (
+        <TestReadQuiz
+          key={current.id}
+          targetId={current.id}
+          options={readOptions}
+          promptAudio={current.hanzi}
+          onDone={handleReadDone}
+        />
+      )}
+
+      {skill === "read" && level === 2 && (
+        <TestReadQuiz
+          key={current.id}
+          targetId={current.id}
+          options={readOptions}
+          promptText={blankPairing(findPairingWithWord(current) as string, current.hanzi)}
+          onDone={handleReadDone}
+        />
+      )}
+
+      {skill === "write" && (
+        <>
+          {level === 2 && (
+            <p className="hanzi text-lg text-center" style={{ color: "var(--mut)" }}>
+              {blankPairing(findPairingWithWord(current) as string, current.hanzi)}
+            </p>
+          )}
+          <StrokeTestQuiz
+            key={`${current.id}-${charIndex}`}
+            char={strokeChars(current.hanzi)[charIndex]}
+            announceWord={charIndex === 0 && level === 1 ? current.hanzi : undefined}
+            word={current.hanzi}
+            epochRef={epochRef}
+            onDone={handleStrokeCharDone}
+          />
+        </>
+      )}
+    </div>
+  );
+}
