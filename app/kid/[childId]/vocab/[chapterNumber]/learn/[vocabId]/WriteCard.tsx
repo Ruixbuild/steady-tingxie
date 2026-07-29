@@ -6,6 +6,7 @@ import CharLadder from "@/app/kid/[childId]/list/[listId]/learn/CharLadder";
 import { strokeChars } from "@/lib/hanzi";
 import { STAGE_EMOJI } from "@/lib/revision/mastery";
 import { touchMastery } from "@/lib/revision/masteryActions";
+import { stripPunctuation } from "@/lib/revision/narration";
 import type { RevisionVocab } from "@/lib/revision/types";
 
 const SKILL_LABEL: Record<RevisionVocab["skill"], string> = {
@@ -108,8 +109,8 @@ export default function WriteCard({
           <CharLadder
             key={`${word.id}-${charIndex}`}
             char={chars[charIndex]}
-            announceWord={charIndex === 0 ? word.hanzi : undefined}
-            word={word.hanzi}
+            announceWord={charIndex === 0 ? stripPunctuation(word.hanzi) : undefined}
+            word={stripPunctuation(word.hanzi)}
             kind="words"
             skipWatch={false}
             epochRef={epochRef}

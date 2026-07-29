@@ -55,6 +55,12 @@ export default async function VocabLearnGridPage({
 
   const base = `/kid/${childId}/vocab/${chapterNumber}`;
 
+  const groups: { label: string; words: RevisionVocab[] }[] = [
+    { label: "识读", words: words.filter((w) => w.skill === "read") },
+    { label: "识写", words: words.filter((w) => w.skill === "write") },
+    { label: "识读 · 识写", words: words.filter((w) => w.skill === "both") },
+  ].filter((g) => g.words.length > 0);
+
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl">
@@ -66,18 +72,27 @@ export default async function VocabLearnGridPage({
           Learn · tap a word to practise
         </p>
 
-        <div className="flex flex-wrap gap-2">
-          {words.map((w) => (
-            <Link
-              key={w.id}
-              href={`${base}/learn/${w.id}`}
-              className="hanzi flex items-center gap-1 rounded-2xl px-3 py-2 text-lg"
-              style={{ background: "#fff", border: "1.5px solid var(--line)" }}
-            >
-              {isFlagged(w.id, masteryByKey) && <span className="text-sm">🚩</span>}
-              {w.hanzi}
-              <span className="text-sm">{STAGE_EMOJI[wordStage(w, masteryByKey)]}</span>
-            </Link>
+        <div className="flex flex-col gap-6">
+          {groups.map((g) => (
+            <div key={g.label}>
+              <p className="text-sm font-semibold mb-2" style={{ color: "var(--mut)" }}>
+                {g.label}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {g.words.map((w) => (
+                  <Link
+                    key={w.id}
+                    href={`${base}/learn/${w.id}`}
+                    className="hanzi flex items-center gap-1 rounded-2xl px-3 py-2 text-lg"
+                    style={{ background: "#fff", border: "1.5px solid var(--line)" }}
+                  >
+                    {isFlagged(w.id, masteryByKey) && <span className="text-sm">🚩</span>}
+                    {w.hanzi}
+                    <span className="text-sm">{STAGE_EMOJI[wordStage(w, masteryByKey)]}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>
