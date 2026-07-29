@@ -53,5 +53,13 @@ export default async function VocabTestPage({
 
   const base = `/kid/${childId}/vocab/${chapterNumber}`;
 
-  return <TestHost childId={childId} base={base} words={words} masteryRows={masteryRows} />;
+  return (
+    <TestHost
+      childId={childId}
+      chapterNumber={chapterNumber}
+      base={base}
+      words={words}
+      masteryRows={masteryRows}
+    />
+  );
 }

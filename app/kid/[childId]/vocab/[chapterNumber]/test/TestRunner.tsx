@@ -6,11 +6,12 @@
 // "test time"/hint banner and no progress bar — per the wireframe review,
 // this feature stays as plain as TestSession's chrome minus that banner.
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import StrokeTestQuiz from "@/app/kid/[childId]/vocab/StrokeTestQuiz";
 import TestReadQuiz, { type ReadQuizOption } from "@/app/kid/[childId]/vocab/TestReadQuiz";
 import ResultsScreen, { type WordResult } from "./ResultsScreen";
 import { strokeChars } from "@/lib/hanzi";
+import { recordTestAttempt } from "@/lib/revision/attemptActions";
 import { submitWordAttempt, type CharResult } from "@/lib/revision/testActions";
 import { blankPairing, findPairingWithWord, pickDistractors, shuffle } from "@/lib/revision/testScoring";
 import type { RevisionVocab } from "@/lib/revision/types";
@@ -22,6 +23,7 @@ const TITLE: Record<"read" | "write", Record<1 | 2, string>> = {
 
 export default function TestRunner({
   childId,
+  chapterNumber,
   chapterHref,
   onExit,
   skill,
@@ -30,6 +32,9 @@ export default function TestRunner({
   chapterWords,
 }: {
   childId: string;
+  /** For persisting the finished run as one revision_attempts row — see
+   * the completion effect below. */
+  chapterNumber: number;
   /** Real navigation target for the results screen's "Back to chapter" —
    * a genuinely different URL, so an ordinary Link is fine there. */
   chapterHref: string;
@@ -54,6 +59,7 @@ export default function TestRunner({
   const [results, setResults] = useState<WordResult[]>([]);
   const epochRef = useRef(0);
   const charResultsRef = useRef<CharResult[]>([]);
+  const attemptSubmittedRef = useRef(false);
 
   const current = queue[index];
 
@@ -68,7 +74,7 @@ export default function TestRunner({
       // Best-effort — the session stays usable even if one write hiccups;
       // that word just won't have this attempt recorded.
     });
-    setResults((r) => [...r, { hanzi: current.hanzi, passed }]);
+    setResults((r) => [...r, { vocabId: current.id, hanzi: current.hanzi, passed }]);
     setIndex((i) => i + 1);
   }
 
@@ -81,21 +87,35 @@ export default function TestRunner({
     }
     const charResults = charResultsRef.current;
     const finishedHanzi = current.hanzi;
+    const finishedVocabId = current.id;
     // Same fire-and-forget reasoning as handleReadDone — advance to the
     // next word immediately; the graded verdict (only known once the RPC
     // resolves, since 识写 pass/fail is computed server-side) is appended
     // to results whenever it arrives rather than blocking the transition.
     submitWordAttempt(childId, current.id, "write", level, { charResults })
       .then((res) => {
-        setResults((r) => [...r, { hanzi: finishedHanzi, passed: res.item_passed }]);
+        setResults((r) => [...r, { vocabId: finishedVocabId, hanzi: finishedHanzi, passed: res.item_passed }]);
       })
       .catch(() => {
-        setResults((r) => [...r, { hanzi: finishedHanzi, passed: false }]);
+        setResults((r) => [...r, { vocabId: finishedVocabId, hanzi: finishedHanzi, passed: false }]);
       });
     charResultsRef.current = [];
     setCharIndex(0);
     setIndex((i) => i + 1);
   }
+
+  // Persists the whole finished run as one revision_attempts row, once —
+  // gated on results.length rather than index, since a write run's last
+  // word's result only lands after its grading RPC resolves (async), which
+  // can trail index reaching queue.length by a beat. Fire-and-forget, same
+  // reasoning as the per-word calls above: this is a history record, not
+  // something the child is waiting on.
+  useEffect(() => {
+    if (queue.length > 0 && results.length === queue.length && !attemptSubmittedRef.current) {
+      attemptSubmittedRef.current = true;
+      recordTestAttempt(childId, chapterNumber, skill, level, results).catch(() => {});
+    }
+  }, [results, queue.length, childId, chapterNumber, skill, level]);
 
   if (queue.length === 0) {
     return (

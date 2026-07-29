@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
+import type { RevisionAttempt, RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
 import ZooClient from "./ZooClient";
 
 const EDITION = "huanlehuoban-2025";
@@ -53,6 +53,15 @@ export default async function VocabProgressPage({
     );
   const masteryRows = (masteryRaw ?? []) as unknown as RevisionMastery[];
 
+  const { data: attemptsRaw } = await supabase
+    .from("revision_attempts")
+    .select("id, child_id, chapter_number, skill, test_level, score, total, detail, taken_at")
+    .eq("child_id", childId)
+    .eq("chapter_number", chapterNumber)
+    .order("taken_at", { ascending: false })
+    .limit(10);
+  const recentAttempts = (attemptsRaw ?? []) as unknown as RevisionAttempt[];
+
   const base = `/kid/${childId}/vocab/${chapterNumber}`;
 
   return (
@@ -66,7 +75,13 @@ export default async function VocabProgressPage({
           <p style={{ color: "var(--mut)" }}>My vocab zoo</p>
         </div>
 
-        <ZooClient base={base} words={words} masteryRows={masteryRows} />
+        <ZooClient
+          base={base}
+          allChaptersHref={`/kid/${childId}/vocab/progress`}
+          words={words}
+          masteryRows={masteryRows}
+          recentAttempts={recentAttempts}
+        />
       </div>
     </main>
   );

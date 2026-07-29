@@ -142,7 +142,15 @@ export default async function VocabRevisionPage({
           </div>
         )}
 
-        <h2 className="text-lg font-semibold mb-3 mt-8">My chapters</h2>
+        <Link
+          href={`/kid/${childId}/vocab/progress`}
+          className="mt-8 inline-block text-sm"
+          style={{ color: "var(--accent)", fontWeight: 700 }}
+        >
+          🦁 My whole vocab zoo →
+        </Link>
+
+        <h2 className="text-lg font-semibold mb-3 mt-4">My chapters</h2>
         <div className="flex flex-col gap-3">
           {chapters.length === 0 && (
             <p style={{ color: "var(--mut)" }}>

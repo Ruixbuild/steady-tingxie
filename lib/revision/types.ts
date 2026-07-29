@@ -50,6 +50,22 @@ export type ChapterSummary = {
   words: RevisionVocab[];
 };
 
+/** One row per completed Test run (revision_attempts.sql) — the whole
+ * skill+level session's outcome, not a per-word row (that's what
+ * RevisionMastery already tracks). `detail.words` mirrors what's sent to
+ * record_revision_test_attempt. */
+export type RevisionAttempt = {
+  id: string;
+  child_id: string;
+  chapter_number: number;
+  skill: "read" | "write";
+  test_level: 1 | 2;
+  score: number;
+  total: number;
+  detail: { words: { vocab_id: string; hanzi: string; passed: boolean }[] };
+  taken_at: string;
+};
+
 /** children + the new higher_chinese column. lib/supabase/types.ts's
  * generated Child type doesn't know about that column (deliberately left
  * untouched — see the note at the top of this file), so any query selecting

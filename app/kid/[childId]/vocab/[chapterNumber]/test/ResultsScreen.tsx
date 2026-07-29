@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-export type WordResult = { hanzi: string; passed: boolean };
+export type WordResult = { vocabId: string; hanzi: string; passed: boolean };
 
 const TITLE: Record<"read" | "write", Record<1 | 2, string>> = {
   read: { 1: "识读 Level 1 results", 2: "识读 Level 2 results" },

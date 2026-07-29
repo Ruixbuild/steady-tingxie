@@ -21,11 +21,13 @@ type Active = { skill: "read" | "write"; level: 1 | 2 };
 
 export default function TestHost({
   childId,
+  chapterNumber,
   base,
   words,
   masteryRows,
 }: {
   childId: string;
+  chapterNumber: number;
   base: string;
   words: RevisionVocab[];
   masteryRows: RevisionMastery[];
@@ -45,6 +47,7 @@ export default function TestHost({
         <div className="w-full max-w-xl">
           <TestRunner
             childId={childId}
+            chapterNumber={chapterNumber}
             chapterHref={base}
             onExit={() => setActive(null)}
             skill={active.skill}

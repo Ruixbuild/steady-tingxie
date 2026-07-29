@@ -17,7 +17,7 @@ import {
   STAGE_EMOJI,
   tracksFor,
 } from "@/lib/revision/mastery";
-import type { RevisionMastery, RevisionVocab } from "@/lib/revision/types";
+import type { RevisionAttempt, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
 
 // The zoo page is Revision's own naming/chrome for this screen (🦁 mascot,
 // "my vocab zoo" caption on the chapter hub), but the actual mastery stage
@@ -29,12 +29,16 @@ const STAGE_LABEL = ["New", "Learning", "Almost", "Mastered"];
 
 export default function ZooClient({
   base,
+  allChaptersHref,
   words,
   masteryRows,
+  recentAttempts,
 }: {
   base: string;
+  allChaptersHref: string;
   words: RevisionVocab[];
   masteryRows: RevisionMastery[];
+  recentAttempts: RevisionAttempt[];
 }) {
   const masteryByKey = masteryMapFromRows(masteryRows);
 
@@ -90,6 +94,10 @@ export default function ZooClient({
 
   return (
     <div className="flex flex-col gap-6">
+      <Link href={allChaptersHref} className="text-sm self-start" style={{ color: "var(--accent)", fontWeight: 700 }}>
+        ← All chapters
+      </Link>
+
       <div className="card p-5 flex flex-col gap-3 items-center text-center">
         <span className="text-4xl">🦁</span>
         <p className="font-semibold text-lg">
@@ -105,6 +113,29 @@ export default function ZooClient({
 
       {renderGroup(readWords, "read", "👁 识读")}
       {renderGroup(writeWords, "write", "✍️ 识写")}
+
+      {recentAttempts.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-semibold" style={{ color: "var(--mut)" }}>
+            📊 Recent tests
+          </p>
+          <div className="flex flex-col gap-2">
+            {recentAttempts.map((a) => (
+              <div key={a.id} className="card flex items-center justify-between px-4 py-3">
+                <span>
+                  {a.skill === "read" ? "👁" : "✍️"} L{a.test_level}
+                </span>
+                <span className="text-sm" style={{ color: "var(--mut)" }}>
+                  {a.taken_at.slice(0, 10)}
+                </span>
+                <span className="font-semibold">
+                  {a.score}/{a.total}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {hasTricky && (
         <div className="flex flex-col gap-3">
