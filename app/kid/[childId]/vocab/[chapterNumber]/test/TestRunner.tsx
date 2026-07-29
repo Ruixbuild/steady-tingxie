@@ -51,18 +51,22 @@ export default function TestRunner({
 
   const current = queue[index];
 
-  async function handleReadDone(passed: boolean) {
-    try {
-      await submitWordAttempt(childId, current.id, "read", level, { passed });
-    } catch {
+  function handleReadDone(passed: boolean) {
+    // Fire-and-forget: submitting the RPC doesn't block advancing to the
+    // next word. Awaiting it here (the original approach) stacked a network
+    // round-trip on top of TestReadQuiz's ~900ms reveal delay, pushing the
+    // gap between the child's tap and the next word's auto-play call past
+    // the browser's recent-user-activation window — which is what made
+    // audio silently stop auto-playing from the second word onward.
+    submitWordAttempt(childId, current.id, "read", level, { passed }).catch(() => {
       // Best-effort — the session stays usable even if one write hiccups;
       // that word just won't have this attempt recorded.
-    }
+    });
     setResults((r) => [...r, { hanzi: current.hanzi, passed }]);
     setIndex((i) => i + 1);
   }
 
-  async function handleStrokeCharDone(result: { strokes: number; totalMistakes: number }) {
+  function handleStrokeCharDone(result: { strokes: number; totalMistakes: number }) {
     charResultsRef.current.push({ strokes: result.strokes, total_mistakes: result.totalMistakes });
     const chars = strokeChars(current.hanzi);
     if (charIndex + 1 < chars.length) {
@@ -70,14 +74,18 @@ export default function TestRunner({
       return;
     }
     const charResults = charResultsRef.current;
-    let passed = false;
-    try {
-      const res = await submitWordAttempt(childId, current.id, "write", level, { charResults });
-      passed = res.item_passed;
-    } catch {
-      // best-effort, see handleReadDone
-    }
-    setResults((r) => [...r, { hanzi: current.hanzi, passed }]);
+    const finishedHanzi = current.hanzi;
+    // Same fire-and-forget reasoning as handleReadDone — advance to the
+    // next word immediately; the graded verdict (only known once the RPC
+    // resolves, since 识写 pass/fail is computed server-side) is appended
+    // to results whenever it arrives rather than blocking the transition.
+    submitWordAttempt(childId, current.id, "write", level, { charResults })
+      .then((res) => {
+        setResults((r) => [...r, { hanzi: finishedHanzi, passed: res.item_passed }]);
+      })
+      .catch(() => {
+        setResults((r) => [...r, { hanzi: finishedHanzi, passed: false }]);
+      });
     charResultsRef.current = [];
     setCharIndex(0);
     setIndex((i) => i + 1);
