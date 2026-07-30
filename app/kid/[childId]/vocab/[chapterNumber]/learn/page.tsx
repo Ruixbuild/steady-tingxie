@@ -12,6 +12,7 @@ import {
   STAGE_EMOJI,
   tracksFor,
 } from "@/lib/revision/mastery";
+import RevisionRefresher from "@/app/kid/[childId]/vocab/RevisionRefresher";
 
 const EDITION = "huanlehuoban-2025";
 
@@ -81,15 +82,16 @@ export default async function VocabLearnGridPage({
 
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
+      <RevisionRefresher />
       <div className="w-full max-w-xl">
         <Link href={base} className="mb-4 inline-block text-base" style={{ color: "var(--accent)", fontWeight: 700 }}>
           ← Back
         </Link>
-        <h1 className="text-2xl font-semibold mb-1">
-          Chapter {chapterNumber} - <span className="hanzi">{chapterTitle}</span>
+        <h1 className="text-2xl font-semibold mb-2">
+          Chapter {chapterNumber} <span className="hanzi">{chapterTitle}</span>
         </h1>
-        <p style={{ color: "var(--mut)" }}>Tap a word to learn.</p>
-        <p className="flex items-center gap-2 text-sm" style={{ color: "var(--mut)" }}>
+        <p className="mb-3" style={{ color: "var(--mut)" }}>Tap a word to learn.</p>
+        <p className="mb-1 flex items-center gap-2 text-sm" style={{ color: "var(--mut)" }}>
           <span className="text-lg">{STAGE_EMOJI[stage]}</span>
           识读 {readProgress.mastered}/{readProgress.total} · 识写 {writeProgress.mastered}/{writeProgress.total}
         </p>

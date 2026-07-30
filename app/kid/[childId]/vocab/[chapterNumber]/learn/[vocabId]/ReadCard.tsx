@@ -79,8 +79,8 @@ export default function ReadCard({
           <button
             type="button"
             onClick={toggleFlag}
-            aria-label={flagged ? "Unflag" : "Flag"}
-            title={flagged ? "Unflag" : "Flag"}
+            aria-label={flagged ? "Unmark as weak" : "Mark as weak"}
+            title={flagged ? "Unmark as weak" : "Mark as weak"}
             className="inline-flex items-center gap-1"
             style={{
               position: "absolute",
@@ -95,7 +95,7 @@ export default function ReadCard({
               fontWeight: 600,
             }}
           >
-            ⚑ {flagged ? "Flagged" : "Flag"}
+            ⚑ {flagged ? "Marked as weak" : "Mark as weak"}
           </button>
 
           <span

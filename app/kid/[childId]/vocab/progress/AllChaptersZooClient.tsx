@@ -1,6 +1,6 @@
 "use client";
 
-// All-chapters version of the per-chapter zoo (../[chapterNumber]/progress/
+// All-chapters version of the per-chapter farm (../[chapterNumber]/progress/
 // ZooClient.tsx) -- same overall-completion card and STAGE_EMOJI stage set,
 // but aggregated across every chapter's words at once instead of one
 // chapter's. chapterStage/skillProgress/isWordMastered are already pure
@@ -32,7 +32,7 @@ export default function AllChaptersZooClient({
   return (
     <div className="flex flex-col gap-6">
       <div className="card p-5 flex flex-col gap-3 items-center text-center">
-        <span className="text-4xl">🦁</span>
+        <span className="text-4xl">🐓</span>
         <p className="font-semibold text-lg">
           {grown}/{total} mastered
         </p>

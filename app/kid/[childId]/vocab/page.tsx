@@ -6,6 +6,7 @@ import type { RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/rev
 import { chapterStage, masteryMapFromRows, STAGE_EMOJI, weeklyReviewedCount } from "@/lib/revision/mastery";
 import ChapterSelector from "./ChapterSelector";
 import PrimaryLevelSelector from "./PrimaryLevelSelector";
+import RevisionRefresher from "./RevisionRefresher";
 
 const EDITION = "huanlehuoban-2025";
 
@@ -99,6 +100,7 @@ export default async function VocabRevisionPage({
 
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
+      <RevisionRefresher />
       <div className="w-full max-w-xl">
         <Link
           href={`/kid/${childId}/choose`}
@@ -171,7 +173,7 @@ export default async function VocabRevisionPage({
           className="mt-8 inline-block text-sm"
           style={{ color: "var(--accent)", fontWeight: 700 }}
         >
-          🦁 My whole vocab zoo →
+          🐓 My whole vocabulary farm →
         </Link>
 
         <h2 className="text-lg font-semibold mb-3 mt-4">My chapters</h2>

@@ -6,7 +6,7 @@ import type { RevisionMastery, RevisionSkill, RevisionVocab } from "./types";
 /** Revision's own 4-stage mastery symbol set — deliberately different from
  * TingXie's plant stages (HubWordList.tsx/GardenClient.tsx's 🌱🌿🌸🌳), per
  * the "different mastery symbol in vocab revision vs tingxie" design call:
- * egg -> hatched egg -> chick -> chicken, matching the 🦁-zoo framing
+ * egg -> hatched egg -> chick -> chicken, matching the 🐓-farm framing
  * without depending on that mascot itself for the day-to-day level badge. */
 export const STAGE_EMOJI = ["🥚", "🐣", "🐥", "🐔"] as const;
 

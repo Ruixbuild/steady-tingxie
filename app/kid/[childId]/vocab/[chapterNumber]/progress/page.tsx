@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { RevisionAttempt, RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
+import RevisionRefresher from "@/app/kid/[childId]/vocab/RevisionRefresher";
 import ZooClient from "./ZooClient";
 
 const EDITION = "huanlehuoban-2025";
@@ -71,13 +72,14 @@ export default async function VocabProgressPage({
 
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
+      <RevisionRefresher />
       <div className="w-full max-w-xl flex flex-col gap-4">
         <Link href={base} className="inline-block text-base" style={{ color: "var(--accent)", fontWeight: 700 }}>
           ← Back
         </Link>
         <div>
           <h1 className="hanzi text-2xl font-semibold mb-1">{chapterTitle}</h1>
-          <p style={{ color: "var(--mut)" }}>My vocab zoo</p>
+          <p style={{ color: "var(--mut)" }}>My vocabulary farm</p>
         </div>
 
         <ZooClient

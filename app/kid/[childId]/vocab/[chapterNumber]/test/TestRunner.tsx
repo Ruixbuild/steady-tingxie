@@ -7,6 +7,7 @@
 // this feature stays as plain as TestSession's chrome minus that banner.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import StrokeTestQuiz from "@/app/kid/[childId]/vocab/StrokeTestQuiz";
 import TestReadQuiz, { type ReadQuizOption } from "@/app/kid/[childId]/vocab/TestReadQuiz";
 import ResultsScreen, { type WordResult } from "./ResultsScreen";
@@ -48,6 +49,8 @@ export default function TestRunner({
   words: RevisionVocab[];
   chapterWords: RevisionVocab[];
 }) {
+  const router = useRouter();
+
   // Level 2 needs a pairing containing the word to blank out — words
   // without one are skipped from that level's queue.
   const queue = useMemo(
@@ -122,12 +125,21 @@ export default function TestRunner({
   // can trail index reaching queue.length by a beat. Fire-and-forget, same
   // reasoning as the per-word calls above: this is a history record, not
   // something the child is waiting on.
+  //
+  // router.refresh() here re-fetches this route's server data (the picker's
+  // masteryRows, threaded down through TestHost) so that if the child taps
+  // "✕ End test" back to the picker, its "suggested" level badge already
+  // reflects this run's result — without it, TestHost was still holding
+  // the masteryRows from before the test (it's a client component that
+  // never remounts between picker and runner), so a level-1 pass wouldn't
+  // bump the suggestion to level 2 until a real page navigation happened.
   useEffect(() => {
     if (queue.length > 0 && results.length === queue.length && !attemptSubmittedRef.current) {
       attemptSubmittedRef.current = true;
       recordTestAttempt(childId, chapterNumber, skill, level, results).catch(() => {});
+      router.refresh();
     }
-  }, [results, queue.length, childId, chapterNumber, skill, level]);
+  }, [results, queue.length, childId, chapterNumber, skill, level, router]);
 
   if (queue.length === 0) {
     return (

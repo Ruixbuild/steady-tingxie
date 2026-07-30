@@ -71,12 +71,21 @@ export default function TestReadQuiz({ targetId, options, promptAudio, promptTex
               type="button"
               disabled={revealed}
               onClick={() => handlePick(opt.id)}
-              className="hanzi font-semibold"
+              className="hanzi font-bold"
               style={{
                 ...style,
                 borderRadius: 14,
                 padding: "10px 4px",
-                fontSize: "1.05rem",
+                // clamp() instead of a fixed size: the grid's own container
+                // is capped at max-w-xl regardless of viewport, so a phone
+                // and an iPad give each option roughly the same available
+                // cell width today only on phones -- an iPad has much more
+                // room per cell, and a size tuned to fit 4 options on a
+                // ~375px phone screen reads as small and unclear once that
+                // extra width isn't used. The 1.05rem floor keeps the
+                // phone-fit behavior unchanged; the 1.6rem ceiling is what
+                // actually grows on a tablet-sized viewport.
+                fontSize: "clamp(1.05rem, 4vw, 1.6rem)",
                 lineHeight: 1.3,
                 minWidth: 0,
                 wordBreak: "keep-all",

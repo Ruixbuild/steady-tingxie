@@ -2,10 +2,10 @@
 
 // Revision's own progress visualization — same underlying mastery-stage
 // concept as TingXie's GardenClient (per-word/track stage badge, a
-// weak-words callout, a completion bar), but re-skinned as a zoo rather
-// than a garden per the chapter hub's existing "🦁 my vocab zoo" framing.
-// Deliberately a new component rather than reusing GardenClient, which is
-// TingXie's own and keyed on TingXie's mastery/char_misses schema.
+// weak-words callout, a completion bar), but re-skinned as a farm rather
+// than a garden per the chapter hub's existing "🐓 my vocabulary farm"
+// framing. Deliberately a new component rather than reusing GardenClient,
+// which is TingXie's own and keyed on TingXie's mastery/char_misses schema.
 //
 // The mastery stage symbols themselves (STAGE_EMOJI) are also
 // Revision-specific -- egg/hatched egg/chick/chicken, not TingXie's plant
@@ -98,7 +98,7 @@ export default function ZooClient({
       </Link>
 
       <div className="card p-5 flex flex-col gap-3 items-center text-center">
-        <span className="text-4xl">🦁</span>
+        <span className="text-4xl">🐓</span>
         <p className="font-semibold text-lg">
           {grown}/{total} mastered
         </p>

@@ -90,6 +90,12 @@ export default function TestHost({
                   ? defaultTestLevel(writeWords[0].id, "write", masteryByKey)
                   : 1;
             const isSuggested = suggestedLevel === c.level;
+            // Once a lower level's word has passed enough to bump the
+            // suggestion up (e.g. a Level 1 pass suggesting Level 2 next),
+            // that lower level is still tappable -- for re-practice -- but
+            // is de-emphasized rather than looking like an equally live
+            // option next to the new "· suggested" one.
+            const isFaint = c.level < suggestedLevel;
             return (
               <button
                 key={`${c.skill}-${c.level}`}
@@ -108,7 +114,13 @@ export default function TestHost({
                   setActive({ skill: c.skill, level: c.level });
                 }}
                 className="card flex items-center justify-between p-5 text-left"
-                style={c.count === 0 ? { opacity: 0.5, cursor: "default" } : undefined}
+                style={
+                  c.count === 0
+                    ? { opacity: 0.5, cursor: "default" }
+                    : isFaint
+                      ? { opacity: 0.55 }
+                      : undefined
+                }
               >
                 <span className="font-semibold">
                   {c.label}

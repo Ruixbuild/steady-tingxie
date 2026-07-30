@@ -11,6 +11,7 @@ import {
   STAGE_EMOJI,
   tracksFor,
 } from "@/lib/revision/mastery";
+import RevisionRefresher from "@/app/kid/[childId]/vocab/RevisionRefresher";
 
 const EDITION = "huanlehuoban-2025";
 
@@ -78,6 +79,7 @@ export default async function VocabChapterHubPage({
 
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
+      <RevisionRefresher />
       <div className="w-full max-w-xl">
         <Link
           href={`/kid/${childId}/vocab`}
@@ -117,9 +119,9 @@ export default async function VocabChapterHubPage({
             className="rounded-[18px] p-5 flex flex-col gap-1"
             style={{ background: "var(--ok-soft)", color: "#3E7A4E" }}
           >
-            <span className="text-3xl">🦁</span>
+            <span className="text-3xl">🐓</span>
             <span className="font-semibold text-lg">Progress</span>
-            <span className="text-sm opacity-80">my vocab zoo</span>
+            <span className="text-sm opacity-80">my vocabulary farm</span>
           </Link>
         </div>
 

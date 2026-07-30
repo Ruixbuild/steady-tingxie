@@ -3,11 +3,12 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { ChapterSummary, RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
+import RevisionRefresher from "@/app/kid/[childId]/vocab/RevisionRefresher";
 import AllChaptersZooClient from "./AllChaptersZooClient";
 
 const EDITION = "huanlehuoban-2025";
 
-// Cross-chapter zoo view — coexists with the sibling dynamic route
+// Cross-chapter farm view — coexists with the sibling dynamic route
 // vocab/[chapterNumber]/progress (Next.js resolves this literal "progress"
 // segment ahead of the dynamic one, same as any static-vs-dynamic sibling
 // route pair).
@@ -73,6 +74,7 @@ export default async function VocabAllChaptersProgressPage({
 
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
+      <RevisionRefresher />
       <div className="w-full max-w-xl flex flex-col gap-4">
         <Link
           href={`/kid/${childId}/vocab`}
@@ -82,7 +84,7 @@ export default async function VocabAllChaptersProgressPage({
           ← Back
         </Link>
         <div>
-          <h1 className="text-2xl font-semibold mb-1">{child.name}&apos;s vocab zoo</h1>
+          <h1 className="text-2xl font-semibold mb-1">{child.name}&apos;s vocabulary farm</h1>
           <p style={{ color: "var(--mut)" }}>Every chapter, all in one place</p>
         </div>
 
