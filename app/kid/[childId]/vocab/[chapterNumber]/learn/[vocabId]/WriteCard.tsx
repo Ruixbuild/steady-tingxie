@@ -5,7 +5,7 @@ import Link from "next/link";
 import StrokeLadder from "@/app/kid/[childId]/vocab/StrokeLadder";
 import { strokeChars } from "@/lib/hanzi";
 import { touchMastery } from "@/lib/revision/masteryActions";
-import { speakRevision, stripPunctuation } from "@/lib/revision/narration";
+import { prefetchRevision, speakRevision, stripPunctuation } from "@/lib/revision/narration";
 import type { RevisionVocab } from "@/lib/revision/types";
 
 // Mirrors ReadCard.tsx's initial card layout exactly (flag badge, speak
@@ -58,6 +58,26 @@ export default function WriteCard({
     // bumps level once practice completes).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [word.id]);
+
+  useEffect(() => {
+    // Same reasoning as ReadCard's mount prefetch: warms every speakable
+    // text here (including the stripped word text StrokeLadder auto-
+    // announces once practice starts) while the card is still being read,
+    // so neither a 🔊 tap nor entering practice mode hits a cold cache.
+    [
+      word.hanzi,
+      stripPunctuation(word.hanzi),
+      word.cn_definition,
+      word.pairing_1,
+      word.pairing_2,
+      word.pairing_3,
+      word.pairing_4,
+      word.sentence_1,
+      word.sentence_2,
+    ]
+      .filter((t): t is string => Boolean(t))
+      .forEach(prefetchRevision);
+  }, [word]);
 
   async function toggleFlag() {
     const next = !flagged;

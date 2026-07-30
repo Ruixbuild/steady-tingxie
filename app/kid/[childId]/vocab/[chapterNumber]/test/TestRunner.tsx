@@ -12,6 +12,7 @@ import TestReadQuiz, { type ReadQuizOption } from "@/app/kid/[childId]/vocab/Tes
 import ResultsScreen, { type WordResult } from "./ResultsScreen";
 import { strokeChars } from "@/lib/hanzi";
 import { recordTestAttempt } from "@/lib/revision/attemptActions";
+import { prefetchRevision } from "@/lib/revision/narration";
 import { submitWordAttempt, type CharResult } from "@/lib/revision/testActions";
 import { blankPairing, findPairingWithWord, pickDistractors, shuffle } from "@/lib/revision/testScoring";
 import type { RevisionVocab } from "@/lib/revision/types";
@@ -103,6 +104,17 @@ export default function TestRunner({
     setCharIndex(0);
     setIndex((i) => i + 1);
   }
+
+  // Prefetches the *next* item's audio while the current one is still on
+  // screen, so by the time the queue advances, TestReadQuiz's promptAudio
+  // auto-play (or StrokeTestQuiz's announceWord) hits an already-warm
+  // cache instead of a cold /api/tts fetch. Covers the second word onward;
+  // the very first word is prefetched by TestHost the moment its picker
+  // card is tapped, before this component even mounts.
+  useEffect(() => {
+    const next = queue[index + 1];
+    if (next) prefetchRevision(next.hanzi);
+  }, [index, queue]);
 
   // Persists the whole finished run as one revision_attempts row, once —
   // gated on results.length rather than index, since a write run's last

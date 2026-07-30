@@ -14,6 +14,7 @@ import { useState } from "react";
 import Link from "next/link";
 import TestRunner from "./TestRunner";
 import { masteryMapFromRows, tracksFor } from "@/lib/revision/mastery";
+import { prefetchRevision } from "@/lib/revision/narration";
 import { defaultTestLevel, findPairingWithWord } from "@/lib/revision/testScoring";
 import type { RevisionMastery, RevisionVocab } from "@/lib/revision/types";
 
@@ -94,7 +95,18 @@ export default function TestHost({
                 key={`${c.skill}-${c.level}`}
                 type="button"
                 disabled={c.count === 0}
-                onClick={() => setActive({ skill: c.skill, level: c.level })}
+                onClick={() => {
+                  // Warms the first word's audio right as the tap happens —
+                  // TestRunner's own look-ahead prefetch (see its useEffect)
+                  // only covers the second word onward, since it needs a
+                  // "current" item already mounted to look ahead from. This
+                  // is the one moment before that where there's still time
+                  // to beat the fetch before the child sees the first item.
+                  const runWords = c.skill === "read" ? readWords : writeWords;
+                  const firstWord = c.level === 1 ? runWords[0] : runWords.find((w) => findPairingWithWord(w) !== null);
+                  if (firstWord) prefetchRevision(firstWord.hanzi);
+                  setActive({ skill: c.skill, level: c.level });
+                }}
                 className="card flex items-center justify-between p-5 text-left"
                 style={c.count === 0 ? { opacity: 0.5, cursor: "default" } : undefined}
               >

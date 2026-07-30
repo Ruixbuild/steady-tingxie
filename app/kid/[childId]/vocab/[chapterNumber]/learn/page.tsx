@@ -89,9 +89,12 @@ export default async function VocabLearnGridPage({
           Chapter {chapterNumber} - <span className="hanzi">{chapterTitle}</span>
         </h1>
         <p style={{ color: "var(--mut)" }}>Tap a word to learn.</p>
-        <p className="mb-6 flex items-center gap-2 text-sm" style={{ color: "var(--mut)" }}>
+        <p className="flex items-center gap-2 text-sm" style={{ color: "var(--mut)" }}>
           <span className="text-lg">{STAGE_EMOJI[stage]}</span>
           识读 {readProgress.mastered}/{readProgress.total} · 识写 {writeProgress.mastered}/{writeProgress.total}
+        </p>
+        <p className="mb-6 text-xs" style={{ color: "var(--mut)" }}>
+          🥚 new → 🐣 learning → 🐥 almost → 🐔 mastered · tests grow words fastest
         </p>
 
         <div className="flex flex-col gap-6">

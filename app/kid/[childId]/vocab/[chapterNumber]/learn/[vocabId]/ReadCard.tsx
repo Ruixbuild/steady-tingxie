@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { touchMastery } from "@/lib/revision/masteryActions";
-import { speakRevision } from "@/lib/revision/narration";
+import { prefetchRevision, speakRevision } from "@/lib/revision/narration";
 import type { RevisionVocab } from "@/lib/revision/types";
 
 function SpeakButton({ text }: { text: string }) {
@@ -46,6 +46,17 @@ export default function ReadCard({
     // not tied to the flag toggle below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [word.id]);
+
+  useEffect(() => {
+    // Warms every speakable text on this card as soon as it's opened, so
+    // the network round-trip to /api/tts is already done by the time a
+    // child taps a 🔊 button — otherwise that tap is the first thing that
+    // ever asks for this clip, and the fetch latency reads as a silent lag
+    // before playback starts.
+    [word.hanzi, word.cn_definition, word.pairing_1, word.pairing_2, word.pairing_3, word.pairing_4, word.sentence_1, word.sentence_2]
+      .filter((t): t is string => Boolean(t))
+      .forEach(prefetchRevision);
+  }, [word]);
 
   async function toggleFlag() {
     const next = !flagged;

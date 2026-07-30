@@ -79,6 +79,20 @@ function fallbackSpeak(text: string) {
   }, 0);
 }
 
+/** Warms the clip cache for text that's about to be needed, without playing
+ * it — the actual source of the "silent lag before it plays" complaint is
+ * the network round-trip to /api/tts on a cache miss, which no amount of
+ * <audio>-element trickery can hide once speakRevision is actually called.
+ * Callers fire this ahead of time (on mount, or for the next queued item
+ * while the current one is still on screen) so that by the time
+ * speakRevision runs for real, fetchClip resolves from the already-warm
+ * cache instead of hitting the network. Errors are swallowed -- a failed
+ * prefetch just means speakRevision falls back to its own normal
+ * (slower) path when it's actually called. */
+export function prefetchRevision(text: string): void {
+  fetchClip(text).catch(() => {});
+}
+
 /** Revision's one narration entry point — one clip per call, real Chinese
  * punctuation left intact for Google's own natural phrasing, played on a
  * single reused <audio> element (see getAudioEl above). */
