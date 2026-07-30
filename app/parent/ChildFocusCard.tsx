@@ -11,7 +11,7 @@ export type FocusData = {
   activeList: { id: string; name: string } | null;
   daysToTest: number | null;
   predicted: number;
-  sections: { kind: "words" | "pinyin" | "passage"; r: number; light: "green" | "orange" | "red" }[];
+  sections: { kind: "words" | "pinyin" | "passage"; r: number; light: "green" | "orange" | "red" | "none" }[];
   weakTop5: { itemId: string; hanzi: string; kind: "words" | "pinyin" }[];
   weakByKind: { words: string[]; pinyin: string[]; passage: string[] };
   weakPassageChars: string[];
@@ -19,7 +19,10 @@ export type FocusData = {
   wordsPerDay?: number | null;
 };
 
-const LIGHT_COLOR = { green: "var(--ok)", orange: "var(--warn)", red: "var(--miss)" };
+// "none" -- a passage with no attempts.detail.sections.passage.total > 0
+// yet (never actually tested, as opposed to tested-and-solid) -- gets a
+// neutral outline instead of a color, so it can't be mistaken for "green".
+const LIGHT_COLOR = { green: "var(--ok)", orange: "var(--warn)", red: "var(--miss)", none: "transparent" };
 const KIND_LABEL = { words: "词语", pinyin: "拼音", passage: "默写" };
 
 export default function ChildFocusCard({ data }: { data: FocusData }) {
@@ -65,9 +68,13 @@ export default function ChildFocusCard({ data }: { data: FocusData }) {
                 height: 10,
                 borderRadius: "50%",
                 background: LIGHT_COLOR[s.light],
+                border: s.light === "none" ? "1.5px solid var(--line)" : undefined,
               }}
             />
             {KIND_LABEL[s.kind]}
+            {s.light === "none" && (
+              <span style={{ color: "var(--mut)" }}>(not tested yet)</span>
+            )}
           </span>
         ))}
       </div>

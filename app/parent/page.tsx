@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { SectionKind } from "@/lib/supabase/types";
+import type { AttemptDetail, SectionKind } from "@/lib/supabase/types";
 import { isTricky, passageQuizPositions, predictedPct } from "@/lib/testScoring";
 import { daysUntil } from "@/lib/dates";
 import ChildFocusCard, { type FocusData } from "./ChildFocusCard";
@@ -128,7 +128,9 @@ export default async function ParentPage() {
     }
     const predicted = predictedPct({ nonPassageLevels, passageCharMissed });
 
-    const sectionLights = (sections ?? [])
+    const sectionLights: { kind: "words" | "pinyin" | "passage"; r: number; light: "green" | "orange" | "red" | "none" }[] = (
+      sections ?? []
+    )
       .filter((s) => s.kind !== "passage")
       .map((s) => {
         const items = s.items ?? [];
@@ -140,13 +142,34 @@ export default async function ParentPage() {
         return { kind: s.kind as "words" | "pinyin" | "passage", r, light };
       });
 
-    if ((sections ?? []).some((s) => s.kind === "passage") && passageCharMissed.length > 0) {
-      const solid = passageCharMissed.filter((missed) => !missed).length;
-      const r = solid / passageCharMissed.length;
-      const light = r >= 0.8 ? ("green" as const) : r >= 0.5 ? ("orange" as const) : ("red" as const);
+    if ((sections ?? []).some((s) => s.kind === "passage")) {
+      // char_misses defaults to {} for a passage that's never been tested at
+      // all (or only tested supervised) — every position then reads as
+      // "never missed," which the old r>=0.8 check couldn't tell apart from
+      // genuinely solid, so an untouched 默写 showed green. record_test_
+      // attempt.sql never sets level/misses for passage kind (only Learn's
+      // record_item_progress does, which is practice, not a graded Test) —
+      // the attempts table's detail.sections.passage.total is the only
+      // reliable "was this actually tested" signal, so check that first.
+      const { data: attemptRows } = await supabase
+        .from("attempts")
+        .select("detail")
+        .eq("child_id", child.id)
+        .eq("list_id", activeList.id);
+      const passageTested = (attemptRows ?? []).some(
+        (a) => ((a.detail as AttemptDetail | null)?.sections?.passage?.total ?? 0) > 0
+      );
+
       // Slot 默写 in right after 词语 rather than at the end.
       const wordsIdx = sectionLights.findIndex((s) => s.kind === "words");
-      const passageLight = { kind: "passage" as const, r, light };
+      const passageLight = passageTested
+        ? (() => {
+            const solid = passageCharMissed.filter((missed) => !missed).length;
+            const r = passageCharMissed.length > 0 ? solid / passageCharMissed.length : 0;
+            const light = r >= 0.8 ? ("green" as const) : r >= 0.5 ? ("orange" as const) : ("red" as const);
+            return { kind: "passage" as const, r, light };
+          })()
+        : { kind: "passage" as const, r: 0, light: "none" as const };
       if (wordsIdx >= 0) sectionLights.splice(wordsIdx + 1, 0, passageLight);
       else sectionLights.push(passageLight);
     }
