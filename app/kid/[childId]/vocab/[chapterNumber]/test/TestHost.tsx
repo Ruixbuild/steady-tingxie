@@ -42,10 +42,10 @@ export default function TestHost({
   // Tricky-only used to be a whole separate card per level ("Level 1",
   // "Level 1 · tricky words only", "Level 2", "Level 2 · tricky words
   // only", ...) which doubled the picker's card count and read as
-  // cluttered once 识写's own two cards were mixed in among them. A single
-  // toggle above 识读's cards (the only skill tricky-only applies to)
-  // re-scopes its existing Level 1/2 cards instead of adding new ones.
+  // cluttered. A single toggle above each skill's cards re-scopes its
+  // existing Level 1/2 cards instead of adding new ones.
   const [readTrickyOnly, setReadTrickyOnly] = useState(false);
+  const [writeTrickyOnly, setWriteTrickyOnly] = useState(false);
 
   const readWords = words.filter((w) => tracksFor(w.skill).includes("read"));
   const writeWords = words.filter((w) => tracksFor(w.skill).includes("write"));
@@ -60,11 +60,20 @@ export default function TestHost({
   // "not yet mastered"), leaving them in the Level 1 list made that card
   // look permanently stuck -- same word, same tricky count, no matter how
   // many times it's "passed". They belong in the Level 2 tricky list only.
+  // Same reasoning applies identically to 识写 (write is graded through the
+  // same level/max(current, test_level+1) mechanism), hence the mirrored
+  // writeTrickyWordsL1/L2 pair below.
   const readTrickyWordsL1 = readWords.filter(
     (w) => isTricky(w, "read", masteryByKey) && skillLevel(w.id, "read", masteryByKey) < 2
   );
   const readTrickyWordsL2 = readWords.filter(
     (w) => isTricky(w, "read", masteryByKey) && findPairingWithWord(w) !== null
+  );
+  const writeTrickyWordsL1 = writeWords.filter(
+    (w) => isTricky(w, "write", masteryByKey) && skillLevel(w.id, "write", masteryByKey) < 2
+  );
+  const writeTrickyWordsL2 = writeWords.filter(
+    (w) => isTricky(w, "write", masteryByKey) && findPairingWithWord(w) !== null
   );
 
   function readRunWords(level: 1 | 2, tricky: boolean) {
@@ -72,9 +81,17 @@ export default function TestHost({
     return level === 1 ? readWords : readWordsL2;
   }
 
+  function writeRunWords(level: 1 | 2, tricky: boolean) {
+    if (tricky) return level === 1 ? writeTrickyWordsL1 : writeTrickyWordsL2;
+    return level === 1 ? writeWords : writeWordsL2;
+  }
+
   if (active) {
     const runWords =
-      active.skill === "read" ? readRunWords(active.level, active.tricky ?? false) : writeWords;
+      active.skill === "read"
+        ? readRunWords(active.level, active.tricky ?? false)
+        : writeRunWords(active.level, active.tricky ?? false);
+    const skillLabel = active.skill === "read" ? "识读" : "识写";
     return (
       <main className="flex flex-1 flex-col items-center px-6 py-12">
         <div className="w-full max-w-xl">
@@ -88,7 +105,7 @@ export default function TestHost({
             words={runWords}
             chapterWords={words}
             learntWords={learntWords}
-            modeLabel={active.tricky ? `识读 Level ${active.level} — tricky words only` : undefined}
+            modeLabel={active.tricky ? `${skillLabel} Level ${active.level} — tricky words only` : undefined}
           />
         </div>
       </main>
@@ -99,9 +116,9 @@ export default function TestHost({
     { level: 1, label: "Level 1 · listen & pick" },
     { level: 2, label: "Level 2 · match the phrase" },
   ];
-  const writeCards: { level: 1 | 2; label: string; count: number }[] = [
-    { level: 1, label: "Level 1 · write from memory", count: writeWords.length },
-    { level: 2, label: "Level 2 · fill in the blank", count: writeWordsL2.length },
+  const writeCards: { level: 1 | 2; label: string }[] = [
+    { level: 1, label: "Level 1 · write from memory" },
+    { level: 2, label: "Level 2 · fill in the blank" },
   ];
 
   function renderCard(opts: {
@@ -208,21 +225,36 @@ export default function TestHost({
           </div>
 
           <div className="flex flex-col gap-3">
-            <p className="text-sm font-semibold" style={{ color: "var(--mut)" }}>
-              ✍️ 识写
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold" style={{ color: "var(--mut)" }}>
+                ✍️ 识写
+              </p>
+              <label className="flex items-center gap-2 text-sm" style={{ color: "var(--mut)" }}>
+                <input
+                  type="checkbox"
+                  checked={writeTrickyOnly}
+                  onChange={(e) => setWriteTrickyOnly(e.target.checked)}
+                />
+                Tricky words only
+              </label>
+            </div>
             {writeCards.map((c) => {
-              const isSuggested = isCardSuggested(writeSuggestedLevel, c.level);
-              const isFaint = isCardFaint(writeSuggestedLevel, c.level);
+              const count = writeRunWords(c.level, writeTrickyOnly).length;
+              // Tricky-only is a re-practice filter, not a step in the
+              // adaptive level-1-then-level-2 progression, so it never
+              // shows the suggested/faint badging below.
+              const isSuggested = !writeTrickyOnly && isCardSuggested(writeSuggestedLevel, c.level);
+              const isFaint = !writeTrickyOnly && isCardFaint(writeSuggestedLevel, c.level);
               return renderCard({
                 key: `write-${c.level}`,
                 label: `识写 ${c.label}`,
-                count: c.count,
+                count,
                 isSuggested,
                 isFaint,
                 onClick: () => {
-                  prefetchFirst(writeWords, c.level);
-                  setActive({ skill: "write", level: c.level });
+                  const runWords = writeRunWords(c.level, writeTrickyOnly);
+                  prefetchFirst(runWords, c.level);
+                  setActive({ skill: "write", level: c.level, tricky: writeTrickyOnly });
                 },
               });
             })}
