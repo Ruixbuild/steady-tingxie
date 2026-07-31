@@ -3,12 +3,22 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
-import { masteryMapFromRows, skillProgress, weeklyReviewedCount } from "@/lib/revision/mastery";
+import {
+  masteryMapFromRows,
+  skillFocusLight,
+  skillProgress,
+  weeklyReviewedCount,
+} from "@/lib/revision/mastery";
 import ChapterSelector from "./ChapterSelector";
 import PrimaryLevelSelector from "./PrimaryLevelSelector";
 import RevisionRefresher from "./RevisionRefresher";
 
 const EDITION = "huanlehuoban-2025";
+
+// Same traffic-light convention as TingXie's parent-facing ChildFocusCard
+// (green/orange/none) — see skillFocusLight's own doc comment for why
+// "none" is a neutral outline rather than a color.
+const LIGHT_COLOR = { green: "var(--ok)", orange: "var(--warn)", none: "transparent" } as const;
 
 export default async function VocabRevisionPage({
   params,
@@ -192,6 +202,8 @@ export default async function VocabRevisionPage({
             const isActive = c.number === activeChapter?.number;
             const readProgress = skillProgress(c.words, "read", masteryByKey);
             const writeProgress = skillProgress(c.words, "write", masteryByKey);
+            const readLight = skillFocusLight(c.words, "read", masteryByKey);
+            const writeLight = skillFocusLight(c.words, "write", masteryByKey);
             return (
               <Link
                 key={c.number}
@@ -206,10 +218,33 @@ export default async function VocabRevisionPage({
                 <span className="font-semibold">
                   Chapter {String(c.number).padStart(2, "0")} · {c.title}
                 </span>
-                <span className="text-xs text-right shrink-0" style={{ color: "var(--mut)" }}>
-                  识读 {readProgress.mastered}/{readProgress.total}
-                  <br />
-                  识写 {writeProgress.mastered}/{writeProgress.total}
+                <span className="text-xs text-right shrink-0 flex flex-col gap-1" style={{ color: "var(--mut)" }}>
+                  <span className="flex items-center justify-end gap-1.5">
+                    识读 {readProgress.mastered}/{readProgress.total}
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: LIGHT_COLOR[readLight],
+                        border: readLight === "none" ? "1.5px solid var(--line)" : undefined,
+                      }}
+                    />
+                  </span>
+                  <span className="flex items-center justify-end gap-1.5">
+                    识写 {writeProgress.mastered}/{writeProgress.total}
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: LIGHT_COLOR[writeLight],
+                        border: writeLight === "none" ? "1.5px solid var(--line)" : undefined,
+                      }}
+                    />
+                  </span>
                 </span>
               </Link>
             );

@@ -180,6 +180,26 @@ export function skillProgress(
   return { mastered, total: eligible.length };
 }
 
+/** Same traffic-light convention as TingXie's parent-facing ChildFocusCard
+ * (green/orange/none, see LIGHT_COLOR there) applied to a skill's mastered
+ * count for a chapter: green once every eligible word has hit its ceiling,
+ * orange once at least one word has been attempted but the set isn't fully
+ * mastered yet, and "none" (neutral outline, not a color) when nothing in
+ * this skill has been touched at all — matches that file's own reasoning
+ * for why an untouched item shouldn't read as any color, including green. */
+export function skillFocusLight(
+  words: RevisionVocab[],
+  skill: "read" | "write",
+  masteryByKey: Map<MasteryKey, RevisionMastery>
+): "green" | "orange" | "none" {
+  const eligible = words.filter((w) => tracksFor(w.skill).includes(skill));
+  if (eligible.length === 0) return "none";
+  const { mastered, total } = skillProgress(words, skill, masteryByKey);
+  if (mastered >= total) return "green";
+  const started = eligible.some((w) => masteryByKey.has(masteryKey(w.id, skill)));
+  return started ? "orange" : "none";
+}
+
 /** Monday of the current week in Asia/Singapore — duplicated from
  * app/kid/[childId]/page.tsx's local currentMondaySGT() rather than
  * exporting it from that (TingXie) file. */

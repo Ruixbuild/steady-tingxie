@@ -13,7 +13,7 @@ export default async function SettingsPage() {
 
   const { data: children } = await supabase
     .from("children")
-    .select("id, name, level, hard_mode")
+    .select("id, name, level, hard_mode, higher_chinese")
     .order("created_at", { ascending: true });
 
   return (
@@ -35,6 +35,7 @@ export default async function SettingsPage() {
             name: c.name,
             level: c.level,
             hardMode: c.hard_mode,
+            higherChinese: c.higher_chinese,
           }))}
         />
       </div>

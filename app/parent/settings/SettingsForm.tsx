@@ -16,7 +16,7 @@ function atLeastP3(level: Level) {
   return LEVEL_ORDER.indexOf(level) >= LEVEL_ORDER.indexOf("P3");
 }
 
-type ChildOption = { id: string; name: string; level: Level; hardMode: boolean };
+type ChildOption = { id: string; name: string; level: Level; hardMode: boolean; higherChinese: boolean };
 
 export default function SettingsForm({
   childOptions,
@@ -78,6 +78,16 @@ export default function SettingsForm({
     setChildren((prev) => prev.map((c) => (c.id === childId ? { ...c, hardMode: next } : c)));
     setSavingKey(childId);
     await supabase.from("children").update({ hard_mode: next }).eq("id", childId);
+    setSavingKey(null);
+  }
+
+  async function toggleHigherChinese(childId: string) {
+    const child = children.find((c) => c.id === childId);
+    if (!child) return;
+    const next = !child.higherChinese;
+    setChildren((prev) => prev.map((c) => (c.id === childId ? { ...c, higherChinese: next } : c)));
+    setSavingKey(`hci:${childId}`);
+    await supabase.from("children").update({ higher_chinese: next }).eq("id", childId);
     setSavingKey(null);
   }
 
@@ -149,6 +159,33 @@ export default function SettingsForm({
             ))}
         </div>
       )}
+
+      <div className="card p-5 flex flex-col gap-3">
+        <p className="font-semibold">Higher Chinese (HCI)</p>
+        <p className="text-sm" style={{ color: "var(--mut)" }}>
+          Adds the extra Higher Chinese word set to Vocabulary Revision for this child.
+        </p>
+        {children.map((c) => (
+          <div key={c.id} className="flex items-center justify-between">
+            <span>
+              {c.name} <span style={{ color: "var(--mut)" }}>({c.level})</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => toggleHigherChinese(c.id)}
+              disabled={savingKey === `hci:${c.id}`}
+              className="btn btn-sm"
+              style={{
+                background: c.higherChinese ? "var(--accent)" : "#fff",
+                color: c.higherChinese ? "#fff" : "var(--accent)",
+                border: `1px solid ${c.higherChinese ? "var(--accent)" : "var(--line)"}`,
+              }}
+            >
+              {c.higherChinese ? "On" : "Off"}
+            </button>
+          </div>
+        ))}
+      </div>
 
       <div className="card p-5 flex flex-col gap-3" style={{ borderColor: "var(--miss)" }}>
         <p className="font-semibold">Danger zone</p>

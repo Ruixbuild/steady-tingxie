@@ -21,6 +21,7 @@ export type Child = {
   cheer: string | null;
   last_summary: string | null;
   hard_mode: boolean;
+  higher_chinese: boolean;
   streak: number;
   streak_grace_used: boolean;
   last_set_done: string | null;
