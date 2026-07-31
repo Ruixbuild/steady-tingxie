@@ -52,7 +52,7 @@ function LoginPageContent() {
           Steady Ting Xie
         </h1>
         <p className="text-center mb-6" style={{ color: "var(--mut)" }}>
-          Master Chinese, stroke by stroke.
+          Master P1-P6 Chinese, Stroke by Stroke
         </p>
 
         {status === "sent" ? (
@@ -81,7 +81,7 @@ function LoginPageContent() {
               {status === "sending" ? "Sending…" : "Send me a link"}
             </button>
             <p className="text-sm text-center" style={{ color: "var(--mut)" }}>
-              Free access for a limited period.
+              Free access for a limited period
             </p>
             {status === "error" && (
               <p className="text-sm text-center" style={{ color: "var(--miss)" }}>

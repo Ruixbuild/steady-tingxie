@@ -6,8 +6,8 @@ import type { RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/rev
 import {
   isFlagged,
   masteryMapFromRows,
-  skillLevel,
   skillProgress,
+  skillStage,
   STAGE_EMOJI,
   tracksFor,
 } from "@/lib/revision/mastery";
@@ -145,7 +145,7 @@ export default async function VocabChapterHubPage({
               >
                 {isFlagged(w.id, masteryByKey) && <span className="text-sm">🚩</span>}
                 {w.hanzi}
-                <span className="text-sm">{STAGE_EMOJI[skillLevel(w.id, "read", masteryByKey)]}</span>
+                <span className="text-sm">{STAGE_EMOJI[skillStage(w, "read", masteryByKey)]}</span>
               </div>
             ))}
           </div>
@@ -162,7 +162,7 @@ export default async function VocabChapterHubPage({
               >
                 {isFlagged(w.id, masteryByKey) && <span className="text-sm">🚩</span>}
                 {w.hanzi}
-                <span className="text-sm">{STAGE_EMOJI[skillLevel(w.id, "write", masteryByKey)]}</span>
+                <span className="text-sm">{STAGE_EMOJI[skillStage(w, "write", masteryByKey)]}</span>
               </div>
             ))}
           </div>

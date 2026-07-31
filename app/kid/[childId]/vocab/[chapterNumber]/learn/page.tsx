@@ -7,8 +7,8 @@ import {
   chapterStage,
   isSkillFlagged,
   masteryMapFromRows,
-  skillLevel,
   skillProgress,
+  skillStage,
   STAGE_EMOJI,
   tracksFor,
 } from "@/lib/revision/mastery";
@@ -115,7 +115,7 @@ export default async function VocabLearnGridPage({
                   >
                     {isSkillFlagged(w.id, g.skill, masteryByKey) && <span className="text-sm">🚩</span>}
                     {w.hanzi}
-                    <span className="text-sm">{STAGE_EMOJI[skillLevel(w.id, g.skill, masteryByKey)]}</span>
+                    <span className="text-sm">{STAGE_EMOJI[skillStage(w, g.skill, masteryByKey)]}</span>
                   </Link>
                 ))}
               </div>
