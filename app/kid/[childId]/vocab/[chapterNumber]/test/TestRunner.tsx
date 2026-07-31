@@ -13,7 +13,7 @@ import TestReadQuiz, { type ReadQuizOption } from "@/app/kid/[childId]/vocab/Tes
 import ResultsScreen, { type WordResult } from "./ResultsScreen";
 import { strokeChars } from "@/lib/hanzi";
 import { recordTestAttempt } from "@/lib/revision/attemptActions";
-import { prefetchRevision } from "@/lib/revision/narration";
+import { prefetchRevision, speakRevision } from "@/lib/revision/narration";
 import { submitWordAttempt, type CharResult } from "@/lib/revision/testActions";
 import {
   blankPairing,
@@ -130,6 +130,21 @@ export default function TestRunner({
 
   const current = queue[index];
 
+  // findPairingWithWord now picks randomly among the word's eligible
+  // pairings (so repeating the test doesn't show the same question every
+  // time) — memoized per item (not just computed inline) so it stays
+  // reused for both the blanked prompt and the full-phrase reveal below,
+  // and stays stable across any incidental re-render while the same
+  // question is still showing rather than re-randomizing mid-question.
+  // Declared before handleStrokeCharDone (which reads it to speak the
+  // completed phrase once Level 2's boxes finish) and before the early
+  // returns below, since it's a Hook — `current` can be undefined once
+  // the queue is exhausted, hence the guard.
+  const currentPairing = useMemo(
+    () => (current && level === 2 ? findPairingWithWord(current) : null),
+    [current, level]
+  );
+
   function handleReadDone(passed: boolean) {
     // Fire-and-forget: submitting the RPC doesn't block advancing to the
     // next word. Awaiting it here (the original approach) stacked a network
@@ -179,6 +194,10 @@ export default function TestRunner({
     );
     charResultsRef.current = [];
     setWordItemDone(true);
+    // Level 2's boxes just finished filling in with the written word --
+    // read the whole phrase back, same as 识读 Level 2's reveal, so the
+    // child hears the completed sentence rather than just seeing it.
+    if (level === 2 && currentPairing) speakRevision(currentPairing);
   }
 
   function advanceWordItem() {
@@ -224,19 +243,6 @@ export default function TestRunner({
       });
     }
   }, [results, queue.length, childId, chapterNumber, skill, level, router]);
-
-  // findPairingWithWord now picks randomly among the word's eligible
-  // pairings (so repeating the test doesn't show the same question every
-  // time) — memoized per item (not just computed inline) so it stays
-  // reused for both the blanked prompt and the full-phrase reveal below,
-  // and stays stable across any incidental re-render while the same
-  // question is still showing rather than re-randomizing mid-question.
-  // Declared before the early returns below since it's a Hook — `current`
-  // can be undefined once the queue is exhausted, hence the guard.
-  const currentPairing = useMemo(
-    () => (current && level === 2 ? findPairingWithWord(current) : null),
-    [current, level]
-  );
 
   // 识写 Level 2's pairing split around the target word, so its writing
   // boxes can render embedded at that position in the sentence instead of
