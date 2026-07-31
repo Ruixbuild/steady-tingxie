@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Level } from "@/lib/supabase/types";
 
+// Hard mode is built and working (stricter stroke-mistake threshold in
+// record_test_attempt.sql, stricter leniency in TestCharQuiz), but not yet
+// ready to launch to parents -- hidden here rather than removed so it can
+// be flipped back on later without re-implementing the settings UI.
+const HARD_MODE_ENABLED = false;
+
 const LEVEL_ORDER: Level[] = ["P1", "P2", "P3", "P4", "P5", "P6"];
 function atLeastP3(level: Level) {
   return LEVEL_ORDER.indexOf(level) >= LEVEL_ORDER.indexOf("P3");
@@ -113,7 +119,7 @@ export default function SettingsForm({
         })}
       </div>
 
-      {children.filter((c) => atLeastP3(c.level)).length > 0 && (
+      {HARD_MODE_ENABLED && children.filter((c) => atLeastP3(c.level)).length > 0 && (
         <div className="card p-5 flex flex-col gap-3">
           <p className="font-semibold">Hard mode</p>
           <p className="text-sm" style={{ color: "var(--mut)" }}>
