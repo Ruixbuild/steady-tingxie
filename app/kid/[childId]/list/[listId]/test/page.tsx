@@ -10,6 +10,13 @@ type SectionRaw = {
   items: { id: string; hanzi: string; pinyin: string | null }[] | null;
 };
 
+type ItemWithSectionRaw = {
+  id: string;
+  hanzi: string;
+  pinyin: string | null;
+  sections: { kind: SectionKind; list_id: string };
+};
+
 export default async function TestPage({
   params,
   searchParams,
@@ -42,6 +49,49 @@ export default async function TestPage({
     .eq("child_id", childId)
     .maybeSingle();
   if (!list) notFound();
+
+  // A word card tapped directly from the list hub or the word garden asks
+  // to retest just that one item, regardless of its kind or current
+  // mastery level -- unlike `mode=tricky`, this isn't gated on the item
+  // actually being tricky, since the point is letting a child jump
+  // straight into practising any specific word they tapped.
+  //
+  // Deliberately a separate, lean query here (not reusing the full
+  // sections+mastery+predicted-% fetch below) and returned before any of
+  // that heavier work runs: a single-item test's only item IS its first
+  // item, so if that item's narration misses the browser's brief
+  // post-tap window for auto-playing audio without a fresh gesture, the
+  // whole test is silently narration-less. A multi-item test risks the
+  // exact same thing on its own first item, but that's easy to miss since
+  // every item after it still plays fine -- the extra round-trip time
+  // this skips is exactly what was pushing the RSC response past that
+  // window on this entry point specifically.
+  if (requestedItemIds && requestedItemIds.length > 0) {
+    const { data: itemsRaw } = await supabase
+      .from("items")
+      .select("id, hanzi, pinyin, sections!inner(kind, list_id)")
+      .in("id", requestedItemIds)
+      .eq("sections.list_id", listId);
+    const items: TestItem[] = ((itemsRaw ?? []) as unknown as ItemWithSectionRaw[]).map((it) => ({
+      id: it.id,
+      hanzi: it.hanzi,
+      pinyin: it.pinyin,
+      kind: it.sections.kind,
+    }));
+    if (items.length === 0) notFound();
+    return (
+      <TestSession
+        childId={childId}
+        listId={listId}
+        mode="quickdrill"
+        supervised={supervised === "true"}
+        hardMode={child.hard_mode}
+        guessPct={0}
+        items={items}
+        passageReveal={passageReveal}
+      />
+    );
+  }
 
   const { data: sectionsRaw } = await supabase
     .from("sections")
@@ -82,35 +132,6 @@ export default async function TestPage({
     }
   }
   const predicted = predictedPct({ nonPassageLevels, passageCharMissed });
-
-  // A word card tapped directly from the list hub or the word garden asks
-  // to retest just that one item, regardless of its kind or current
-  // mastery level -- unlike `mode=tricky`, this isn't gated on the item
-  // actually being tricky, since the point is letting a child jump
-  // straight into practising any specific word they tapped. Takes priority
-  // over `mode`/the picker screen entirely.
-  if (requestedItemIds && requestedItemIds.length > 0) {
-    const idSet = new Set(requestedItemIds);
-    const items: TestItem[] = [];
-    for (const s of sections ?? []) {
-      for (const it of s.items ?? []) {
-        if (idSet.has(it.id)) items.push({ id: it.id, hanzi: it.hanzi, pinyin: it.pinyin, kind: s.kind });
-      }
-    }
-    if (items.length === 0) notFound();
-    return (
-      <TestSession
-        childId={childId}
-        listId={listId}
-        mode="quickdrill"
-        supervised={supervised === "true"}
-        hardMode={child.hard_mode}
-        guessPct={predicted}
-        items={items}
-        passageReveal={passageReveal}
-      />
-    );
-  }
 
   if (!mode) {
     const counts = {
