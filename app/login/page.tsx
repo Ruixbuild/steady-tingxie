@@ -83,9 +83,17 @@ function LoginPageContent() {
             >
               {status === "sending" ? "Sending…" : "Send me a link"}
             </button>
-            <p className="text-sm text-center" style={{ color: "var(--mut)" }}>
-              Free access for a limited period
-            </p>
+            <div
+              className="text-center flex flex-col gap-1"
+              style={{ color: "var(--mut)", fontSize: "clamp(0.5rem, calc(4vw - 4.9px), 0.75rem)", lineHeight: 1.4 }}
+            >
+              <p style={{ whiteSpace: "nowrap" }}>
+                Built by fellow parent to overcome last-min 听写 nights.
+              </p>
+              <p style={{ whiteSpace: "nowrap" }}>
+                Early free access till end-Sep, try it with your child!
+              </p>
+            </div>
             {status === "error" && (
               <p className="text-sm text-center" style={{ color: "var(--miss)" }}>
                 {errorMessage}
