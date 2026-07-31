@@ -79,8 +79,8 @@ export default function ReadCard({
           <button
             type="button"
             onClick={toggleFlag}
-            aria-label={flagged ? "Unmark as weak" : "Mark as weak"}
-            title={flagged ? "Unmark as weak" : "Mark as weak"}
+            aria-label={flagged ? "Unmark as needing attention" : "Mark as needing attention"}
+            title={flagged ? "Unmark as needing attention" : "Mark as needing attention"}
             className="inline-flex items-center gap-1"
             style={{
               position: "absolute",
@@ -95,12 +95,12 @@ export default function ReadCard({
               fontWeight: 600,
             }}
           >
-            ⚑ {flagged ? "Marked as weak" : "Mark as weak"}
+            ⚑ Attention
           </button>
 
           <span
-            className="text-sm font-semibold rounded-full px-3 py-1 self-start"
-            style={{ background: "var(--accent-soft)", color: "var(--accent-d)" }}
+            className="font-semibold rounded-full px-3 py-1 self-start"
+            style={{ background: "var(--accent-soft)", color: "var(--accent-d)", fontSize: "clamp(0.875rem, 2.6vw, 1rem)" }}
           >
             识读
           </span>
@@ -109,12 +109,12 @@ export default function ReadCard({
             <h1 className="hanzi text-4xl font-extrabold">{word.hanzi}</h1>
             <SpeakButton text={word.hanzi} />
           </div>
-          <p style={{ color: "var(--mut)" }}>{word.pinyin}</p>
-          <p className="text-lg">{word.english}</p>
+          <p style={{ color: "var(--mut)", fontSize: "clamp(1rem, 3.2vw, 1.25rem)" }}>{word.pinyin}</p>
+          <p style={{ fontSize: "clamp(1.125rem, 3.5vw, 1.375rem)" }}>{word.english}</p>
 
           {word.cn_definition && (
             <div className="flex items-center gap-2">
-              <p style={{ color: "var(--mut)" }}>{word.cn_definition}</p>
+              <p style={{ color: "var(--mut)", fontSize: "clamp(1rem, 3.2vw, 1.25rem)" }}>{word.cn_definition}</p>
               <SpeakButton text={word.cn_definition} />
             </div>
           )}
@@ -125,13 +125,13 @@ export default function ReadCard({
 
           {pairings.length > 0 && (
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold" style={{ color: "var(--mut)" }}>
+              <p className="font-semibold" style={{ color: "var(--mut)", fontSize: "clamp(0.875rem, 2.6vw, 1rem)" }}>
                 搭配
               </p>
               <div className="flex flex-col gap-2">
                 {pairings.map((p, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <p className="hanzi" style={{ lineHeight: 1.7 }}>
+                    <p className="hanzi" style={{ lineHeight: 1.7, fontSize: "clamp(1.15rem, 3.6vw, 1.4rem)" }}>
                       {p}
                     </p>
                     <SpeakButton text={p} />
@@ -147,13 +147,13 @@ export default function ReadCard({
 
           {(word.sentence_1 || word.sentence_2) && (
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold" style={{ color: "var(--mut)" }}>
+              <p className="font-semibold" style={{ color: "var(--mut)", fontSize: "clamp(0.875rem, 2.6vw, 1rem)" }}>
                 造句
               </p>
               <div className="flex flex-col gap-3">
                 {[word.sentence_1, word.sentence_2].filter(Boolean).map((s, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <p className="hanzi" style={{ lineHeight: 1.7 }}>
+                    <p className="hanzi" style={{ lineHeight: 1.7, fontSize: "clamp(1.15rem, 3.6vw, 1.4rem)" }}>
                       {s}
                     </p>
                     <SpeakButton text={s as string} />

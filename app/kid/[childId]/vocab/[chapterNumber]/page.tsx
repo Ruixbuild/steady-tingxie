@@ -111,7 +111,7 @@ export default async function VocabChapterHubPage({
           >
             <span className="text-3xl">✏️</span>
             <span className="font-semibold text-lg">Test</span>
-            <span className="text-sm opacity-80">listen. write. get graded</span>
+            <span className="text-sm opacity-80">listen. recognize. write</span>
           </Link>
 
           <Link

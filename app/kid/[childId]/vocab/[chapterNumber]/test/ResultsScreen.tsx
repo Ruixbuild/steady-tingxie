@@ -17,11 +17,18 @@ export default function ResultsScreen({
   level,
   results,
   backHref,
+  onBackToTest,
 }: {
   skill: "read" | "write";
   level: 1 | 2;
   results: WordResult[];
   backHref: string;
+  /** Returns to the picker on this same page (TestHost's local state,
+   * already refreshed with this run's mastery via TestRunner's
+   * router.refresh()) so the next-level suggestion reflects this result
+   * immediately — a real navigation to the chapter page would lose that
+   * "come test the next level" momentum. */
+  onBackToTest: () => void;
 }) {
   const score = results.filter((r) => r.passed).length;
   const total = results.length;
@@ -49,7 +56,10 @@ export default function ResultsScreen({
         ))}
       </div>
 
-      <Link href={backHref} className="btn btn-primary">
+      <button type="button" onClick={onBackToTest} className="btn btn-primary">
+        Back to test
+      </button>
+      <Link href={backHref} className="text-sm" style={{ color: "var(--mut)" }}>
         Back to chapter
       </Link>
     </div>

@@ -61,9 +61,19 @@ export default function TestRunner({
   const [index, setIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [results, setResults] = useState<WordResult[]>([]);
+  const [finished, setFinished] = useState(false);
   const epochRef = useRef(0);
   const charResultsRef = useRef<CharResult[]>([]);
   const attemptSubmittedRef = useRef(false);
+  // Every submitWordAttempt call is fire-and-forget so the quiz itself never
+  // stalls on a network round-trip (see the comments below), but that means
+  // `results` can reach queue.length before the *last* word's mastery write
+  // has actually landed in revision_mastery. The completion effect awaits
+  // this before treating the run as done, so navigating off the results
+  // screen (back to the picker or the chapter page) always sees fresh
+  // mastery — otherwise a fast tap right after the last question raced
+  // ahead of the write and the chapter list still showed the old stage.
+  const pendingWritesRef = useRef<Promise<unknown>[]>([]);
 
   const current = queue[index];
 
@@ -74,10 +84,12 @@ export default function TestRunner({
     // gap between the child's tap and the next word's auto-play call past
     // the browser's recent-user-activation window — which is what made
     // audio silently stop auto-playing from the second word onward.
-    submitWordAttempt(childId, current.id, "read", level, { passed }).catch(() => {
-      // Best-effort — the session stays usable even if one write hiccups;
-      // that word just won't have this attempt recorded.
-    });
+    pendingWritesRef.current.push(
+      submitWordAttempt(childId, current.id, "read", level, { passed }).catch(() => {
+        // Best-effort — the session stays usable even if one write hiccups;
+        // that word just won't have this attempt recorded.
+      })
+    );
     setResults((r) => [...r, { vocabId: current.id, hanzi: current.hanzi, passed }]);
     setIndex((i) => i + 1);
   }
@@ -96,13 +108,15 @@ export default function TestRunner({
     // next word immediately; the graded verdict (only known once the RPC
     // resolves, since 识写 pass/fail is computed server-side) is appended
     // to results whenever it arrives rather than blocking the transition.
-    submitWordAttempt(childId, current.id, "write", level, { charResults })
-      .then((res) => {
-        setResults((r) => [...r, { vocabId: finishedVocabId, hanzi: finishedHanzi, passed: res.item_passed }]);
-      })
-      .catch(() => {
-        setResults((r) => [...r, { vocabId: finishedVocabId, hanzi: finishedHanzi, passed: false }]);
-      });
+    pendingWritesRef.current.push(
+      submitWordAttempt(childId, current.id, "write", level, { charResults })
+        .then((res) => {
+          setResults((r) => [...r, { vocabId: finishedVocabId, hanzi: finishedHanzi, passed: res.item_passed }]);
+        })
+        .catch(() => {
+          setResults((r) => [...r, { vocabId: finishedVocabId, hanzi: finishedHanzi, passed: false }]);
+        })
+    );
     charResultsRef.current = [];
     setCharIndex(0);
     setIndex((i) => i + 1);
@@ -136,8 +150,11 @@ export default function TestRunner({
   useEffect(() => {
     if (queue.length > 0 && results.length === queue.length && !attemptSubmittedRef.current) {
       attemptSubmittedRef.current = true;
-      recordTestAttempt(childId, chapterNumber, skill, level, results).catch(() => {});
-      router.refresh();
+      Promise.allSettled(pendingWritesRef.current).then(() => {
+        recordTestAttempt(childId, chapterNumber, skill, level, results).catch(() => {});
+        router.refresh();
+        setFinished(true);
+      });
     }
   }, [results, queue.length, childId, chapterNumber, skill, level, router]);
 
@@ -150,7 +167,16 @@ export default function TestRunner({
   }
 
   if (index >= queue.length) {
-    return <ResultsScreen skill={skill} level={level} results={results} backHref={chapterHref} />;
+    if (!finished) {
+      return (
+        <div className="card p-8 text-center" style={{ color: "var(--mut)" }}>
+          Grading…
+        </div>
+      );
+    }
+    return (
+      <ResultsScreen skill={skill} level={level} results={results} backHref={chapterHref} onBackToTest={onExit} />
+    );
   }
 
   const readOptions: ReadQuizOption[] =
