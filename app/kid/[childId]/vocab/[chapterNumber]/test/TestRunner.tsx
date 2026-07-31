@@ -15,7 +15,7 @@ import { strokeChars } from "@/lib/hanzi";
 import { recordTestAttempt } from "@/lib/revision/attemptActions";
 import { prefetchRevision } from "@/lib/revision/narration";
 import { submitWordAttempt, type CharResult } from "@/lib/revision/testActions";
-import { blankPairing, findPairingWithWord, pickDistractors, shuffle } from "@/lib/revision/testScoring";
+import { blankPairing, findPairingWithWord, pickReadDistractors, shuffle } from "@/lib/revision/testScoring";
 import type { RevisionVocab } from "@/lib/revision/types";
 
 const TITLE: Record<"read" | "write", Record<1 | 2, string>> = {
@@ -32,6 +32,8 @@ export default function TestRunner({
   level,
   words,
   chapterWords,
+  learntWords,
+  modeLabel,
 }: {
   childId: string;
   /** For persisting the finished run as one revision_attempts row — see
@@ -48,6 +50,13 @@ export default function TestRunner({
   level: 1 | 2;
   words: RevisionVocab[];
   chapterWords: RevisionVocab[];
+  /** Words (any chapter) this child already has read-mastery for — the
+   * fallback distractor pool for pickReadDistractors when the current
+   * chapter alone doesn't have enough same-length words. */
+  learntWords: RevisionVocab[];
+  /** Overrides the default skill+level title (e.g. "tricky words only"
+   * mode) — falls back to TITLE below when omitted. */
+  modeLabel?: string;
 }) {
   const router = useRouter();
 
@@ -212,7 +221,7 @@ export default function TestRunner({
     skill === "read"
       ? shuffle([
           { id: current.id, hanzi: current.hanzi },
-          ...pickDistractors(current, chapterWords, 3).map((w) => ({ id: w.id, hanzi: w.hanzi })),
+          ...pickReadDistractors(current, chapterWords, learntWords, 3).map((w) => ({ id: w.id, hanzi: w.hanzi })),
         ])
       : [];
 
@@ -220,7 +229,7 @@ export default function TestRunner({
     <div className="flex flex-col gap-6">
       <div className="text-center">
         <p className="text-base" style={{ color: "var(--mut)" }}>
-          {TITLE[skill][level]}
+          {modeLabel ?? TITLE[skill][level]}
         </p>
         <p className="text-sm mt-1" style={{ color: "var(--mut)" }}>
           Item {index + 1} of {queue.length}
@@ -243,6 +252,7 @@ export default function TestRunner({
           targetId={current.id}
           options={readOptions}
           promptText={blankPairing(findPairingWithWord(current) as string, current.hanzi)}
+          fullPhrase={findPairingWithWord(current) as string}
           onDone={handleReadDone}
         />
       )}

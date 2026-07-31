@@ -37,17 +37,47 @@ export function defaultTestLevelForWords(
   return advanced / words.length >= 0.5 ? 2 : 1;
 }
 
-/** Random sample of `count` distractors from `pool`, excluding `target`.
- * Used to build multiple-choice options for the 识读 formats. Returns fewer
- * than `count` if the pool is too small (e.g. a short chapter). */
-export function pickDistractors<T>(target: T, pool: T[], count: number): T[] {
-  const candidates = pool.filter((item) => item !== target);
-  const shuffled = [...candidates];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+function hanziLength(hanzi: string): number {
+  return Array.from(hanzi).length;
+}
+
+/** 识读 distractor pool for the multiple-choice formats (Level 1's listen &
+ * pick, and Level 2's blanked-pairing match): same character length as the
+ * target word first — pairing a 1-character word with 3-character
+ * distractors would make the correct answer visually obvious without any
+ * actual recognition needed. Within that length match, this chapter's own
+ * words are tried first; if that alone doesn't have enough, it falls back
+ * to any other word (any chapter) the child has already been exposed to
+ * (an existing read-mastery row), and only relaxes the length match as a
+ * last resort — so an unusually short or narrow chapter still gets a full
+ * set of options rather than fewer than `count`. */
+export function pickReadDistractors(
+  target: RevisionVocab,
+  chapterWords: RevisionVocab[],
+  learntWords: RevisionVocab[],
+  count: number
+): RevisionVocab[] {
+  const targetLen = hanziLength(target.hanzi);
+  const picked: RevisionVocab[] = [];
+  const usedIds = new Set([target.id]);
+
+  function takeFrom(pool: RevisionVocab[], matchLength: boolean) {
+    if (picked.length >= count) return;
+    const candidates = shuffle(
+      pool.filter((w) => !usedIds.has(w.id) && (!matchLength || hanziLength(w.hanzi) === targetLen))
+    );
+    for (const w of candidates) {
+      if (picked.length >= count) break;
+      picked.push(w);
+      usedIds.add(w.id);
+    }
   }
-  return shuffled.slice(0, count);
+
+  takeFrom(chapterWords, true);
+  takeFrom(learntWords, true);
+  takeFrom(chapterWords, false);
+  takeFrom(learntWords, false);
+  return picked;
 }
 
 /** Shuffles an array of options (distractors + the correct answer) so the

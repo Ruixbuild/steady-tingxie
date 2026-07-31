@@ -15,7 +15,7 @@
 import Link from "next/link";
 import {
   isSkillFlagged,
-  masteryKey,
+  isTricky,
   masteryMapFromRows,
   skillLevel,
   skillProgress,
@@ -49,13 +49,9 @@ export default function ZooClient({
   const grown = readProgress.mastered + writeProgress.mastered;
   const pct = total > 0 ? Math.round((grown / total) * 100) : 0;
 
-  function isTricky(vocabId: string, skill: "read" | "write") {
-    const m = masteryByKey.get(masteryKey(vocabId, skill));
-    return (m?.flagged ?? false) || (m?.misses ?? 0) > 0 || (m?.level ?? 0) < 2;
-  }
-
   const hasTricky =
-    readWords.some((w) => isTricky(w.id, "read")) || writeWords.some((w) => isTricky(w.id, "write"));
+    readWords.some((w) => isTricky(w.id, "read", masteryByKey)) ||
+    writeWords.some((w) => isTricky(w.id, "write", masteryByKey));
 
   function renderGroup(list: RevisionVocab[], skill: "read" | "write", label: string) {
     if (list.length === 0) return null;

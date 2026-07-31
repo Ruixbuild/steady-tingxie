@@ -71,6 +71,19 @@ export function isSkillFlagged(
   return masteryByKey.get(masteryKey(vocabId, skill))?.flagged ?? false;
 }
 
+/** A word/track counts as "tricky" if it's explicitly flagged, has ever
+ * been missed, or hasn't yet reached level 2 (passed its Level-1 test) —
+ * used for the Test picker's "tricky words only" mode and mirrored from
+ * the equivalent local check on the Progress page (ZooClient.tsx). */
+export function isTricky(
+  vocabId: string,
+  skill: "read" | "write",
+  masteryByKey: Map<MasteryKey, RevisionMastery>
+): boolean {
+  const m = masteryByKey.get(masteryKey(vocabId, skill));
+  return (m?.flagged ?? false) || (m?.misses ?? 0) > 0 || (m?.level ?? 0) < 2;
+}
+
 /** Chapter-level stage badge: fraction of this chapter's words that are
  * individually mastered (every required track at level 3), bucketed into
  * the same 4-stage set as a single word — 0% -> 🥚, <50% -> 🐣, <100% -> 🐥,

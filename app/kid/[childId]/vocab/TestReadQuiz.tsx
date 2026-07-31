@@ -18,10 +18,17 @@ type Props = {
   options: ReadQuizOption[];
   promptAudio?: string;
   promptText?: string;
+  /** The un-blanked pairing to reveal (and read aloud) once the child has
+   * picked an answer, instead of auto-advancing after a fixed delay — used
+   * by 识读 Level 2's fill-in-the-blank format so the child actually gets
+   * to read/hear the completed phrase and taps "Next" when ready, rather
+   * than the answer flashing by for 900ms. Level 1 passes no fullPhrase
+   * and keeps the original auto-advance timing. */
+  fullPhrase?: string;
   onDone: (passed: boolean) => void;
 };
 
-export default function TestReadQuiz({ targetId, options, promptAudio, promptText, onDone }: Props) {
+export default function TestReadQuiz({ targetId, options, promptAudio, promptText, fullPhrase, onDone }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,10 +39,17 @@ export default function TestReadQuiz({ targetId, options, promptAudio, promptTex
     if (promptAudio) speakRevision(promptAudio);
   }, [targetId, promptAudio]);
 
+  const revealed = selectedId !== null;
+  const passed = selectedId === targetId;
+
   function handlePick(id: string) {
     if (selectedId) return;
     setSelectedId(id);
-    setTimeout(() => onDone(id === targetId), 900);
+    if (fullPhrase) {
+      speakRevision(fullPhrase);
+    } else {
+      setTimeout(() => onDone(id === targetId), 900);
+    }
   }
 
   return (
@@ -45,7 +59,17 @@ export default function TestReadQuiz({ targetId, options, promptAudio, promptTex
           🔊 Say it again
         </button>
       )}
-      {promptText && <p className="hanzi text-3xl font-extrabold text-center">{promptText}</p>}
+      {promptText && !(fullPhrase && revealed) && (
+        <p className="hanzi text-3xl font-extrabold text-center">{promptText}</p>
+      )}
+      {fullPhrase && revealed && (
+        <div className="flex flex-col gap-2 items-center">
+          <p className="hanzi text-3xl font-extrabold text-center">{fullPhrase}</p>
+          <button type="button" onClick={() => speakRevision(fullPhrase)} className="btn btn-secondary">
+            🔊 Say it again
+          </button>
+        </div>
+      )}
 
       <div
         className="w-full mt-2"
@@ -54,7 +78,6 @@ export default function TestReadQuiz({ targetId, options, promptAudio, promptTex
         {options.map((opt) => {
           const isSelected = selectedId === opt.id;
           const isCorrect = opt.id === targetId;
-          const revealed = selectedId !== null;
           let style: CSSProperties = {
             border: "1.5px solid var(--line)",
             background: "#fff",
@@ -82,10 +105,13 @@ export default function TestReadQuiz({ targetId, options, promptAudio, promptTex
                 // cell width today only on phones -- an iPad has much more
                 // room per cell, and a size tuned to fit 4 options on a
                 // ~375px phone screen reads as small and unclear once that
-                // extra width isn't used. The 1.05rem floor keeps the
-                // phone-fit behavior unchanged; the 1.6rem ceiling is what
-                // actually grows on a tablet-sized viewport.
-                fontSize: "clamp(1.05rem, 4vw, 1.6rem)",
+                // extra width isn't used. Bumped again after the 1.05rem
+                // floor still read as too small on iPhone: at a 375px
+                // viewport, 4vw computes to well under that floor, so
+                // phones were stuck at the floor value regardless of the
+                // vw term — the floor itself needed to go up, not just the
+                // scaling factor.
+                fontSize: "clamp(1.2rem, 4.5vw, 1.75rem)",
                 lineHeight: 1.3,
                 minWidth: 0,
                 wordBreak: "keep-all",
@@ -96,6 +122,12 @@ export default function TestReadQuiz({ targetId, options, promptAudio, promptTex
           );
         })}
       </div>
+
+      {fullPhrase && revealed && (
+        <button type="button" onClick={() => onDone(passed)} className="btn btn-primary">
+          Next →
+        </button>
+      )}
     </div>
   );
 }
