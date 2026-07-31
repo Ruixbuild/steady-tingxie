@@ -112,14 +112,25 @@ export default async function VocabRevisionPage({
         <h1 className="text-2xl font-semibold mb-1" style={{ color: "var(--accent-d)" }}>
           词语复习
         </h1>
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-lg">{child.emoji}</span>
-          <p className="text-lg font-semibold">
-            {child.name}
-            <span className="text-lg font-normal ml-3" style={{ color: "var(--mut)" }}>
-              {selectedLevel}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-lg">{child.emoji}</span>
+            <p className="text-lg font-semibold">
+              {child.name}
+              <span className="text-lg font-normal ml-3" style={{ color: "var(--mut)" }}>
+                {selectedLevel}
+              </span>
+            </p>
+          </div>
+          <Link
+            href={`/kid/${childId}/vocab/progress`}
+            className="card flex items-center gap-1.5 px-4 py-2 shrink-0"
+          >
+            <span className="text-lg leading-none">🐓</span>
+            <span className="text-sm font-semibold whitespace-nowrap" style={{ color: "var(--accent-d)" }}>
+              Visit Farm
             </span>
-          </p>
+          </Link>
         </div>
 
         <p className="mt-2 text-sm" style={{ color: "var(--mut)" }}>
@@ -129,25 +140,27 @@ export default async function VocabRevisionPage({
           {`You've reviewed ${reviewedThisWeek} word${reviewedThisWeek === 1 ? "" : "s"} this week!`}
         </p>
 
-        <div className="mt-8 flex items-center gap-2 flex-wrap">
-          <p className="text-sm" style={{ color: "var(--mut)" }}>
-            Choose primary level:
-          </p>
-          <PrimaryLevelSelector childId={childId} levels={availableLevels} selectedLevel={selectedLevel} />
-        </div>
-
-        {activeChapter && (
-          <div className="mt-4 flex items-center gap-2 flex-wrap">
+        <div className="mt-8 flex flex-col gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm" style={{ color: "var(--mut)" }}>
-              Choose chapter:
+              Choose primary level:
             </p>
-            <ChapterSelector
-              childId={childId}
-              chapters={chapters.map((c) => ({ number: c.number, title: c.title }))}
-              selectedNumber={activeChapter.number}
-            />
+            <PrimaryLevelSelector childId={childId} levels={availableLevels} selectedLevel={selectedLevel} />
           </div>
-        )}
+
+          {activeChapter && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm" style={{ color: "var(--mut)" }}>
+                Choose chapter:
+              </p>
+              <ChapterSelector
+                childId={childId}
+                chapters={chapters.map((c) => ({ number: c.number, title: c.title }))}
+                selectedNumber={activeChapter.number}
+              />
+            </div>
+          )}
+        </div>
 
         {activeChapter && (
           <div className="mt-8">
@@ -168,15 +181,7 @@ export default async function VocabRevisionPage({
           </div>
         )}
 
-        <Link
-          href={`/kid/${childId}/vocab/progress`}
-          className="mt-8 inline-block text-sm"
-          style={{ color: "var(--accent)", fontWeight: 700 }}
-        >
-          🐓 My whole vocabulary farm →
-        </Link>
-
-        <h2 className="text-lg font-semibold mb-3 mt-4">My chapters</h2>
+        <h2 className="text-lg font-semibold mb-3 mt-8">My chapters</h2>
         <div className="flex flex-col gap-3">
           {chapters.length === 0 && (
             <p style={{ color: "var(--mut)" }}>
