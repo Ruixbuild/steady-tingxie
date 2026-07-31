@@ -217,6 +217,16 @@ export default function TestRunner({
     if (next) prefetchRevision(next.hanzi);
   }, [index, queue]);
 
+  // Warms the current word's pairing phrase as soon as it's known — for
+  // Level 2, the full sentence isn't spoken until the boxes finish filling
+  // in (handleStrokeCharDone/TestReadQuiz's reveal), which is however long
+  // the child takes to write or pick. Without this, that speakRevision call
+  // hit a cold /api/tts fetch right when it mattered most, reading as a
+  // noticeable lag before the completed phrase played.
+  useEffect(() => {
+    if (level === 2 && currentPairing) prefetchRevision(currentPairing);
+  }, [level, currentPairing]);
+
   // Persists the whole finished run as one revision_attempts row, once —
   // gated on results.length rather than index, since a write run's last
   // word's result only lands after its grading RPC resolves (async), which
