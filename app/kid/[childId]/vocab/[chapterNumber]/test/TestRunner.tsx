@@ -351,7 +351,13 @@ export default function TestRunner({
             // in the sentence, rather than a "＿" placeholder in the text
             // with a disconnected box row rendered separately below it —
             // the two used to have no visual relationship to each other.
-            <p className="hanzi text-lg text-center" style={{ color: "var(--mut)", lineHeight: 1.8 }}>
+            // Sized/weighted to match 识读 Level 2's own phrase display
+            // (TestReadQuiz's promptText) -- this was previously a much
+            // smaller, muted text-lg/var(--mut) line with an inflated 1.8
+            // line-height, both reading as too small and adding avoidable
+            // vertical space that pushed "End test" further down the page
+            // than the equivalent 识读 screen.
+            <p className="hanzi text-3xl font-extrabold text-center">
               {writePairingParts.before}
               {strokeChars(current.hanzi).map((c, i) => {
                 const done = wordItemDone || i < charIndex;
@@ -360,11 +366,11 @@ export default function TestRunner({
                     key={i}
                     className="hanzi inline-flex items-center justify-center"
                     style={{
-                      minWidth: 30,
-                      height: 30,
-                      margin: "0 2px",
-                      fontSize: "1rem",
-                      borderRadius: 8,
+                      minWidth: 44,
+                      height: 44,
+                      margin: "0 3px",
+                      fontSize: "1.3rem",
+                      borderRadius: 12,
                       border: `1.5px solid ${done ? "var(--ok)" : "var(--line)"}`,
                       background: done ? "var(--ok-soft)" : "#fff",
                       color: "var(--ink)",
