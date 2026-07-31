@@ -83,6 +83,12 @@ export default function TestRunner({
   // results screen so a "score looks right but mastery didn't move" report
   // is diagnosable instead of silent.
   const failedWritesRef = useRef(0);
+  // Captures the first failure's raw message — the generic "didn't save"
+  // copy on the results screen isn't enough to tell a real connectivity
+  // drop apart from e.g. an RLS/RPC error, and iPhone Safari has no easy
+  // way to inspect the network tab to find out which.
+  const lastErrorRef = useRef<string | null>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const current = queue[index];
 
@@ -94,10 +100,11 @@ export default function TestRunner({
     // the browser's recent-user-activation window — which is what made
     // audio silently stop auto-playing from the second word onward.
     pendingWritesRef.current.push(
-      submitWordAttempt(childId, current.id, "read", level, { passed }).catch(() => {
+      submitWordAttempt(childId, current.id, "read", level, { passed }).catch((err) => {
         // Best-effort — the session stays usable even if one write hiccups;
         // that word just won't have this attempt recorded.
         failedWritesRef.current += 1;
+        lastErrorRef.current = err instanceof Error ? err.message : String(err);
       })
     );
     setResults((r) => [...r, { vocabId: current.id, hanzi: current.hanzi, passed }]);
@@ -123,8 +130,9 @@ export default function TestRunner({
         .then((res) => {
           setResults((r) => [...r, { vocabId: finishedVocabId, hanzi: finishedHanzi, passed: res.item_passed }]);
         })
-        .catch(() => {
+        .catch((err) => {
           failedWritesRef.current += 1;
+          lastErrorRef.current = err instanceof Error ? err.message : String(err);
           setResults((r) => [...r, { vocabId: finishedVocabId, hanzi: finishedHanzi, passed: false }]);
         })
     );
@@ -165,6 +173,7 @@ export default function TestRunner({
         recordTestAttempt(childId, chapterNumber, skill, level, results).catch(() => {});
         router.refresh();
         setFailedCount(failedWritesRef.current);
+        setLastError(lastErrorRef.current);
         setFinished(true);
       });
     }
@@ -194,6 +203,7 @@ export default function TestRunner({
         backHref={chapterHref}
         onBackToTest={onExit}
         failedCount={failedCount}
+        lastError={lastError}
       />
     );
   }

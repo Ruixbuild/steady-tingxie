@@ -19,6 +19,7 @@ export default function ResultsScreen({
   backHref,
   onBackToTest,
   failedCount = 0,
+  lastError = null,
 }: {
   skill: "read" | "write";
   level: 1 | 2;
@@ -35,6 +36,10 @@ export default function ResultsScreen({
    * value regardless, so a failed write wouldn't otherwise show up
    * anywhere and that word's mastery just silently wouldn't have moved. */
   failedCount?: number;
+  /** Raw message from the last failed write — shown so a report of "it
+   * didn't save" can be diagnosed without needing to inspect the network
+   * tab, which isn't practical on a phone. */
+  lastError?: string | null;
 }) {
   const score = results.filter((r) => r.passed).length;
   const total = results.length;
@@ -47,10 +52,17 @@ export default function ResultsScreen({
       </p>
 
       {failedCount > 0 && (
-        <p className="text-sm" style={{ color: "var(--miss)" }}>
-          ⚠ {failedCount} result{failedCount > 1 ? "s" : ""} didn&apos;t save — check your connection and retake
-          this test.
-        </p>
+        <div className="flex flex-col gap-1">
+          <p className="text-sm" style={{ color: "var(--miss)" }}>
+            ⚠ {failedCount} result{failedCount > 1 ? "s" : ""} didn&apos;t save — check your connection and retake
+            this test.
+          </p>
+          {lastError && (
+            <p className="text-xs" style={{ color: "var(--mut)" }}>
+              {lastError}
+            </p>
+          )}
+        </div>
       )}
 
       <div className="flex flex-wrap gap-2 justify-center max-w-md">
