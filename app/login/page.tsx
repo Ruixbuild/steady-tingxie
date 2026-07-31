@@ -88,10 +88,10 @@ function LoginPageContent() {
               style={{ color: "var(--mut)", fontSize: "clamp(0.5rem, calc(4vw - 4.9px), 0.75rem)", lineHeight: 1.4 }}
             >
               <p style={{ whiteSpace: "nowrap" }}>
-                Built by fellow parent to overcome last-min 听写 nights.
+                Built by fellow parent who&apos;s tired of last-min 听写 nights.
               </p>
               <p style={{ whiteSpace: "nowrap" }}>
-                Early free access till end-Aug, try it with your child!
+                Free access for Term 3, try it with your child!
               </p>
             </div>
             {status === "error" && (
