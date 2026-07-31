@@ -39,6 +39,13 @@ export default function TestHost({
 }) {
   const masteryByKey = masteryMapFromRows(masteryRows);
   const [active, setActive] = useState<Active | null>(null);
+  // Tricky-only used to be a whole separate card per level ("Level 1",
+  // "Level 1 · tricky words only", "Level 2", "Level 2 · tricky words
+  // only", ...) which doubled the picker's card count and read as
+  // cluttered once 识写's own two cards were mixed in among them. A single
+  // toggle above 识读's cards (the only skill tricky-only applies to)
+  // re-scopes its existing Level 1/2 cards instead of adding new ones.
+  const [readTrickyOnly, setReadTrickyOnly] = useState(false);
 
   const readWords = words.filter((w) => tracksFor(w.skill).includes("read"));
   const writeWords = words.filter((w) => tracksFor(w.skill).includes("write"));
@@ -47,12 +54,14 @@ export default function TestHost({
   const readTrickyWords = readWords.filter((w) => isTricky(w.id, "read", masteryByKey));
   const readTrickyWordsL2 = readTrickyWords.filter((w) => findPairingWithWord(w) !== null);
 
-  function trickyRunWords(level: 1 | 2) {
-    return level === 1 ? readTrickyWords : readTrickyWordsL2;
+  function readRunWords(level: 1 | 2, tricky: boolean) {
+    if (tricky) return level === 1 ? readTrickyWords : readTrickyWordsL2;
+    return level === 1 ? readWords : readWordsL2;
   }
 
   if (active) {
-    const runWords = active.tricky ? trickyRunWords(active.level) : active.skill === "read" ? readWords : writeWords;
+    const runWords =
+      active.skill === "read" ? readRunWords(active.level, active.tricky ?? false) : writeWords;
     return (
       <main className="flex flex-1 flex-col items-center px-6 py-12">
         <div className="w-full max-w-xl">
@@ -73,20 +82,59 @@ export default function TestHost({
     );
   }
 
-  const cards: { skill: "read" | "write"; level: 1 | 2; label: string; count: number; tricky?: boolean }[] = [
-    { skill: "read", level: 1, label: "识读 Level 1 · listen & pick", count: readWords.length },
-    { skill: "read", level: 1, label: "识读 Level 1 · tricky words only", count: readTrickyWords.length, tricky: true },
-    { skill: "read", level: 2, label: "识读 Level 2 · match the phrase", count: readWordsL2.length },
-    {
-      skill: "read",
-      level: 2,
-      label: "识读 Level 2 · tricky words only",
-      count: readTrickyWordsL2.length,
-      tricky: true,
-    },
-    { skill: "write", level: 1, label: "识写 Level 1 · write from memory", count: writeWords.length },
-    { skill: "write", level: 2, label: "识写 Level 2 · fill in the blank", count: writeWordsL2.length },
+  const readCards: { level: 1 | 2; label: string }[] = [
+    { level: 1, label: "Level 1 · listen & pick" },
+    { level: 2, label: "Level 2 · match the phrase" },
   ];
+  const writeCards: { level: 1 | 2; label: string; count: number }[] = [
+    { level: 1, label: "Level 1 · write from memory", count: writeWords.length },
+    { level: 2, label: "Level 2 · fill in the blank", count: writeWordsL2.length },
+  ];
+
+  function renderCard(opts: {
+    key: string;
+    label: string;
+    count: number;
+    isSuggested: boolean;
+    isFaint: boolean;
+    onClick: () => void;
+  }) {
+    return (
+      <button
+        key={opts.key}
+        type="button"
+        disabled={opts.count === 0}
+        onClick={opts.onClick}
+        className="card flex items-center justify-between p-5 text-left"
+        style={opts.count === 0 ? { opacity: 0.5, cursor: "default" } : opts.isFaint ? { opacity: 0.55 } : undefined}
+      >
+        <span className="font-semibold">
+          {opts.label}
+          {opts.isSuggested && (
+            <span className="text-sm ml-2" style={{ color: "var(--accent)" }}>
+              · suggested
+            </span>
+          )}
+        </span>
+        <span className="text-sm" style={{ color: "var(--mut)" }}>
+          {opts.count} words
+        </span>
+      </button>
+    );
+  }
+
+  // Warms the first word's audio right as the tap happens — TestRunner's
+  // own look-ahead prefetch only covers the second word onward, since it
+  // needs a "current" item already mounted to look ahead from. This is the
+  // one moment before that where there's still time to beat the fetch
+  // before the child sees the first item.
+  function prefetchFirst(runWords: RevisionVocab[], level: 1 | 2) {
+    const firstWord = level === 1 ? runWords[0] : runWords.find((w) => findPairingWithWord(w) !== null);
+    if (firstWord) prefetchRevision(firstWord.hanzi);
+  }
+
+  const readSuggestedLevel = defaultTestLevelForWords(readWords, "read", masteryByKey);
+  const writeSuggestedLevel = defaultTestLevelForWords(writeWords, "write", masteryByKey);
 
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
@@ -99,63 +147,63 @@ export default function TestHost({
           Choose a format to test
         </p>
 
-        <div className="flex flex-col gap-3">
-          {cards.map((c) => {
-            // The tricky-words-only mode is a re-practice tool, not a step
-            // in the adaptive level-1-then-level-2 progression, so it never
-            // participates in the suggested/faint badging below.
-            const suggestedLevel = c.tricky
-              ? null
-              : c.skill === "read"
-                ? defaultTestLevelForWords(readWords, "read", masteryByKey)
-                : defaultTestLevelForWords(writeWords, "write", masteryByKey);
-            const isSuggested = suggestedLevel !== null && suggestedLevel === c.level;
-            // Once a lower level's word has passed enough to bump the
-            // suggestion up (e.g. a Level 1 pass suggesting Level 2 next),
-            // that lower level is still tappable -- for re-practice -- but
-            // is de-emphasized rather than looking like an equally live
-            // option next to the new "· suggested" one.
-            const isFaint = suggestedLevel !== null && c.level < suggestedLevel;
-            return (
-              <button
-                key={`${c.skill}-${c.level}-${c.tricky ? "tricky" : "all"}`}
-                type="button"
-                disabled={c.count === 0}
-                onClick={() => {
-                  // Warms the first word's audio right as the tap happens —
-                  // TestRunner's own look-ahead prefetch (see its useEffect)
-                  // only covers the second word onward, since it needs a
-                  // "current" item already mounted to look ahead from. This
-                  // is the one moment before that where there's still time
-                  // to beat the fetch before the child sees the first item.
-                  const runWords = c.tricky ? trickyRunWords(c.level) : c.skill === "read" ? readWords : writeWords;
-                  const firstWord = c.level === 1 ? runWords[0] : runWords.find((w) => findPairingWithWord(w) !== null);
-                  if (firstWord) prefetchRevision(firstWord.hanzi);
-                  setActive({ skill: c.skill, level: c.level, tricky: c.tricky });
-                }}
-                className="card flex items-center justify-between p-5 text-left"
-                style={
-                  c.count === 0
-                    ? { opacity: 0.5, cursor: "default" }
-                    : isFaint
-                      ? { opacity: 0.55 }
-                      : undefined
-                }
-              >
-                <span className="font-semibold">
-                  {c.label}
-                  {isSuggested && (
-                    <span className="text-sm ml-2" style={{ color: "var(--accent)" }}>
-                      · suggested
-                    </span>
-                  )}
-                </span>
-                <span className="text-sm" style={{ color: "var(--mut)" }}>
-                  {c.count} words
-                </span>
-              </button>
-            );
-          })}
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold" style={{ color: "var(--mut)" }}>
+                👁 识读
+              </p>
+              <label className="flex items-center gap-2 text-sm" style={{ color: "var(--mut)" }}>
+                <input
+                  type="checkbox"
+                  checked={readTrickyOnly}
+                  onChange={(e) => setReadTrickyOnly(e.target.checked)}
+                />
+                Tricky words only
+              </label>
+            </div>
+            {readCards.map((c) => {
+              const count = readRunWords(c.level, readTrickyOnly).length;
+              // Tricky-only is a re-practice filter, not a step in the
+              // adaptive level-1-then-level-2 progression, so it never
+              // shows the suggested/faint badging below.
+              const isSuggested = !readTrickyOnly && readSuggestedLevel === c.level;
+              const isFaint = !readTrickyOnly && c.level < readSuggestedLevel;
+              return renderCard({
+                key: `read-${c.level}`,
+                label: `识读 ${c.label}`,
+                count,
+                isSuggested,
+                isFaint,
+                onClick: () => {
+                  const runWords = readRunWords(c.level, readTrickyOnly);
+                  prefetchFirst(runWords, c.level);
+                  setActive({ skill: "read", level: c.level, tricky: readTrickyOnly });
+                },
+              });
+            })}
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <p className="text-sm font-semibold" style={{ color: "var(--mut)" }}>
+              ✍️ 识写
+            </p>
+            {writeCards.map((c) => {
+              const isSuggested = writeSuggestedLevel === c.level;
+              const isFaint = c.level < writeSuggestedLevel;
+              return renderCard({
+                key: `write-${c.level}`,
+                label: `识写 ${c.label}`,
+                count: c.count,
+                isSuggested,
+                isFaint,
+                onClick: () => {
+                  prefetchFirst(writeWords, c.level);
+                  setActive({ skill: "write", level: c.level });
+                },
+              });
+            })}
+          </div>
         </div>
       </div>
     </main>
