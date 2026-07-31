@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
-import { chapterStage, masteryMapFromRows, STAGE_EMOJI, weeklyReviewedCount } from "@/lib/revision/mastery";
+import { masteryMapFromRows, skillProgress, weeklyReviewedCount } from "@/lib/revision/mastery";
 import ChapterSelector from "./ChapterSelector";
 import PrimaryLevelSelector from "./PrimaryLevelSelector";
 import RevisionRefresher from "./RevisionRefresher";
@@ -190,12 +190,13 @@ export default async function VocabRevisionPage({
           )}
           {chapters.map((c) => {
             const isActive = c.number === activeChapter?.number;
-            const stage = chapterStage(c.words, masteryByKey);
+            const readProgress = skillProgress(c.words, "read", masteryByKey);
+            const writeProgress = skillProgress(c.words, "write", masteryByKey);
             return (
               <Link
                 key={c.number}
                 href={`/kid/${childId}/vocab/${c.number}`}
-                className="card flex items-center justify-between p-5"
+                className="card flex items-center justify-between p-5 gap-3"
                 style={
                   isActive
                     ? { border: "2px solid var(--accent)", background: "var(--accent-soft)" }
@@ -205,8 +206,10 @@ export default async function VocabRevisionPage({
                 <span className="font-semibold">
                   Chapter {String(c.number).padStart(2, "0")} · {c.title}
                 </span>
-                <span className="text-lg" aria-hidden>
-                  {STAGE_EMOJI[stage]}
+                <span className="text-xs text-right shrink-0" style={{ color: "var(--mut)" }}>
+                  识读 {readProgress.mastered}/{readProgress.total}
+                  <br />
+                  识写 {writeProgress.mastered}/{writeProgress.total}
                 </span>
               </Link>
             );
