@@ -93,10 +93,19 @@ export function shuffle<T>(items: T[]): T[] {
 
 /** A pairing containing the word's own hanzi, for the Level-2 "blank the
  * word out of its pairing" formats — or null if this word has none, in
- * which case it's not eligible for Level 2. */
+ * which case it's not eligible for Level 2. Picks randomly among every
+ * eligible pairing (not just the first) so repeating the test on the same
+ * word doesn't show an identical question every time. Callers must call
+ * this once per word and reuse the result (e.g. for both the blanked
+ * prompt and the later full-phrase reveal) rather than calling it twice,
+ * since two calls could otherwise pick two different pairings for what's
+ * supposed to be the same question. */
 export function findPairingWithWord(word: RevisionVocab): string | null {
-  const pairings = [word.pairing_1, word.pairing_2, word.pairing_3, word.pairing_4];
-  return pairings.find((p): p is string => p !== null && p !== "" && p.includes(word.hanzi)) ?? null;
+  const eligible = [word.pairing_1, word.pairing_2, word.pairing_3, word.pairing_4].filter(
+    (p): p is string => p !== null && p !== "" && p.includes(word.hanzi)
+  );
+  if (eligible.length === 0) return null;
+  return eligible[Math.floor(Math.random() * eligible.length)];
 }
 
 export function blankPairing(pairing: string, hanzi: string): string {

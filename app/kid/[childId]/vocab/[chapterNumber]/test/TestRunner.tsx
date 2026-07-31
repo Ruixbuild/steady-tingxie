@@ -188,6 +188,19 @@ export default function TestRunner({
     }
   }, [results, queue.length, childId, chapterNumber, skill, level, router]);
 
+  // findPairingWithWord now picks randomly among the word's eligible
+  // pairings (so repeating the test doesn't show the same question every
+  // time) — memoized per item (not just computed inline) so it stays
+  // reused for both the blanked prompt and the full-phrase reveal below,
+  // and stays stable across any incidental re-render while the same
+  // question is still showing rather than re-randomizing mid-question.
+  // Declared before the early returns below since it's a Hook — `current`
+  // can be undefined once the queue is exhausted, hence the guard.
+  const currentPairing = useMemo(
+    () => (current && skill === "read" && level === 2 ? findPairingWithWord(current) : null),
+    [current, skill, level]
+  );
+
   if (queue.length === 0) {
     return (
       <div className="card p-8 text-center" style={{ color: "var(--mut)" }}>
@@ -251,8 +264,8 @@ export default function TestRunner({
           key={current.id}
           targetId={current.id}
           options={readOptions}
-          promptText={blankPairing(findPairingWithWord(current) as string, current.hanzi)}
-          fullPhrase={findPairingWithWord(current) as string}
+          promptText={blankPairing(currentPairing as string, current.hanzi)}
+          fullPhrase={currentPairing as string}
           onDone={handleReadDone}
         />
       )}

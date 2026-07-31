@@ -73,7 +73,19 @@ export default function TestReadQuiz({ targetId, options, promptAudio, promptTex
 
       <div
         className="w-full mt-2"
-        style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(options.length, 1)}, 1fr)`, gap: 8 }}
+        style={{
+          display: "grid",
+          // A fixed 2 columns (wrapping into 2 rows for the usual 4
+          // options) instead of one column per option: forcing every
+          // option into a single row squeezed each one into a narrow
+          // sliver, which only got worse once distractors started
+          // matching the target's character length (pickReadDistractors)
+          // — a 4-character target now means every option is a similarly
+          // long word, cramped and hard to read at 4-across. Two columns
+          // gives each option roughly double the width.
+          gridTemplateColumns: `repeat(${Math.min(2, Math.max(options.length, 1))}, 1fr)`,
+          gap: 8,
+        }}
       >
         {options.map((opt) => {
           const isSelected = selectedId === opt.id;

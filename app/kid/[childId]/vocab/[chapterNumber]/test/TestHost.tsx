@@ -45,9 +45,14 @@ export default function TestHost({
   const readWordsL2 = readWords.filter((w) => findPairingWithWord(w) !== null);
   const writeWordsL2 = writeWords.filter((w) => findPairingWithWord(w) !== null);
   const readTrickyWords = readWords.filter((w) => isTricky(w.id, "read", masteryByKey));
+  const readTrickyWordsL2 = readTrickyWords.filter((w) => findPairingWithWord(w) !== null);
+
+  function trickyRunWords(level: 1 | 2) {
+    return level === 1 ? readTrickyWords : readTrickyWordsL2;
+  }
 
   if (active) {
-    const runWords = active.tricky ? readTrickyWords : active.skill === "read" ? readWords : writeWords;
+    const runWords = active.tricky ? trickyRunWords(active.level) : active.skill === "read" ? readWords : writeWords;
     return (
       <main className="flex flex-1 flex-col items-center px-6 py-12">
         <div className="w-full max-w-xl">
@@ -61,7 +66,7 @@ export default function TestHost({
             words={runWords}
             chapterWords={words}
             learntWords={learntWords}
-            modeLabel={active.tricky ? "识读 Level 1 — tricky words only" : undefined}
+            modeLabel={active.tricky ? `识读 Level ${active.level} — tricky words only` : undefined}
           />
         </div>
       </main>
@@ -72,6 +77,13 @@ export default function TestHost({
     { skill: "read", level: 1, label: "识读 Level 1 · listen & pick", count: readWords.length },
     { skill: "read", level: 1, label: "识读 Level 1 · tricky words only", count: readTrickyWords.length, tricky: true },
     { skill: "read", level: 2, label: "识读 Level 2 · match the phrase", count: readWordsL2.length },
+    {
+      skill: "read",
+      level: 2,
+      label: "识读 Level 2 · tricky words only",
+      count: readTrickyWordsL2.length,
+      tricky: true,
+    },
     { skill: "write", level: 1, label: "识写 Level 1 · write from memory", count: writeWords.length },
     { skill: "write", level: 2, label: "识写 Level 2 · fill in the blank", count: writeWordsL2.length },
   ];
@@ -116,7 +128,7 @@ export default function TestHost({
                   // "current" item already mounted to look ahead from. This
                   // is the one moment before that where there's still time
                   // to beat the fetch before the child sees the first item.
-                  const runWords = c.tricky ? readTrickyWords : c.skill === "read" ? readWords : writeWords;
+                  const runWords = c.tricky ? trickyRunWords(c.level) : c.skill === "read" ? readWords : writeWords;
                   const firstWord = c.level === 1 ? runWords[0] : runWords.find((w) => findPairingWithWord(w) !== null);
                   if (firstWord) prefetchRevision(firstWord.hanzi);
                   setActive({ skill: c.skill, level: c.level, tricky: c.tricky });
