@@ -13,7 +13,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import TestRunner from "./TestRunner";
-import { isTricky, masteryMapFromRows, tracksFor } from "@/lib/revision/mastery";
+import { isTricky, masteryMapFromRows, skillLevel, tracksFor } from "@/lib/revision/mastery";
 import { prefetchRevision } from "@/lib/revision/narration";
 import { defaultTestLevelForWords, findPairingWithWord } from "@/lib/revision/testScoring";
 import type { RevisionMastery, RevisionVocab } from "@/lib/revision/types";
@@ -51,11 +51,24 @@ export default function TestHost({
   const writeWords = words.filter((w) => tracksFor(w.skill).includes("write"));
   const readWordsL2 = readWords.filter((w) => findPairingWithWord(w) !== null);
   const writeWordsL2 = writeWords.filter((w) => findPairingWithWord(w) !== null);
-  const readTrickyWords = readWords.filter((w) => isTricky(w.id, "read", masteryByKey));
-  const readTrickyWordsL2 = readTrickyWords.filter((w) => findPairingWithWord(w) !== null);
+  // Level 1's tricky-only list is deliberately narrower than "everything
+  // isTricky": a word already at level 2 ("Almost") can only advance by
+  // passing Level 2 -- record_revision_word_attempt sets
+  // level = max(current, test_level + 1), so re-passing Level 1 on a
+  // level-2 word computes max(2, 2) = 2, a genuine no-op. Since isTricky
+  // was widened to flag level-2 words too (so they show up somewhere as
+  // "not yet mastered"), leaving them in the Level 1 list made that card
+  // look permanently stuck -- same word, same tricky count, no matter how
+  // many times it's "passed". They belong in the Level 2 tricky list only.
+  const readTrickyWordsL1 = readWords.filter(
+    (w) => isTricky(w.id, "read", masteryByKey) && skillLevel(w.id, "read", masteryByKey) < 2
+  );
+  const readTrickyWordsL2 = readWords.filter(
+    (w) => isTricky(w.id, "read", masteryByKey) && findPairingWithWord(w) !== null
+  );
 
   function readRunWords(level: 1 | 2, tricky: boolean) {
-    if (tricky) return level === 1 ? readTrickyWords : readTrickyWordsL2;
+    if (tricky) return level === 1 ? readTrickyWordsL1 : readTrickyWordsL2;
     return level === 1 ? readWords : readWordsL2;
   }
 
