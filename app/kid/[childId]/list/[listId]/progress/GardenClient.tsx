@@ -115,7 +115,13 @@ export default function GardenClient({
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {Array.from(item.hanzi).map((c, i) => {
-                        const weak = (item.charMisses?.[String(i)] ?? 0) > 0;
+                        // char_misses only ever increments (see
+                        // record_test_attempt.sql) -- it never resets once
+                        // the word is later mastered, so without the
+                        // item.level check a fully-grown 🌳 word could still
+                        // show a permanent "weak" rim from a mistake made
+                        // long before it was mastered. Mastered status wins.
+                        const weak = item.level < 3 && (item.charMisses?.[String(i)] ?? 0) > 0;
                         return (
                           <span
                             key={i}
