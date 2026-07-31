@@ -62,6 +62,7 @@ export default function TestRunner({
   const [charIndex, setCharIndex] = useState(0);
   const [results, setResults] = useState<WordResult[]>([]);
   const [finished, setFinished] = useState(false);
+  const [failedCount, setFailedCount] = useState(0);
   const epochRef = useRef(0);
   const charResultsRef = useRef<CharResult[]>([]);
   const attemptSubmittedRef = useRef(false);
@@ -74,6 +75,14 @@ export default function TestRunner({
   // mastery — otherwise a fast tap right after the last question raced
   // ahead of the write and the chapter list still showed the old stage.
   const pendingWritesRef = useRef<Promise<unknown>[]>([]);
+  // A failed write (e.g. a flaky connection mid-test) used to be swallowed
+  // completely, with nothing telling the child/parent that word's mastery
+  // wasn't actually recorded despite the results screen showing a normal
+  // score (score is computed from the client-known `passed` value, not
+  // from whether the write succeeded). Counted here and surfaced on the
+  // results screen so a "score looks right but mastery didn't move" report
+  // is diagnosable instead of silent.
+  const failedWritesRef = useRef(0);
 
   const current = queue[index];
 
@@ -88,6 +97,7 @@ export default function TestRunner({
       submitWordAttempt(childId, current.id, "read", level, { passed }).catch(() => {
         // Best-effort — the session stays usable even if one write hiccups;
         // that word just won't have this attempt recorded.
+        failedWritesRef.current += 1;
       })
     );
     setResults((r) => [...r, { vocabId: current.id, hanzi: current.hanzi, passed }]);
@@ -114,6 +124,7 @@ export default function TestRunner({
           setResults((r) => [...r, { vocabId: finishedVocabId, hanzi: finishedHanzi, passed: res.item_passed }]);
         })
         .catch(() => {
+          failedWritesRef.current += 1;
           setResults((r) => [...r, { vocabId: finishedVocabId, hanzi: finishedHanzi, passed: false }]);
         })
     );
@@ -153,6 +164,7 @@ export default function TestRunner({
       Promise.allSettled(pendingWritesRef.current).then(() => {
         recordTestAttempt(childId, chapterNumber, skill, level, results).catch(() => {});
         router.refresh();
+        setFailedCount(failedWritesRef.current);
         setFinished(true);
       });
     }
@@ -175,7 +187,14 @@ export default function TestRunner({
       );
     }
     return (
-      <ResultsScreen skill={skill} level={level} results={results} backHref={chapterHref} onBackToTest={onExit} />
+      <ResultsScreen
+        skill={skill}
+        level={level}
+        results={results}
+        backHref={chapterHref}
+        onBackToTest={onExit}
+        failedCount={failedCount}
+      />
     );
   }
 

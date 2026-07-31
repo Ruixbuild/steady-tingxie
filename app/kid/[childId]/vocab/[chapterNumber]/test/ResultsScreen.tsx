@@ -18,6 +18,7 @@ export default function ResultsScreen({
   results,
   backHref,
   onBackToTest,
+  failedCount = 0,
 }: {
   skill: "read" | "write";
   level: 1 | 2;
@@ -29,6 +30,11 @@ export default function ResultsScreen({
    * immediately — a real navigation to the chapter page would lose that
    * "come test the next level" momentum. */
   onBackToTest: () => void;
+  /** How many of this run's mastery writes failed (e.g. a flaky connection
+   * mid-test) — the score above is computed from the client-known `passed`
+   * value regardless, so a failed write wouldn't otherwise show up
+   * anywhere and that word's mastery just silently wouldn't have moved. */
+  failedCount?: number;
 }) {
   const score = results.filter((r) => r.passed).length;
   const total = results.length;
@@ -39,6 +45,13 @@ export default function ResultsScreen({
       <p className="text-3xl font-extrabold">
         {score} / {total}
       </p>
+
+      {failedCount > 0 && (
+        <p className="text-sm" style={{ color: "var(--miss)" }}>
+          ⚠ {failedCount} result{failedCount > 1 ? "s" : ""} didn&apos;t save — check your connection and retake
+          this test.
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-2 justify-center max-w-md">
         {results.map((r, i) => (
