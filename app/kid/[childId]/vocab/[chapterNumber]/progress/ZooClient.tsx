@@ -50,8 +50,8 @@ export default function ZooClient({
   const pct = total > 0 ? Math.round((grown / total) * 100) : 0;
 
   const hasTricky =
-    readWords.some((w) => isTricky(w.id, "read", masteryByKey)) ||
-    writeWords.some((w) => isTricky(w.id, "write", masteryByKey));
+    readWords.some((w) => isTricky(w, "read", masteryByKey)) ||
+    writeWords.some((w) => isTricky(w, "write", masteryByKey));
 
   function renderGroup(list: RevisionVocab[], skill: "read" | "write", label: string) {
     if (list.length === 0) return null;

@@ -25,13 +25,44 @@ export function tracksFor(skill: RevisionSkill): ("read" | "write")[] {
   return [skill];
 }
 
+/** True if this word has any pairing (of its up-to-4 pairing_N columns)
+ * containing its own hanzi — the same eligibility check testScoring.ts's
+ * findPairingWithWord makes, duplicated here (rather than imported) to
+ * avoid a mastery.ts <-> testScoring.ts import cycle, since testScoring.ts
+ * already imports skillLevel from this file. */
+export function hasEligiblePairing(word: RevisionVocab): boolean {
+  return [word.pairing_1, word.pairing_2, word.pairing_3, word.pairing_4].some(
+    (p) => p !== null && p !== "" && p.includes(word.hanzi)
+  );
+}
+
+/** The highest level a (word, track) can realistically reach. Level 2 for
+ * both 识读 and 识写 is a "blank the word out of its pairing" format (see
+ * findPairingWithWord) — a word with no pairing at all in the CSV has no
+ * possible Level 2 test, so it can only ever reach level 2 ("Almost"), no
+ * matter how many times Level 1 is retested. Without this cap, such a
+ * word sat in permanent limbo: not "mastered" (level < 3 literally), yet
+ * also invisible to every actionable view — excluded from Level 1's
+ * tricky list (it already passed Level 1) and Level 2's tricky list (no
+ * pairing to test) — while still dragging the chapter's mastered count
+ * down forever. */
+export function maxLevelFor(word: RevisionVocab): number {
+  return hasEligiblePairing(word) ? 3 : 2;
+}
+
 /** A word only counts as "mastered" once every track it requires has
- * level >= 3 (passed the harder Level-2 test) — a "both" word that's
- * strong on 识读 but still level 1 on 识写 is not mastered, even though one
- * of its two tracks is. Returns the 0-3 stage index for STAGE_EMOJI: the
- * word's *lowest* track level, since that's the one holding it back. */
+ * reached its own realistic ceiling (see maxLevelFor) — a "both" word
+ * that's strong on 识读 but still level 1 on 识写 is not mastered, even
+ * though one of its two tracks is. Returns the 0-3 stage index for
+ * STAGE_EMOJI: the word's *lowest* track level (capped-tracks read as
+ * fully mastered, i.e. stage 3, once their ceiling is hit), since that's
+ * the one holding it back. */
 export function wordStage(word: RevisionVocab, masteryByKey: Map<MasteryKey, RevisionMastery>): number {
-  const levels = tracksFor(word.skill).map((skill) => masteryByKey.get(masteryKey(word.id, skill))?.level ?? 0);
+  const cap = maxLevelFor(word);
+  const levels = tracksFor(word.skill).map((skill) => {
+    const level = masteryByKey.get(masteryKey(word.id, skill))?.level ?? 0;
+    return level >= cap ? 3 : level;
+  });
   return Math.min(...levels);
 }
 
@@ -72,9 +103,10 @@ export function isSkillFlagged(
 }
 
 /** A word/track counts as "tricky" if it's explicitly flagged, has ever
- * been missed, or hasn't reached level 3 (fully mastered) yet — used for
- * the Test picker's "tricky words only" mode and mirrored from the
- * equivalent local check on the Progress page (ZooClient.tsx).
+ * been missed, or hasn't reached its realistic ceiling yet (see
+ * maxLevelFor) — used for the Test picker's "tricky words only" mode and
+ * mirrored from the equivalent local check on the Progress page
+ * (ZooClient.tsx).
  *
  * Deliberately not "< 2": a word can sit at level 2 ("Almost" — passed
  * Level 1 cleanly, never missed or flagged) indefinitely if it's simply
@@ -82,14 +114,18 @@ export function isSkillFlagged(
  * < 2 threshold, so it never showed up in "tricky words only" even though
  * it's the exact reason a chapter's mastered count stays below its total —
  * the threshold needed to match "not yet fully mastered", not just
- * "hasn't cleared the first hurdle". */
+ * "hasn't cleared the first hurdle".
+ *
+ * Takes the whole word (not just its id) because the ceiling check needs
+ * its pairing columns — a word with no eligible pairing tops out at level
+ * 2, so once it's there it's genuinely done, not tricky. */
 export function isTricky(
-  vocabId: string,
+  word: RevisionVocab,
   skill: "read" | "write",
   masteryByKey: Map<MasteryKey, RevisionMastery>
 ): boolean {
-  const m = masteryByKey.get(masteryKey(vocabId, skill));
-  return (m?.flagged ?? false) || (m?.misses ?? 0) > 0 || (m?.level ?? 0) < 3;
+  const m = masteryByKey.get(masteryKey(word.id, skill));
+  return (m?.flagged ?? false) || (m?.misses ?? 0) > 0 || (m?.level ?? 0) < maxLevelFor(word);
 }
 
 /** Chapter-level stage badge: fraction of this chapter's words that are
@@ -117,7 +153,9 @@ export function skillProgress(
   masteryByKey: Map<MasteryKey, RevisionMastery>
 ): { mastered: number; total: number } {
   const eligible = words.filter((w) => tracksFor(w.skill).includes(skill));
-  const mastered = eligible.filter((w) => (masteryByKey.get(masteryKey(w.id, skill))?.level ?? 0) >= 3).length;
+  const mastered = eligible.filter(
+    (w) => (masteryByKey.get(masteryKey(w.id, skill))?.level ?? 0) >= maxLevelFor(w)
+  ).length;
   return { mastered, total: eligible.length };
 }
 

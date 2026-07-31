@@ -61,10 +61,10 @@ export default function TestHost({
   // look permanently stuck -- same word, same tricky count, no matter how
   // many times it's "passed". They belong in the Level 2 tricky list only.
   const readTrickyWordsL1 = readWords.filter(
-    (w) => isTricky(w.id, "read", masteryByKey) && skillLevel(w.id, "read", masteryByKey) < 2
+    (w) => isTricky(w, "read", masteryByKey) && skillLevel(w.id, "read", masteryByKey) < 2
   );
   const readTrickyWordsL2 = readWords.filter(
-    (w) => isTricky(w.id, "read", masteryByKey) && findPairingWithWord(w) !== null
+    (w) => isTricky(w, "read", masteryByKey) && findPairingWithWord(w) !== null
   );
 
   function readRunWords(level: 1 | 2, tricky: boolean) {
