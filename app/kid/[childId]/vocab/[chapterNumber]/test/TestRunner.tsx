@@ -15,7 +15,13 @@ import { strokeChars } from "@/lib/hanzi";
 import { recordTestAttempt } from "@/lib/revision/attemptActions";
 import { prefetchRevision } from "@/lib/revision/narration";
 import { submitWordAttempt, type CharResult } from "@/lib/revision/testActions";
-import { blankPairing, findPairingWithWord, pickReadDistractors, shuffle } from "@/lib/revision/testScoring";
+import {
+  blankPairing,
+  findPairingWithWord,
+  pickReadDistractors,
+  shuffle,
+  splitPairingAroundWord,
+} from "@/lib/revision/testScoring";
 import type { RevisionVocab } from "@/lib/revision/types";
 
 const TITLE: Record<"read" | "write", Record<1 | 2, string>> = {
@@ -232,6 +238,17 @@ export default function TestRunner({
     [current, level]
   );
 
+  // 识写 Level 2's pairing split around the target word, so its writing
+  // boxes can render embedded at that position in the sentence instead of
+  // a "＿" placeholder in the text with a disconnected box row below it.
+  const writePairingParts = useMemo(
+    () =>
+      current && skill === "write" && level === 2 && currentPairing
+        ? splitPairingAroundWord(currentPairing, current.hanzi)
+        : null,
+    [current, skill, level, currentPairing]
+  );
+
   // Memoized per word (not recomputed inline in the render body) so the
   // distractor pool and its shuffle order stay stable for as long as the
   // same question is on screen — pickReadDistractors/shuffle are both
@@ -313,34 +330,63 @@ export default function TestRunner({
 
       {skill === "write" && (
         <>
-          {level === 2 && (
-            <p className="hanzi text-lg text-center" style={{ color: "var(--mut)" }}>
-              {blankPairing(currentPairing as string, current.hanzi)}
-            </p>
-          )}
-          {strokeChars(current.hanzi).length > 1 && (
-            <div className="flex gap-2 justify-center flex-wrap">
+          {level === 2 && writePairingParts ? (
+            // The word's writing boxes sit embedded at its actual position
+            // in the sentence, rather than a "＿" placeholder in the text
+            // with a disconnected box row rendered separately below it —
+            // the two used to have no visual relationship to each other.
+            <p className="hanzi text-lg text-center" style={{ color: "var(--mut)", lineHeight: 1.8 }}>
+              {writePairingParts.before}
               {strokeChars(current.hanzi).map((c, i) => {
                 const done = wordItemDone || i < charIndex;
                 return (
                   <span
                     key={i}
-                    className="hanzi flex items-center justify-center"
+                    className="hanzi inline-flex items-center justify-center"
                     style={{
-                      minWidth: 44,
-                      height: 44,
-                      fontSize: "1.3rem",
-                      borderRadius: 12,
+                      minWidth: 30,
+                      height: 30,
+                      margin: "0 2px",
+                      fontSize: "1rem",
+                      borderRadius: 8,
                       border: `1.5px solid ${done ? "var(--ok)" : "var(--line)"}`,
                       background: done ? "var(--ok-soft)" : "#fff",
                       color: "var(--ink)",
+                      verticalAlign: "middle",
                     }}
                   >
                     {done ? c : ""}
                   </span>
                 );
               })}
-            </div>
+              {writePairingParts.after}
+            </p>
+          ) : (
+            level === 1 &&
+            strokeChars(current.hanzi).length > 1 && (
+              <div className="flex gap-2 justify-center flex-wrap">
+                {strokeChars(current.hanzi).map((c, i) => {
+                  const done = wordItemDone || i < charIndex;
+                  return (
+                    <span
+                      key={i}
+                      className="hanzi flex items-center justify-center"
+                      style={{
+                        minWidth: 44,
+                        height: 44,
+                        fontSize: "1.3rem",
+                        borderRadius: 12,
+                        border: `1.5px solid ${done ? "var(--ok)" : "var(--line)"}`,
+                        background: done ? "var(--ok-soft)" : "#fff",
+                        color: "var(--ink)",
+                      }}
+                    >
+                      {done ? c : ""}
+                    </span>
+                  );
+                })}
+              </div>
+            )
           )}
           {wordItemDone ? (
             <div className="card flex flex-col items-center gap-4 py-6">

@@ -119,3 +119,23 @@ export function findPairingWithWord(word: RevisionVocab): string | null {
 export function blankPairing(pairing: string, hanzi: string): string {
   return pairing.replace(hanzi, "＿".repeat(hanzi.length));
 }
+
+/** Splits a pairing into the text before/after the target word's first
+ * occurrence — for 识写 Level 2, which shows the word's own writing boxes
+ * embedded at that position within the sentence (instead of blankPairing's
+ * plain "＿" placeholder text, which had no connection to the separate box
+ * row rendered below it). Returns null if the word isn't actually in the
+ * pairing — shouldn't happen given findPairingWithWord's own eligibility
+ * check, but callers get an unambiguous "can't split this" signal instead
+ * of silently rendering the whole pairing as "before" with an empty
+ * "after". Only the first occurrence is split, matching blankPairing's
+ * own .replace() (which only replaces the first match) so both formats
+ * agree on which occurrence is "the blank" if the word appears twice. */
+export function splitPairingAroundWord(
+  pairing: string,
+  hanzi: string
+): { before: string; after: string } | null {
+  const i = pairing.indexOf(hanzi);
+  if (i === -1) return null;
+  return { before: pairing.slice(0, i), after: pairing.slice(i + hanzi.length) };
+}
