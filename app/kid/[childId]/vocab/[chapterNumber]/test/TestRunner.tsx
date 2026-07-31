@@ -62,10 +62,18 @@ export default function TestRunner({
 
   // Level 2 needs a pairing containing the word to blank out — words
   // without one are skipped from that level's queue.
-  const queue = useMemo(
-    () => (level === 1 ? words : words.filter((w) => findPairingWithWord(w) !== null)),
-    [words, level]
-  );
+  //
+  // Snapshotted once via a lazy useState initializer, NOT a useMemo keyed
+  // on `words` — the tricky-words-only mode's word list is itself derived
+  // from live mastery (TestHost's readTrickyWords), and router.refresh()
+  // at the end of this very run updates that mastery, which would
+  // otherwise shrink `words` (a just-passed word is no longer tricky) and
+  // recompute a smaller queue out from under an already-finished run.
+  // Passing every tricky word then flipped `queue.length` to 0 and kicked
+  // the results screen straight back to the "Nothing to test here yet"
+  // early return instead — the "closes abruptly to a blank page" bug. A
+  // test's word list has to stay fixed for the run it was built for.
+  const [queue] = useState(() => (level === 1 ? words : words.filter((w) => findPairingWithWord(w) !== null)));
 
   const [index, setIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
