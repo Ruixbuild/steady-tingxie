@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { prefetchBeforeNavigate } from "@/lib/narration";
 
 const STAGE_EMOJI = ["🌱", "🌿", "🌸", "🌳"] as const;
 
@@ -40,6 +43,7 @@ export default function HubWordList({
                 href={`/kid/${childId}/list/${listId}/test?items=${it.id}`}
                 className="hanzi flex items-center gap-1 rounded-2xl px-3 py-2 text-lg"
                 style={{ background: "#fff", border: "1.5px solid var(--line)" }}
+                onClick={() => prefetchBeforeNavigate(s.kind, it.hanzi)}
               >
                 {it.hanzi}
                 <span className="text-sm">{STAGE_EMOJI[it.level] ?? "🌱"}</span>

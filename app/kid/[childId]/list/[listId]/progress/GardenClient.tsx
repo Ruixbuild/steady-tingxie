@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { isTricky } from "@/lib/testScoring";
+import { prefetchBeforeNavigate } from "@/lib/narration";
 import Confetti from "@/components/Confetti";
 
 type GardenItem = {
@@ -106,6 +107,7 @@ export default function GardenClient({
                     href={`/kid/${childId}/list/${listId}/test?items=${item.id}`}
                     className="card p-3 flex flex-col gap-2"
                     style={{ background: "var(--card)" }}
+                    onClick={() => prefetchBeforeNavigate(section.kind, item.hanzi)}
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{emoji}</span>
@@ -159,6 +161,7 @@ export default function GardenClient({
                       background: "var(--card)",
                       border: tricky ? "2px solid var(--warn)" : "1.5px solid var(--line)",
                     }}
+                    onClick={() => prefetchBeforeNavigate(section.kind, item.hanzi)}
                   >
                     <span className="text-xl">{emoji}</span>
                     <span className="hanzi text-lg">{item.hanzi}</span>

@@ -121,3 +121,19 @@ export function prefetchItem(kind: ItemKind, surface: Surface, text: string) {
   if (!isSilentOnEntry(kind, surface)) return;
   prefetchPaced(text, PACING[kind].rate);
 }
+
+/** Warm this item's audio ahead of a navigation that's *about* to land on a
+ * screen where it auto-announces — e.g. tapping a word card that jumps
+ * straight into a one-item Test. `announceOnEntry`'s own fetch only starts
+ * once the destination page has mounted, which on a real network can outlast
+ * the browser's brief window for auto-playing audio without a fresh user
+ * gesture; starting the same fetch here, synchronously in the click handler,
+ * runs it in parallel with the navigation instead of after it, so by the
+ * time the destination mounts the clip is already cached and `.play()`
+ * resolves near-instantly. Unlike `prefetchItem`, this ignores the
+ * auto-announce policy on purpose — the whole point is to warm the cache for
+ * a spot that WILL auto-announce. */
+export function prefetchBeforeNavigate(kind: ItemKind, text: string) {
+  const { rate } = PACING[kind];
+  prefetchPaced(text, rate);
+}
