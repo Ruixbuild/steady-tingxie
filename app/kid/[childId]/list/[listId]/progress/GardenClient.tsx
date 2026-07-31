@@ -97,8 +97,13 @@ export default function GardenClient({
                 const emoji =
                   item.level === 3 ? (hardMode ? "🌲" : "🌳") : STAGE_EMOJI[item.level] ?? "🌱";
                 return (
-                  <div
+                  // Tapping a word card jumps straight into a one-item
+                  // retest of that word, so noticing a low-mastery card
+                  // here doesn't require going through the full Test
+                  // picker/mode flow just to practise that single word.
+                  <Link
                     key={item.id}
+                    href={`/kid/${childId}/list/${listId}/test?items=${item.id}`}
                     className="card p-3 flex flex-col gap-2"
                     style={{ background: "var(--card)" }}
                   >
@@ -129,7 +134,7 @@ export default function GardenClient({
                         );
                       })}
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
@@ -140,8 +145,9 @@ export default function GardenClient({
                 const emoji =
                   item.level === 3 ? (hardMode ? "🌲" : "🌳") : STAGE_EMOJI[item.level] ?? "🌱";
                 return (
-                  <div
+                  <Link
                     key={item.id}
+                    href={`/kid/${childId}/list/${listId}/test?items=${item.id}`}
                     className="inline-flex items-center gap-2 rounded-2xl px-3 py-2"
                     style={{
                       background: "var(--card)",
@@ -153,7 +159,7 @@ export default function GardenClient({
                     <span className="text-xs" style={{ color: "var(--mut)" }}>
                       {LEVEL_LABEL[item.level] ?? "New"}
                     </span>
-                  </div>
+                  </Link>
                 );
               })}
             </div>

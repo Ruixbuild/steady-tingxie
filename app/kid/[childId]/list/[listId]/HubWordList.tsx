@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const STAGE_EMOJI = ["🌱", "🌿", "🌸", "🌳"] as const;
 
 export type HubSection = {
@@ -11,7 +13,15 @@ const KIND_HEADER: Record<HubSection["kind"], string> = {
   passage: "🖋 默写",
 };
 
-export default function HubWordList({ sections }: { sections: HubSection[] }) {
+export default function HubWordList({
+  childId,
+  listId,
+  sections,
+}: {
+  childId: string;
+  listId: string;
+  sections: HubSection[];
+}) {
   return (
     <div className="flex flex-col gap-4 mb-6">
       {sections.map((s, i) => (
@@ -21,14 +31,19 @@ export default function HubWordList({ sections }: { sections: HubSection[] }) {
           </p>
           <div className="flex flex-wrap gap-2">
             {s.items.map((it) => (
-              <div
+              // Tapping a word card jumps straight into a one-item retest
+              // of that word, so a child (or parent) noticing a low-mastery
+              // card doesn't have to go through the full Test picker/mode
+              // flow just to practise that single word.
+              <Link
                 key={it.id}
+                href={`/kid/${childId}/list/${listId}/test?items=${it.id}`}
                 className="hanzi flex items-center gap-1 rounded-2xl px-3 py-2 text-lg"
                 style={{ background: "#fff", border: "1.5px solid var(--line)" }}
               >
                 {it.hanzi}
                 <span className="text-sm">{STAGE_EMOJI[it.level] ?? "🌱"}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

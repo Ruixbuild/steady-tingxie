@@ -137,7 +137,7 @@ export default async function ListHubPage({
           <p style={{ color: "var(--mut)" }}>{sectionsSummary}</p>
         </div>
 
-        {hubSections.length > 0 && <HubWordList sections={hubSections} />}
+        {hubSections.length > 0 && <HubWordList childId={childId} listId={listId} sections={hubSections} />}
       </div>
     </main>
   );
