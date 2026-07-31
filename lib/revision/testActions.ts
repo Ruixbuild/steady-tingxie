@@ -28,11 +28,19 @@ export async function submitWordAttempt(
   // record_revision_word_attempt isn't in the shared Database generic (same
   // reason revision_mastery's upsert needed a cast in masteryActions.ts) —
   // supabase-js's rpc() only accepts known function names otherwise.
-  const rpc = supabase.rpc as unknown as (
-    fn: string,
-    args: object
-  ) => Promise<{ data: unknown; error: { message: string } | null }>;
-  const { data, error } = await rpc("record_revision_word_attempt", {
+  //
+  // Cast inline and call .rpc() directly on the casted expression, rather
+  // than extracting `supabase.rpc` into a standalone variable first: that
+  // detaches the method from its object, so calling it later as a bare
+  // function loses its `this` binding — supabase-js's internals reference
+  // `this.rest` inside .rpc(), so a detached call throws "undefined is not
+  // an object (evaluating 'this.rest')" every time, which is exactly what
+  // silently broke every Revision test-mastery write until this fix.
+  const { data, error } = await (
+    supabase as unknown as {
+      rpc: (fn: string, args: object) => Promise<{ data: unknown; error: { message: string } | null }>;
+    }
+  ).rpc("record_revision_word_attempt", {
     child_id: childId,
     vocab_id: vocabId,
     skill,

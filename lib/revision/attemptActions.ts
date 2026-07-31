@@ -21,12 +21,16 @@ export async function recordTestAttempt(
 ): Promise<string> {
   const supabase = createClient();
   // record_revision_test_attempt isn't in the shared Database generic, same
-  // reason submitWordAttempt's rpc() call needed a cast.
-  const rpc = supabase.rpc as unknown as (
-    fn: string,
-    args: object
-  ) => Promise<{ data: unknown; error: { message: string } | null }>;
-  const { data, error } = await rpc("record_revision_test_attempt", {
+  // reason submitWordAttempt's rpc() call needed a cast — and same reason
+  // it's called directly on the casted expression rather than extracted to
+  // a standalone variable first, which would detach it from `supabase` and
+  // lose its `this` binding (see testActions.ts's comment for the exact
+  // failure this caused).
+  const { data, error } = await (
+    supabase as unknown as {
+      rpc: (fn: string, args: object) => Promise<{ data: unknown; error: { message: string } | null }>;
+    }
+  ).rpc("record_revision_test_attempt", {
     child_id: childId,
     chapter_number: chapterNumber,
     skill,
