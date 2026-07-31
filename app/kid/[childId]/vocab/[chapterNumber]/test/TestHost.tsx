@@ -15,7 +15,7 @@ import Link from "next/link";
 import TestRunner from "./TestRunner";
 import { masteryMapFromRows, tracksFor } from "@/lib/revision/mastery";
 import { prefetchRevision } from "@/lib/revision/narration";
-import { defaultTestLevel, findPairingWithWord } from "@/lib/revision/testScoring";
+import { defaultTestLevelForWords, findPairingWithWord } from "@/lib/revision/testScoring";
 import type { RevisionMastery, RevisionVocab } from "@/lib/revision/types";
 
 type Active = { skill: "read" | "write"; level: 1 | 2 };
@@ -83,12 +83,8 @@ export default function TestHost({
           {cards.map((c) => {
             const suggestedLevel =
               c.skill === "read"
-                ? readWords.length > 0
-                  ? defaultTestLevel(readWords[0].id, "read", masteryByKey)
-                  : 1
-                : writeWords.length > 0
-                  ? defaultTestLevel(writeWords[0].id, "write", masteryByKey)
-                  : 1;
+                ? defaultTestLevelForWords(readWords, "read", masteryByKey)
+                : defaultTestLevelForWords(writeWords, "write", masteryByKey);
             const isSuggested = suggestedLevel === c.level;
             // Once a lower level's word has passed enough to bump the
             // suggestion up (e.g. a Level 1 pass suggesting Level 2 next),

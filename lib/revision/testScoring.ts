@@ -18,6 +18,25 @@ export function defaultTestLevel(
   return skillLevel(vocabId, skill, masteryByKey) >= 2 ? 2 : 1;
 }
 
+/** Chapter-wide version of defaultTestLevel, for the Test picker's
+ * per-format "suggested" badge: suggests Level 2 once at least half this
+ * chapter's words for that skill have reached level >= 2. The picker used
+ * to base this on a single word (always words[0]) — so a full-chapter
+ * Level-1 pass wouldn't bump the suggestion if that one word's own mastery
+ * happened to lag (e.g. it was skipped, retried, or its write settled a
+ * beat later than the others). Checking the whole set makes "pass every
+ * word in the chapter" reliably flip the suggestion, matching what the
+ * picker badge is meant to represent. */
+export function defaultTestLevelForWords(
+  words: RevisionVocab[],
+  skill: "read" | "write",
+  masteryByKey: Map<MasteryKey, RevisionMastery>
+): 1 | 2 {
+  if (words.length === 0) return 1;
+  const advanced = words.filter((w) => skillLevel(w.id, skill, masteryByKey) >= 2).length;
+  return advanced / words.length >= 0.5 ? 2 : 1;
+}
+
 /** Random sample of `count` distractors from `pool`, excluding `target`.
  * Used to build multiple-choice options for the 识读 formats. Returns fewer
  * than `count` if the pool is too small (e.g. a short chapter). */
