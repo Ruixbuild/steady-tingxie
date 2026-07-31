@@ -84,6 +84,14 @@ export default function TestRunner({
 
   const [index, setIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
+  // Mirrors TingXie's own TestSession: once a multi-char 识写 word's last
+  // character is written, the queue pauses on a "Done ✔ — <word> / Next →"
+  // confirmation instead of auto-advancing, with the boxes above revealing
+  // each finished character's glyph. Previously this screen advanced
+  // straight to the next word the instant the last stroke quiz completed,
+  // with no box row at all — every character stayed invisible even after
+  // being written correctly.
+  const [wordItemDone, setWordItemDone] = useState(false);
   const [results, setResults] = useState<WordResult[]>([]);
   const [finished, setFinished] = useState(false);
   const [failedCount, setFailedCount] = useState(0);
@@ -145,10 +153,13 @@ export default function TestRunner({
     const charResults = charResultsRef.current;
     const finishedHanzi = current.hanzi;
     const finishedVocabId = current.id;
-    // Same fire-and-forget reasoning as handleReadDone — advance to the
-    // next word immediately; the graded verdict (only known once the RPC
-    // resolves, since 识写 pass/fail is computed server-side) is appended
-    // to results whenever it arrives rather than blocking the transition.
+    // Fire-and-forget, same reasoning as handleReadDone: the graded verdict
+    // (only known once the RPC resolves, since 识写 pass/fail is computed
+    // server-side) is appended to results whenever it arrives rather than
+    // blocking. Unlike handleReadDone though, this no longer advances the
+    // queue immediately — it pauses on the "Done ✔" confirmation below
+    // (advanceWordItem) so the child sees every character's box filled in
+    // before moving on, matching TingXie's own TestSession.
     pendingWritesRef.current.push(
       submitWordAttempt(childId, current.id, "write", level, { charResults })
         .then((res) => {
@@ -161,6 +172,11 @@ export default function TestRunner({
         })
     );
     charResultsRef.current = [];
+    setWordItemDone(true);
+  }
+
+  function advanceWordItem() {
+    setWordItemDone(false);
     setCharIndex(0);
     setIndex((i) => i + 1);
   }
@@ -302,14 +318,49 @@ export default function TestRunner({
               {blankPairing(currentPairing as string, current.hanzi)}
             </p>
           )}
-          <StrokeTestQuiz
-            key={`${current.id}-${charIndex}`}
-            char={strokeChars(current.hanzi)[charIndex]}
-            announceWord={charIndex === 0 && level === 1 ? current.hanzi : undefined}
-            word={current.hanzi}
-            epochRef={epochRef}
-            onDone={handleStrokeCharDone}
-          />
+          {strokeChars(current.hanzi).length > 1 && (
+            <div className="flex gap-2 justify-center flex-wrap">
+              {strokeChars(current.hanzi).map((c, i) => {
+                const done = wordItemDone || i < charIndex;
+                return (
+                  <span
+                    key={i}
+                    className="hanzi flex items-center justify-center"
+                    style={{
+                      minWidth: 44,
+                      height: 44,
+                      fontSize: "1.3rem",
+                      borderRadius: 12,
+                      border: `1.5px solid ${done ? "var(--ok)" : "var(--line)"}`,
+                      background: done ? "var(--ok-soft)" : "#fff",
+                      color: "var(--ink)",
+                    }}
+                  >
+                    {done ? c : ""}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+          {wordItemDone ? (
+            <div className="card flex flex-col items-center gap-4 py-6">
+              <p className="text-base" style={{ color: "var(--mut)" }}>
+                Done ✔ — {current.hanzi}
+              </p>
+              <button type="button" className="btn btn-primary" onClick={advanceWordItem}>
+                Next →
+              </button>
+            </div>
+          ) : (
+            <StrokeTestQuiz
+              key={`${current.id}-${charIndex}`}
+              char={strokeChars(current.hanzi)[charIndex]}
+              announceWord={charIndex === 0 && level === 1 ? current.hanzi : undefined}
+              word={current.hanzi}
+              epochRef={epochRef}
+              onDone={handleStrokeCharDone}
+            />
+          )}
         </>
       )}
 

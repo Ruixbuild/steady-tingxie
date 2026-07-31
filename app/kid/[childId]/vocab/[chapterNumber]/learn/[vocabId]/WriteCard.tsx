@@ -5,7 +5,13 @@ import Link from "next/link";
 import StrokeLadder from "@/app/kid/[childId]/vocab/StrokeLadder";
 import { strokeChars } from "@/lib/hanzi";
 import { touchMastery } from "@/lib/revision/masteryActions";
-import { prefetchRevision, speakRevision, stripPunctuation } from "@/lib/revision/narration";
+import {
+  prefetchRevision,
+  prefetchRevisionDefinition,
+  speakRevision,
+  speakRevisionDefinition,
+  stripPunctuation,
+} from "@/lib/revision/narration";
 import type { RevisionVocab } from "@/lib/revision/types";
 
 // Mirrors ReadCard.tsx's initial card layout exactly (flag badge, speak
@@ -13,11 +19,11 @@ import type { RevisionVocab } from "@/lib/revision/types";
 // are the "识写" badge and the "Start writing practice" button appended
 // below the card, which advances into this component's own practice/done
 // states (识读 has no equivalent practice flow).
-function SpeakButton({ text }: { text: string }) {
+function SpeakButton({ text, definition }: { text: string; definition?: boolean }) {
   return (
     <button
       type="button"
-      onClick={() => speakRevision(text)}
+      onClick={() => (definition ? speakRevisionDefinition(text) : speakRevision(text))}
       aria-label={`Play ${text}`}
       className="inline-flex items-center justify-center"
       style={{
@@ -67,7 +73,6 @@ export default function WriteCard({
     [
       word.hanzi,
       stripPunctuation(word.hanzi),
-      word.cn_definition,
       word.pairing_1,
       word.pairing_2,
       word.pairing_3,
@@ -76,7 +81,8 @@ export default function WriteCard({
       word.sentence_2,
     ]
       .filter((t): t is string => Boolean(t))
-      .forEach(prefetchRevision);
+      .forEach((t) => prefetchRevision(t));
+    if (word.cn_definition) prefetchRevisionDefinition(word.cn_definition);
   }, [word]);
 
   async function toggleFlag() {
@@ -220,7 +226,7 @@ export default function WriteCard({
           {word.cn_definition && (
             <div className="flex items-center gap-2">
               <p style={{ color: "var(--mut)", fontSize: "clamp(1rem, 3.2vw, 1.25rem)" }}>{word.cn_definition}</p>
-              <SpeakButton text={word.cn_definition} />
+              <SpeakButton text={word.cn_definition} definition />
             </div>
           )}
 

@@ -17,8 +17,8 @@ import {
   isSkillFlagged,
   isTricky,
   masteryMapFromRows,
-  skillLevel,
   skillProgress,
+  skillStage,
   STAGE_EMOJI,
   tracksFor,
 } from "@/lib/revision/mastery";
@@ -62,7 +62,7 @@ export default function ZooClient({
         </p>
         <div className="flex flex-wrap gap-3">
           {list.map((w) => {
-            const level = skillLevel(w.id, skill, masteryByKey);
+            const level = skillStage(w, skill, masteryByKey);
             return (
               <div
                 key={`${skill}-${w.id}`}

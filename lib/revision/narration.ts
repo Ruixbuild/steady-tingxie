@@ -37,16 +37,25 @@ function getAudioEl(): HTMLAudioElement | null {
 const audioCache = new Map<string, Promise<string>>();
 
 const REVISION_RATE = 0.8;
+// A cn_definition explains the word as a short clause (e.g. 保证's "担保做到。"
+// — 5 characters), but unlike a pairing/example sentence it usually has no
+// internal comma/clause to spread its pacing across. At the same
+// speakingRate multiplier as everything else, Google's engine reads a
+// clause that short noticeably quicker than a longer sentence — reported
+// as "the definition reads faster than the rest" on some vocab pages.
+// Slowed down specifically for definitions so a terse one doesn't sound
+// rushed next to the word's own longer example sentences right below it.
+const DEFINITION_RATE = 0.68;
 
-async function fetchClip(text: string): Promise<string> {
-  const key = `${REVISION_RATE}|${text}`;
+async function fetchClip(text: string, rate: number): Promise<string> {
+  const key = `${rate}|${text}`;
   const cached = audioCache.get(key);
   if (cached) return cached;
   const promise = (async () => {
     const res = await fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, lang: "zh-CN", rate: REVISION_RATE }),
+      body: JSON.stringify({ text, lang: "zh-CN", rate }),
     });
     if (!res.ok) throw new Error(`tts fetch failed: ${res.status}`);
     const blob = await res.blob();
@@ -67,11 +76,11 @@ function stopCurrent() {
   }
 }
 
-function fallbackSpeak(text: string) {
+function fallbackSpeak(text: string, rate: number) {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "zh-CN";
-  utterance.rate = REVISION_RATE;
+  utterance.rate = rate;
   // Chrome can silently drop a speak() issued in the same tick as cancel().
   setTimeout(() => {
     window.speechSynthesis.resume();
@@ -89,20 +98,28 @@ function fallbackSpeak(text: string) {
  * cache instead of hitting the network. Errors are swallowed -- a failed
  * prefetch just means speakRevision falls back to its own normal
  * (slower) path when it's actually called. */
-export function prefetchRevision(text: string): void {
-  fetchClip(text).catch(() => {});
+export function prefetchRevision(text: string, rate: number = REVISION_RATE): void {
+  fetchClip(text, rate).catch(() => {});
+}
+
+/** Warms a definition's clip at DEFINITION_RATE — a plain prefetchRevision
+ * call would warm the cache at the wrong rate (REVISION_RATE), so the
+ * eventual speakRevisionDefinition call would still hit a cold /api/tts
+ * fetch despite having "already" been prefetched. */
+export function prefetchRevisionDefinition(text: string): void {
+  fetchClip(text, DEFINITION_RATE).catch(() => {});
 }
 
 /** Revision's one narration entry point — one clip per call, real Chinese
  * punctuation left intact for Google's own natural phrasing, played on a
  * single reused <audio> element (see getAudioEl above). */
-export function speakRevision(text: string): void {
+export function speakRevision(text: string, rate: number = REVISION_RATE): void {
   stopCurrent();
-  fetchClip(text)
+  fetchClip(text, rate)
     .then((url) => {
       const audio = getAudioEl();
       if (!audio) return;
-      audio.onerror = () => fallbackSpeak(text);
+      audio.onerror = () => fallbackSpeak(text, rate);
       // "Say it again"/replaying the same word reuses this element's
       // current src verbatim -- reassigning `.src` to an identical blob:
       // URL still makes the browser reload/re-buffer it, producing a
@@ -114,9 +131,15 @@ export function speakRevision(text: string): void {
       } else {
         audio.src = url;
       }
-      audio.play().catch(() => fallbackSpeak(text));
+      audio.play().catch(() => fallbackSpeak(text, rate));
     })
-    .catch(() => fallbackSpeak(text));
+    .catch(() => fallbackSpeak(text, rate));
+}
+
+/** Speaks a word's cn_definition specifically, at DEFINITION_RATE instead
+ * of the flat rate everything else uses — see DEFINITION_RATE's comment. */
+export function speakRevisionDefinition(text: string): void {
+  speakRevision(text, DEFINITION_RATE);
 }
 
 // Removal of quote marks and stroke-quiz-irrelevant punctuation for the

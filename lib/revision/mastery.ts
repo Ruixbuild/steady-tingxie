@@ -72,13 +72,34 @@ export function isWordMastered(word: RevisionVocab, masteryByKey: Map<MasteryKey
 
 /** A single track's own level (0-3) — for the per-skill chip groups on the
  * chapter hub, where each group shows that specific track's stage rather
- * than the word's overall (lowest-track) stage. */
+ * than the word's overall (lowest-track) stage. This is the *raw* stored
+ * level: for a word capped at level 2 (see maxLevelFor), it never becomes
+ * 3 even once that's genuinely as far as the word can go. Use skillStage
+ * instead for anything that displays this as a "done or not" badge. */
 export function skillLevel(
   vocabId: string,
   skill: "read" | "write",
   masteryByKey: Map<MasteryKey, RevisionMastery>
 ): number {
   return masteryByKey.get(masteryKey(vocabId, skill))?.level ?? 0;
+}
+
+/** A single track's *display* stage (0-3): skillLevel, but reading as
+ * fully mastered (3) once it's hit its realistic ceiling (see
+ * maxLevelFor), same normalization wordStage already applies per-word.
+ * Needed as its own per-track helper (not just wordStage) for the Progress
+ * page's per-skill badge grid, which shows one card per (word, track) —
+ * without this, a word with no eligible pairing sat at a permanent
+ * "Almost" 🐥 badge even after the chapter's overall count correctly
+ * called it mastered, which read as a live inconsistency on the same
+ * screen. */
+export function skillStage(
+  word: RevisionVocab,
+  skill: "read" | "write",
+  masteryByKey: Map<MasteryKey, RevisionMastery>
+): number {
+  const level = skillLevel(word.id, skill, masteryByKey);
+  return level >= maxLevelFor(word) ? 3 : level;
 }
 
 export function isFlagged(
