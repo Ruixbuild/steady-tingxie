@@ -72,16 +72,24 @@ export function isSkillFlagged(
 }
 
 /** A word/track counts as "tricky" if it's explicitly flagged, has ever
- * been missed, or hasn't yet reached level 2 (passed its Level-1 test) —
- * used for the Test picker's "tricky words only" mode and mirrored from
- * the equivalent local check on the Progress page (ZooClient.tsx). */
+ * been missed, or hasn't reached level 3 (fully mastered) yet — used for
+ * the Test picker's "tricky words only" mode and mirrored from the
+ * equivalent local check on the Progress page (ZooClient.tsx).
+ *
+ * Deliberately not "< 2": a word can sit at level 2 ("Almost" — passed
+ * Level 1 cleanly, never missed or flagged) indefinitely if it's simply
+ * never been tested at Level 2. That word isn't "struggling" by the old
+ * < 2 threshold, so it never showed up in "tricky words only" even though
+ * it's the exact reason a chapter's mastered count stays below its total —
+ * the threshold needed to match "not yet fully mastered", not just
+ * "hasn't cleared the first hurdle". */
 export function isTricky(
   vocabId: string,
   skill: "read" | "write",
   masteryByKey: Map<MasteryKey, RevisionMastery>
 ): boolean {
   const m = masteryByKey.get(masteryKey(vocabId, skill));
-  return (m?.flagged ?? false) || (m?.misses ?? 0) > 0 || (m?.level ?? 0) < 2;
+  return (m?.flagged ?? false) || (m?.misses ?? 0) > 0 || (m?.level ?? 0) < 3;
 }
 
 /** Chapter-level stage badge: fraction of this chapter's words that are
