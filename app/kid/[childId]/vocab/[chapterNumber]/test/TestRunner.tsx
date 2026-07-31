@@ -73,7 +73,14 @@ export default function TestRunner({
   // the results screen straight back to the "Nothing to test here yet"
   // early return instead — the "closes abruptly to a blank page" bug. A
   // test's word list has to stay fixed for the run it was built for.
-  const [queue] = useState(() => (level === 1 ? words : words.filter((w) => findPairingWithWord(w) !== null)));
+  //
+  // Shuffled (not just filtered) so the word order itself varies between
+  // runs — otherwise a child re-testing the same chapter sees an identical
+  // sequence every time and can memorize "3rd question is always X"
+  // without actually recognizing the word.
+  const [queue] = useState(() =>
+    shuffle(level === 1 ? words : words.filter((w) => findPairingWithWord(w) !== null))
+  );
 
   const [index, setIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
@@ -205,8 +212,26 @@ export default function TestRunner({
   // Declared before the early returns below since it's a Hook — `current`
   // can be undefined once the queue is exhausted, hence the guard.
   const currentPairing = useMemo(
-    () => (current && skill === "read" && level === 2 ? findPairingWithWord(current) : null),
-    [current, skill, level]
+    () => (current && level === 2 ? findPairingWithWord(current) : null),
+    [current, level]
+  );
+
+  // Memoized per word (not recomputed inline in the render body) so the
+  // distractor pool and its shuffle order stay stable for as long as the
+  // same question is on screen — pickReadDistractors/shuffle are both
+  // randomized, so recomputing on every incidental re-render (e.g. a
+  // lastError state update from a pending write elsewhere) would silently
+  // reshuffle the options a child is already looking at, or even after
+  // they've picked one.
+  const readOptions: ReadQuizOption[] = useMemo(
+    () =>
+      current && skill === "read"
+        ? shuffle([
+            { id: current.id, hanzi: current.hanzi },
+            ...pickReadDistractors(current, chapterWords, learntWords, 3).map((w) => ({ id: w.id, hanzi: w.hanzi })),
+          ])
+        : [],
+    [current, skill, chapterWords, learntWords]
   );
 
   if (queue.length === 0) {
@@ -237,14 +262,6 @@ export default function TestRunner({
       />
     );
   }
-
-  const readOptions: ReadQuizOption[] =
-    skill === "read"
-      ? shuffle([
-          { id: current.id, hanzi: current.hanzi },
-          ...pickReadDistractors(current, chapterWords, learntWords, 3).map((w) => ({ id: w.id, hanzi: w.hanzi })),
-        ])
-      : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -282,7 +299,7 @@ export default function TestRunner({
         <>
           {level === 2 && (
             <p className="hanzi text-lg text-center" style={{ color: "var(--mut)" }}>
-              {blankPairing(findPairingWithWord(current) as string, current.hanzi)}
+              {blankPairing(currentPairing as string, current.hanzi)}
             </p>
           )}
           <StrokeTestQuiz
