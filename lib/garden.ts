@@ -95,55 +95,76 @@ export type TreeLayout = {
   leftPct: number;
   bottomPx: number;
   sizePx: number;
-  rotationDeg: number;
 };
 
-const ROW_COUNT = 3;
-const ROW_BOTTOM_PX = [8, 42, 76]; // invisible rows, bottom-to-top
-// Kept small on purpose — this is a *baseline* wobble, not free scatter.
-// A wider range let items drift across rows visually, which combined with
-// the old 16-40px size range read as clutter rather than a planted garden.
-const ROW_JITTER_PX = 4;
+// Icons render upright (no rotation) and rows sit at a fixed height (no
+// per-item vertical jitter) — a prior version scattered both, which read as
+// "slanted"/messy once a term had more than a handful of trees. Row count
+// now grows with the item count instead of staying fixed at 3, so a busy
+// term doesn't cram many items into one row's worth of horizontal space.
+const MAX_ICON_PX = 32; // sizePx's own max (22 + 10) below
+const MAX_PER_ROW = 5;
+const ROW_SPACING_PX = 40; // > MAX_ICON_PX, so stacked rows never touch vertically
+const BASE_BOTTOM_PX = 10;
+const GROUND_TOP_MARGIN_PX = 16; // breathing room above the topmost row
+export const GROUND_FRACTION = 0.52; // must match GardenScene's ground <div> height
+export const SCENE_MIN_HEIGHT_PX = 240;
 
-// Deterministic scatter, collision-free by construction: every item is
-// dropped into one of a few invisible rows (hashed off its id, so it's
-// stable across renders) and given its own horizontal slot within that
-// row — sized to the row's item count — so trees never land on top of
-// each other while still reading as "scattered" thanks to per-slot jitter.
+export function gardenRowCount(itemCount: number): number {
+  return Math.max(3, Math.ceil(itemCount / MAX_PER_ROW));
+}
+
+// The scene's fixed height used to be a flat 240px regardless of how many
+// trees it held — fine for 3 rows, but a busy term's extra rows had
+// nowhere to go within that ground strip and started overlapping the sky.
+// Grows the scene (via GardenScene's height prop) to fit however many rows
+// gardenRowCount produces.
+export function gardenSceneHeightPx(itemCount: number): number {
+  const rows = gardenRowCount(itemCount);
+  const neededGroundPx =
+    BASE_BOTTOM_PX + (rows - 1) * ROW_SPACING_PX + MAX_ICON_PX + GROUND_TOP_MARGIN_PX;
+  return Math.max(SCENE_MIN_HEIGHT_PX, Math.ceil(neededGroundPx / GROUND_FRACTION));
+}
+
+// Deterministic scatter, collision-free by construction: every item gets a
+// row and a horizontal slot within that row, sized to the row's item
+// count, so trees never land on top of each other.
 export function treeLayouts(
   items: { itemId: string; type: TreeType }[]
 ): Record<string, TreeLayout> {
-  const typeById = new Map(items.map((it) => [it.itemId, it.type]));
+  const rowCount = gardenRowCount(items.length);
   const sorted = items.map((it) => it.itemId).sort();
-  const rows: string[][] = Array.from({ length: ROW_COUNT }, () => []);
-  for (const itemId of sorted) {
-    rows[hashString(itemId + ":row") % ROW_COUNT].push(itemId);
-  }
+  // Round-robin over the sorted ids, not a per-id hash into a row —
+  // hashing let rows land unevenly by chance (most items could hash into
+  // the same row), packing that row's slots too tight for its icon size
+  // and overlapping. Round-robin guarantees every row's count differs by
+  // at most 1, while staying stable across renders since the input order
+  // is already sorted rather than incidental.
+  const rows: string[][] = Array.from({ length: rowCount }, () => []);
+  sorted.forEach((itemId, i) => rows[i % rowCount].push(itemId));
 
   const layouts: Record<string, TreeLayout> = {};
   rows.forEach((rowItems, rowIdx) => {
     const slotWidth = 100 / rowItems.length;
+    // Jitter capped conservatively: two full-size icons in adjacent slots,
+    // both jittered toward each other at once, must still clear each
+    // other's width even on a narrow phone screen. A wider fraction (tried
+    // during the original design) let that worst case overlap.
+    const jitterRange = Math.min(2, Math.max(1, Math.round(slotWidth * 0.12)));
     rowItems.forEach((itemId, slotIdx) => {
-      const jitterRange = Math.max(1, Math.round(slotWidth * 0.3));
       const leftJitter = (hashString(itemId + ":left") % (jitterRange * 2 + 1)) - jitterRange;
       // Position is anchored by the icon's left edge, not centered, and the
       // scene clips overflow — so the right-side margin has to leave room
-      // for the icon's own width (up to 34px), not just a thin percentage.
+      // for the icon's own width (up to 32px), not just a thin percentage.
       const leftPct = Math.min(
         88,
         Math.max(8, slotIdx * slotWidth + slotWidth / 2 + leftJitter)
       );
-      const bottomJitter = (hashString(itemId + ":bottom") % (ROW_JITTER_PX * 2 + 1)) - ROW_JITTER_PX;
-      const bottomPx = Math.max(10, ROW_BOTTOM_PX[rowIdx] + bottomJitter);
+      const bottomPx = BASE_BOTTOM_PX + rowIdx * ROW_SPACING_PX;
       // Tightened from a 16-40px range — that much size variance between
       // neighboring icons was reading as visual noise, not organic growth.
       const sizePx = 22 + (hashString(itemId + ":size") % 11); // 22-32px
-      // Fruit emoji (round, often with a stem/leaf) reads as visibly
-      // "wonky" when rotated — unlike a tree, there's no natural pose for a
-      // tilted apple — so only trees get the small scattered lean.
-      const rotationDeg =
-        typeById.get(itemId) === "tree" ? -6 + (hashString(itemId + ":rot") % 13) : 0; // -6..+6deg, trees only
-      layouts[itemId] = { leftPct, bottomPx, sizePx, rotationDeg };
+      layouts[itemId] = { leftPct, bottomPx, sizePx };
     });
   });
   return layouts;

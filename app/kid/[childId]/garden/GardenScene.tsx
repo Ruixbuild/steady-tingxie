@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   fadeOpacity,
+  gardenSceneHeightPx,
   termNumberFromKey,
   treeEmoji,
   treeLayouts,
@@ -44,10 +45,15 @@ export default function GardenScene({
     [items]
   );
 
+  // Grows with row count (see gardenSceneHeightPx) instead of a flat 240px
+  // — a busy term's extra rows need somewhere to go that isn't overlapping
+  // the sky.
+  const sceneHeightPx = gardenSceneHeightPx(items.length);
+
   return (
     <div
       className="card relative overflow-hidden"
-      style={{ height: 240, borderRadius: 18 }}
+      style={{ height: sceneHeightPx, borderRadius: 18 }}
       onClick={() => setActiveTreeId(null)}
     >
       <div
@@ -102,7 +108,6 @@ export default function GardenScene({
               left: `${layout.leftPct}%`,
               bottom: layout.bottomPx,
               fontSize: layout.sizePx,
-              transform: `rotate(${layout.rotationDeg}deg)`,
               opacity,
               filter: glow ? "drop-shadow(0 0 4px var(--warn))" : undefined,
               background: "none",
