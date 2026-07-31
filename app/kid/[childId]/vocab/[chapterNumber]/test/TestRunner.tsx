@@ -407,7 +407,13 @@ export default function TestRunner({
             <StrokeTestQuiz
               key={`${current.id}-${charIndex}`}
               char={strokeChars(current.hanzi)[charIndex]}
-              announceWord={charIndex === 0 && level === 1 ? current.hanzi : undefined}
+              // Announces the target word on arrival at a new question for
+              // both levels -- Level 2 embeds the word as blank boxes
+              // inside a sentence, so the child still needs to be told what
+              // word to write, same as Level 1's "write from memory".
+              // Previously gated to level === 1 only, so Level 2 never
+              // spoke anything until the child tapped "Say it again".
+              announceWord={charIndex === 0 ? current.hanzi : undefined}
               word={current.hanzi}
               epochRef={epochRef}
               onDone={handleStrokeCharDone}
