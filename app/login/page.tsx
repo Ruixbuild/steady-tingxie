@@ -51,7 +51,10 @@ function LoginPageContent() {
         <h1 className="text-2xl font-semibold text-center mb-1">
           Steady Ting Xie
         </h1>
-        <p className="text-center mb-6" style={{ color: "var(--mut)" }}>
+        <p
+          className="text-center mb-6"
+          style={{ color: "var(--mut)", fontSize: "clamp(0.8rem, 3.8vw, 1rem)", whiteSpace: "nowrap" }}
+        >
           Master P1-P6 Chinese, Stroke by Stroke
         </p>
 
