@@ -26,13 +26,21 @@ export function defaultTestLevel(
  * happened to lag (e.g. it was skipped, retried, or its write settled a
  * beat later than the others). Checking the whole set makes "pass every
  * word in the chapter" reliably flip the suggestion, matching what the
- * picker badge is meant to represent. */
+ * picker badge is meant to represent.
+ *
+ * Returns null once every one of this skill's words has reached level 3
+ * (fully mastered, i.e. Level 2 already passed for all of them) — there's
+ * no further level to suggest at that point, so the picker should dim
+ * *both* cards rather than keep highlighting Level 2 as "suggested"
+ * forever. */
 export function defaultTestLevelForWords(
   words: RevisionVocab[],
   skill: "read" | "write",
   masteryByKey: Map<MasteryKey, RevisionMastery>
-): 1 | 2 {
+): 1 | 2 | null {
   if (words.length === 0) return 1;
+  const mastered = words.filter((w) => skillLevel(w.id, skill, masteryByKey) >= 3).length;
+  if (mastered === words.length) return null;
   const advanced = words.filter((w) => skillLevel(w.id, skill, masteryByKey) >= 2).length;
   return advanced / words.length >= 0.5 ? 2 : 1;
 }

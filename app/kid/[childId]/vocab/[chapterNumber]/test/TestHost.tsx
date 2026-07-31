@@ -136,6 +136,16 @@ export default function TestHost({
   const readSuggestedLevel = defaultTestLevelForWords(readWords, "read", masteryByKey);
   const writeSuggestedLevel = defaultTestLevelForWords(writeWords, "write", masteryByKey);
 
+  // suggestedLevel is null once every word for that skill is fully
+  // mastered (level 3) — there's nothing left to suggest, so both level
+  // cards dim instead of one staying highlighted as "suggested" forever.
+  function isCardSuggested(suggestedLevel: 1 | 2 | null, level: 1 | 2): boolean {
+    return suggestedLevel !== null && suggestedLevel === level;
+  }
+  function isCardFaint(suggestedLevel: 1 | 2 | null, level: 1 | 2): boolean {
+    return suggestedLevel === null || level < suggestedLevel;
+  }
+
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl">
@@ -167,8 +177,8 @@ export default function TestHost({
               // Tricky-only is a re-practice filter, not a step in the
               // adaptive level-1-then-level-2 progression, so it never
               // shows the suggested/faint badging below.
-              const isSuggested = !readTrickyOnly && readSuggestedLevel === c.level;
-              const isFaint = !readTrickyOnly && c.level < readSuggestedLevel;
+              const isSuggested = !readTrickyOnly && isCardSuggested(readSuggestedLevel, c.level);
+              const isFaint = !readTrickyOnly && isCardFaint(readSuggestedLevel, c.level);
               return renderCard({
                 key: `read-${c.level}`,
                 label: `识读 ${c.label}`,
@@ -189,8 +199,8 @@ export default function TestHost({
               ✍️ 识写
             </p>
             {writeCards.map((c) => {
-              const isSuggested = writeSuggestedLevel === c.level;
-              const isFaint = c.level < writeSuggestedLevel;
+              const isSuggested = isCardSuggested(writeSuggestedLevel, c.level);
+              const isFaint = isCardFaint(writeSuggestedLevel, c.level);
               return renderCard({
                 key: `write-${c.level}`,
                 label: `识写 ${c.label}`,
