@@ -91,7 +91,7 @@ function LoginPageContent() {
                 Built by fellow parent to overcome last-min 听写 nights.
               </p>
               <p style={{ whiteSpace: "nowrap" }}>
-                Early free access till end-Sep, try it with your child!
+                Early free access till end-Aug, try it with your child!
               </p>
             </div>
             {status === "error" && (
