@@ -148,7 +148,7 @@ export type TrickyLeg = { skill: "read" | "write"; level: 1 | 2; words: Revision
  * regardless of how many actually qualify. Applied before splitting into
  * Level 1/Level 2 legs, so a word eligible for both formats still only
  * counts once against the cap. */
-export const MAX_WORDS_PER_SKILL = 10;
+export const MAX_WORDS_PER_SKILL = 5;
 
 /** Cross-chapter tricky words, split into the same up-to-four skill+level
  * "legs" the per-chapter Test picker's tricky-only toggle already computes

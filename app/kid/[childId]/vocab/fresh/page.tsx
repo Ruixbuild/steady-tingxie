@@ -11,8 +11,9 @@ import CrossChapterTestHost from "../practice/CrossChapterTestHost";
 const EDITION = "huanlehuoban-2025";
 
 // "Keep it fresh": randomly samples up to MAX_WORDS_PER_SKILL
-// already-mastered (word, skill) pairs *per skill* (so up to 10 识读 + 10
-// 识写, not 10 combined -- same per-skill cap buildTrickyLegs applies) that
+// already-mastered (word, skill) pairs *per skill* (so up to
+// MAX_WORDS_PER_SKILL 识读 + MAX_WORDS_PER_SKILL 识写, not one shared pool
+// -- same per-skill cap buildTrickyLegs applies) that
 // haven't been touched in FRESHNESS_STALE_DAYS, across every chapter (not
 // scoped to "learnt" chapters like vocab/practice's tricky-words session --
 // a mastered word's chapter is definitionally already learnt). Logged to

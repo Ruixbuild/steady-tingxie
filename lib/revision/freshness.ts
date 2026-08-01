@@ -12,7 +12,8 @@ import type { RevisionMastery, RevisionVocab } from "./types";
  * sampleFreshPairs/revision_freshness_log, so a pair offered by a previous
  * sample stays out of the pool for the same span it took to go stale in
  * the first place, rather than a second, unrelated magic number. */
-export const FRESHNESS_STALE_DAYS = 14;
+// TODO: revert to 14 after testing.
+export const FRESHNESS_STALE_DAYS = 2;
 
 export type FreshCandidate = { word: RevisionVocab; skill: "read" | "write" };
 
