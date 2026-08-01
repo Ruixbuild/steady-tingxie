@@ -3,7 +3,7 @@
 // of SectionKind. No Supabase calls here.
 
 import type { MasteryKey } from "./mastery";
-import { isTricky, skillLevel, tracksFor } from "./mastery";
+import { hasEligiblePairing, isTricky, skillLevel, tracksFor } from "./mastery";
 import type { RevisionMastery, RevisionVocab } from "./types";
 
 /** Adaptive leveling: a word already at level >= 2 (has passed its Level-1
@@ -177,5 +177,25 @@ export function buildTrickyLegs(
   );
   if (writeL2.length > 0) legs.push({ skill: "write", level: 2, words: writeL2 });
 
+  return legs;
+}
+
+/** Groups arbitrary (word, skill) pairs into the same TrickyLeg shape
+ * buildTrickyLegs produces, splitting each skill's pairs into Level 1/Level
+ * 2 by pairing eligibility (hasEligiblePairing) rather than buildTrickyLegs's
+ * isTricky filter — used by "Keep it fresh" (lib/revision/freshness.ts),
+ * whose pairs are already-mastered words by definition, so retesting them
+ * at the level that earned that mastery (Level 2 if the word has an
+ * eligible pairing, else Level 1 — mirroring maxLevelFor's own ceiling
+ * rule) is the point, not filtering for trickiness. */
+export function buildLegsFromPairs(pairs: { word: RevisionVocab; skill: "read" | "write" }[]): TrickyLeg[] {
+  const legs: TrickyLeg[] = [];
+  for (const skill of ["read", "write"] as const) {
+    const skillWords = pairs.filter((p) => p.skill === skill).map((p) => p.word);
+    const l1 = skillWords.filter((w) => !hasEligiblePairing(w));
+    if (l1.length > 0) legs.push({ skill, level: 1, words: l1 });
+    const l2 = skillWords.filter((w) => hasEligiblePairing(w));
+    if (l2.length > 0) legs.push({ skill, level: 2, words: l2 });
+  }
   return legs;
 }

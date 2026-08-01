@@ -11,6 +11,7 @@ import {
   weeklyReviewedCount,
 } from "@/lib/revision/mastery";
 import { buildTrickyLegs } from "@/lib/revision/testScoring";
+import { staleMasteredPairs } from "@/lib/revision/freshness";
 import ChapterSelector from "./ChapterSelector";
 import PrimaryLevelSelector from "./PrimaryLevelSelector";
 import RevisionRefresher from "./RevisionRefresher";
@@ -123,6 +124,14 @@ export default async function VocabRevisionPage({
     new Set(trickyLegs.flatMap((leg) => leg.words.map((w) => w.chapter_number)))
   ).sort((a, b) => a - b);
 
+  // Not scoped to learnt chapters like the tricky-words count above — a
+  // mastered (word, skill) pair's chapter is definitionally already learnt.
+  // This is a raw pool size (doesn't account for revision_freshness_log's
+  // recent-offer exclusion, which only /vocab/fresh's actual sampler
+  // checks), so it's a "roughly how many candidates exist" badge, not a
+  // guarantee of exactly this many in the next sample.
+  const staleCount = staleMasteredPairs(allWords, masteryByKey).length;
+
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <RevisionRefresher />
@@ -226,6 +235,25 @@ export default async function VocabRevisionPage({
               </div>
             </div>
           )
+        )}
+
+        {staleCount > 0 && (
+          <div className="mt-4">
+            <div
+              className="rounded-[26px] p-6 text-white flex flex-col gap-3"
+              style={{
+                background: "linear-gradient(135deg,#4A9463,#7BC08E)",
+                boxShadow: "0 8px 24px rgba(74,148,99,.18)",
+              }}
+            >
+              <p className="text-sm opacity-90">
+                {staleCount} mastered word{staleCount === 1 ? "" : "s"} haven&apos;t been touched in 2+ weeks
+              </p>
+              <Link href={`/kid/${childId}/vocab/fresh`} className="btn btn-primary self-start">
+                🔄 Keep it fresh
+              </Link>
+            </div>
+          </div>
         )}
 
         <h2 className="text-lg font-semibold mb-3 mt-8">My chapters</h2>

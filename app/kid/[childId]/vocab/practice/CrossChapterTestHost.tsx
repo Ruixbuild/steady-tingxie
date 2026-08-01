@@ -1,13 +1,18 @@
 "use client";
 
-// Chains several skill+level "legs" of tricky words (pulled from every
-// chapter the child has started, see the server page's buildTrickyLegs
-// call) into one session — TestRunner already handles a single skill+level
-// run end to end, so this component's whole job is deciding which leg runs
-// next and rendering the combined summary once every leg is done, via
-// TestRunner's onLegComplete escape hatch (see that file's own doc comment
-// on the prop for why a per-leg ResultsScreen would read as the session
-// ending early).
+// Chains several skill+level "legs" into one session — TestRunner already
+// handles a single skill+level run end to end, so this component's whole
+// job is deciding which leg runs next and rendering the combined summary
+// once every leg is done, via TestRunner's onLegComplete escape hatch (see
+// that file's own doc comment on the prop for why a per-leg ResultsScreen
+// would read as the session ending early).
+//
+// Shared by two callers with different leg sources: app/kid/[childId]/
+// vocab/practice (buildTrickyLegs — tricky words across every chapter
+// started) and app/kid/[childId]/vocab/fresh (buildLegsFromPairs — a random
+// sample of mastered-but-stale words, lib/revision/freshness.ts). Nothing
+// here cares which; legLabel/completeTitle just let each caller's copy say
+// the right thing.
 
 import { useState } from "react";
 import Link from "next/link";
@@ -26,12 +31,19 @@ export default function CrossChapterTestHost({
   chapterWords,
   learntWords,
   backHref,
+  legLabel = "tricky words",
+  completeTitle = "🎉 Tricky words practice complete!",
 }: {
   childId: string;
   legs: TrickyLeg[];
   chapterWords: RevisionVocab[];
   learntWords: RevisionVocab[];
   backHref: string;
+  /** Short phrase describing what this leg's words have in common, shown in
+   * TestRunner's header as "识读 Level 1 — {legLabel} (1/3)". */
+  legLabel?: string;
+  /** Heading on the final combined summary screen. */
+  completeTitle?: string;
 }) {
   const [legIndex, setLegIndex] = useState(0);
   const [legResults, setLegResults] = useState<LegResult[]>([]);
@@ -58,7 +70,7 @@ export default function CrossChapterTestHost({
     return (
       <main className="flex flex-1 flex-col items-center px-6 py-12">
         <div className="w-full max-w-xl flex flex-col items-center gap-6 text-center">
-          <h1 className="text-2xl font-semibold">🎉 Tricky words practice complete!</h1>
+          <h1 className="text-2xl font-semibold">{completeTitle}</h1>
           <p className="text-3xl font-extrabold">
             {totalScore} / {totalWords}
           </p>
@@ -121,7 +133,7 @@ export default function CrossChapterTestHost({
           words={currentLeg.words}
           chapterWords={chapterWords}
           learntWords={learntWords}
-          modeLabel={`${SKILL_LABEL[currentLeg.skill]} Level ${currentLeg.level} — tricky words (${
+          modeLabel={`${SKILL_LABEL[currentLeg.skill]} Level ${currentLeg.level} — ${legLabel} (${
             legIndex + 1
           }/${legs.length})`}
           onLegComplete={(results, failedCount) => {
