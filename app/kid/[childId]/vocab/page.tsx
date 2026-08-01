@@ -12,7 +12,6 @@ import {
 } from "@/lib/revision/mastery";
 import { buildTrickyLegs } from "@/lib/revision/testScoring";
 import { staleMasteredPairs } from "@/lib/revision/freshness";
-import ChapterSelector from "./ChapterSelector";
 import PrimaryLevelSelector from "./PrimaryLevelSelector";
 import RevisionRefresher from "./RevisionRefresher";
 
@@ -174,26 +173,11 @@ export default async function VocabRevisionPage({
           {`You've reviewed ${reviewedThisWeek} word${reviewedThisWeek === 1 ? "" : "s"} this week!`}
         </p>
 
-        <div className="mt-8 flex flex-col gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm" style={{ color: "var(--mut)" }}>
-              Choose primary level:
-            </p>
-            <PrimaryLevelSelector childId={childId} levels={availableLevels} selectedLevel={selectedLevel} />
-          </div>
-
-          {activeChapter && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm" style={{ color: "var(--mut)" }}>
-                Choose chapter:
-              </p>
-              <ChapterSelector
-                childId={childId}
-                chapters={chapters.map((c) => ({ number: c.number, title: c.title }))}
-                selectedNumber={activeChapter.number}
-              />
-            </div>
-          )}
+        <div className="mt-8 flex items-center gap-2 flex-wrap">
+          <p className="text-sm" style={{ color: "var(--mut)" }}>
+            Choose primary level:
+          </p>
+          <PrimaryLevelSelector childId={childId} levels={availableLevels} selectedLevel={selectedLevel} />
         </div>
 
         {trickyWordCount > 0 ? (

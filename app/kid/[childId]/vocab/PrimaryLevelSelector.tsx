@@ -20,9 +20,9 @@ export default function PrimaryLevelSelector({
       value={selectedLevel}
       onChange={(e) => {
         const level = e.target.value;
-        // Remembered the same way ChapterSelector remembers its chapter --
-        // switching level drops any chapter param, letting the landing
-        // page's own fallback logic pick that level's first chapter.
+        // Remembered via the same lastX_${childId} cookie pattern used
+        // elsewhere -- switching level drops any chapter param, letting the
+        // landing page's own fallback logic pick that level's first chapter.
         document.cookie = `lastPrimaryLevel_${childId}=${level}; path=/; max-age=${60 * 60 * 24 * 180}`;
         router.push(`/kid/${childId}/vocab?level=${level}`);
       }}
