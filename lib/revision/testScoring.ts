@@ -142,13 +142,26 @@ export function splitPairingAroundWord(
 
 export type TrickyLeg = { skill: "read" | "write"; level: 1 | 2; words: RevisionVocab[] };
 
+/** Session-length cap shared by buildTrickyLegs and "Keep it fresh"
+ * (lib/revision/freshness.ts's per-skill sample size) — at most this many
+ * distinct words get practiced per skill in one cross-chapter session,
+ * regardless of how many actually qualify. Applied before splitting into
+ * Level 1/Level 2 legs, so a word eligible for both formats still only
+ * counts once against the cap. */
+export const MAX_WORDS_PER_SKILL = 10;
+
 /** Cross-chapter tricky words, split into the same up-to-four skill+level
  * "legs" the per-chapter Test picker's tricky-only toggle already computes
  * (see TestHost's readTrickyWordsL1/L2, writeTrickyWordsL1/L2) — kept
  * consistent with that definition rather than reinvented, so a word that
  * shows up as tricky on the picker shows up in the same leg here. Empty
  * legs are omitted entirely, so a cross-chapter practice session only ever
- * walks through formats that actually have something to practice. */
+ * walks through formats that actually have something to practice.
+ *
+ * Each skill's tricky words are capped at MAX_WORDS_PER_SKILL (chosen
+ * randomly, not just the first N) before being split into its L1/L2 legs —
+ * a chapter-spanning tricky list can otherwise run to dozens of words,
+ * which read as an endless test rather than a quick practice round. */
 export function buildTrickyLegs(
   words: RevisionVocab[],
   masteryByKey: Map<MasteryKey, RevisionMastery>
@@ -157,24 +170,24 @@ export function buildTrickyLegs(
   const writeWords = words.filter((w) => tracksFor(w.skill).includes("write"));
   const legs: TrickyLeg[] = [];
 
-  const readL1 = readWords.filter(
-    (w) => isTricky(w, "read", masteryByKey) && skillLevel(w.id, "read", masteryByKey) < 2
+  const readTricky = shuffle(readWords.filter((w) => isTricky(w, "read", masteryByKey))).slice(
+    0,
+    MAX_WORDS_PER_SKILL
   );
+  const readL1 = readTricky.filter((w) => skillLevel(w.id, "read", masteryByKey) < 2);
   if (readL1.length > 0) legs.push({ skill: "read", level: 1, words: readL1 });
 
-  const readL2 = readWords.filter(
-    (w) => isTricky(w, "read", masteryByKey) && findPairingWithWord(w) !== null
-  );
+  const readL2 = readTricky.filter((w) => findPairingWithWord(w) !== null);
   if (readL2.length > 0) legs.push({ skill: "read", level: 2, words: readL2 });
 
-  const writeL1 = writeWords.filter(
-    (w) => isTricky(w, "write", masteryByKey) && skillLevel(w.id, "write", masteryByKey) < 2
+  const writeTricky = shuffle(writeWords.filter((w) => isTricky(w, "write", masteryByKey))).slice(
+    0,
+    MAX_WORDS_PER_SKILL
   );
+  const writeL1 = writeTricky.filter((w) => skillLevel(w.id, "write", masteryByKey) < 2);
   if (writeL1.length > 0) legs.push({ skill: "write", level: 1, words: writeL1 });
 
-  const writeL2 = writeWords.filter(
-    (w) => isTricky(w, "write", masteryByKey) && findPairingWithWord(w) !== null
-  );
+  const writeL2 = writeTricky.filter((w) => findPairingWithWord(w) !== null);
   if (writeL2.length > 0) legs.push({ skill: "write", level: 2, words: writeL2 });
 
   return legs;

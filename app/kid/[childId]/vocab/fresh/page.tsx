@@ -5,21 +5,21 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
 import { masteryMapFromRows, skillLevel } from "@/lib/revision/mastery";
 import { FRESHNESS_STALE_DAYS, sampleFreshPairs, staleMasteredPairs } from "@/lib/revision/freshness";
-import { buildLegsFromPairs } from "@/lib/revision/testScoring";
+import { buildLegsFromPairs, MAX_WORDS_PER_SKILL } from "@/lib/revision/testScoring";
 import CrossChapterTestHost from "../practice/CrossChapterTestHost";
 
 const EDITION = "huanlehuoban-2025";
-const SAMPLE_SIZE = 10;
 
-// "Keep it fresh": randomly samples SAMPLE_SIZE already-mastered (word,
-// skill) pairs that haven't been touched in FRESHNESS_STALE_DAYS, across
-// every chapter (not scoped to "learnt" chapters like vocab/practice's
-// tricky-words session -- a mastered word's chapter is definitionally
-// already learnt). Logged to revision_freshness_log at sample time, before
-// the session even starts, so a repeated or abandoned "Keep it fresh" tap
-// still rotates through the stale pool instead of re-offering the same
-// words -- see that table's own header comment and lib/revision/
-// freshness.ts's sampleFreshPairs for why.
+// "Keep it fresh": randomly samples up to MAX_WORDS_PER_SKILL
+// already-mastered (word, skill) pairs *per skill* (so up to 10 识读 + 10
+// 识写, not 10 combined -- same per-skill cap buildTrickyLegs applies) that
+// haven't been touched in FRESHNESS_STALE_DAYS, across every chapter (not
+// scoped to "learnt" chapters like vocab/practice's tricky-words session --
+// a mastered word's chapter is definitionally already learnt). Logged to
+// revision_freshness_log at sample time, before the session even starts, so
+// a repeated or abandoned "Keep it fresh" tap still rotates through the
+// stale pool instead of re-offering the same words -- see that table's own
+// header comment and lib/revision/freshness.ts's sampleFreshPairs for why.
 export default async function KeepItFreshPage({
   params,
 }: {
@@ -85,7 +85,18 @@ export default async function KeepItFreshPage({
   );
 
   const pool = staleMasteredPairs(allWords, masteryByKey);
-  const sampled = sampleFreshPairs(pool, excludeKeys, SAMPLE_SIZE);
+  const sampled = [
+    ...sampleFreshPairs(
+      pool.filter((p) => p.skill === "read"),
+      excludeKeys,
+      MAX_WORDS_PER_SKILL
+    ),
+    ...sampleFreshPairs(
+      pool.filter((p) => p.skill === "write"),
+      excludeKeys,
+      MAX_WORDS_PER_SKILL
+    ),
+  ];
 
   const backHref = `/kid/${childId}/vocab`;
 
