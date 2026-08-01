@@ -40,8 +40,8 @@ function FarmGrid({
             fontSize: slot.mastered ? 20 : 11,
             cursor: slot.mastered ? "pointer" : "default",
             background: slot.mastered ? "rgba(255,255,255,0.85)" : "transparent",
-            border: slot.mastered ? "none" : `1.5px dashed ${skill === "read" ? "#8FAF7A" : "#DCEFFA"}`,
-            color: slot.mastered ? undefined : skill === "read" ? "#8FAF7A" : "#EAF6FF",
+            border: slot.mastered ? "none" : `1.5px dashed ${skill === "read" ? "#8FAF7A" : "#1B4965"}`,
+            color: slot.mastered ? undefined : skill === "read" ? "#8FAF7A" : "#1B4965",
             boxShadow: slot.mastered ? "0 1px 3px rgba(0,0,0,0.08)" : undefined,
           }}
           aria-label={slot.mastered ? `${slot.chapterTitle} — ${SKILL_LABEL[skill]}, mastered` : `Chapter ${slot.chapterNumber}, not yet mastered`}
@@ -94,7 +94,7 @@ export default function FarmScene({
           className="p-4"
           style={{ background: "linear-gradient(180deg,#EAF3E0 0%,#DFF0C4 100%)" }}
         >
-          <p className="mb-2" style={{ fontSize: 12, fontWeight: 700, color: "#4A6B3A" }}>
+          <p className="mb-2" style={{ fontSize: 16, fontWeight: 700, color: "#4A6B3A" }}>
             🌿 识读
           </p>
           <FarmGrid slots={readSlots} skill="read" onSelect={(slot) => handleSelect(slot, "read")} />
@@ -103,7 +103,7 @@ export default function FarmScene({
           className="p-4"
           style={{ background: "linear-gradient(180deg,#9FD8E8 0%,#4C93CE 100%)" }}
         >
-          <p className="mb-2" style={{ fontSize: 12, fontWeight: 700, color: "#EAF6FF" }}>
+          <p className="mb-2" style={{ fontSize: 16, fontWeight: 700, color: "#000000" }}>
             🌊 识写
           </p>
           <FarmGrid slots={writeSlots} skill="write" onSelect={(slot) => handleSelect(slot, "write")} />
