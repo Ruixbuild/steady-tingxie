@@ -4,7 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { ChapterSummary, RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
 import RevisionRefresher from "@/app/kid/[childId]/vocab/RevisionRefresher";
-import AllChaptersZooClient from "./AllChaptersZooClient";
+import FarmScene from "./FarmScene";
 
 const EDITION = "huanlehuoban-2025";
 
@@ -85,10 +85,10 @@ export default async function VocabAllChaptersProgressPage({
         </Link>
         <div>
           <h1 className="text-2xl font-semibold mb-1">{child.name}&apos;s vocabulary farm</h1>
-          <p style={{ color: "var(--mut)" }}>Every chapter, all in one place</p>
+          <p style={{ color: "var(--mut)" }}>A trophy shelf — one icon per mastered chapter</p>
         </div>
 
-        <AllChaptersZooClient childId={childId} chapters={chapters} masteryRows={masteryRows} />
+        <FarmScene chapters={chapters} masteryRows={masteryRows} />
       </div>
     </main>
   );
