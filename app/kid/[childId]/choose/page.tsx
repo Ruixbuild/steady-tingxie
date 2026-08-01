@@ -46,6 +46,9 @@ export default async function ChooseModulePage({
           <span className="text-sm" style={{ color: "var(--mut)" }}>
             MOE-aligned 识读/识写 vocabulary
           </span>
+          <span className="text-sm" style={{ color: "var(--mut)" }}>
+            P4 available. Other levels coming soon.
+          </span>
         </Link>
       </div>
     </main>
