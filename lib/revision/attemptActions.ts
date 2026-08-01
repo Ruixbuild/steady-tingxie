@@ -11,10 +11,13 @@ import { createClient } from "@/lib/supabase/client";
 export type AttemptWordResult = { vocabId: string; hanzi: string; passed: boolean };
 
 /** Persists one completed Test run (one skill+level session) as a single
- * revision_attempts row. Returns the new attempt id. */
+ * revision_attempts row. Returns the new attempt id. `chapterNumber` is
+ * null for a cross-chapter practice leg, whose words span multiple
+ * chapters — the column is nullable specifically for that case (see
+ * revision_attempts.sql). */
 export async function recordTestAttempt(
   childId: string,
-  chapterNumber: number,
+  chapterNumber: number | null,
   skill: "read" | "write",
   testLevel: 1 | 2,
   results: AttemptWordResult[]

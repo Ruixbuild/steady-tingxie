@@ -1,6 +1,8 @@
 -- revision_attempts.sql
 -- APPLY MANUALLY in Supabase SQL Editor, after revision_schema.sql and
--- revision_test.sql.
+-- revision_test.sql. If this table already exists from an earlier apply,
+-- also run the `alter table ... drop not null` statement below by hand —
+-- `create table` further down is a no-op against an existing table.
 --
 -- Persists one row per completed Test run (one skill+level picker session,
 -- e.g. "识读 Level 1" or "识写 Level 2"), not per word -- mirrors the grain
@@ -17,10 +19,16 @@
 -- reference valid; see the accompanying fix to delete_child_tx.sql itself
 -- for the other (dangling, unbuilt-feature) table it referenced.
 
+-- chapter_number is nullable: null marks a cross-chapter practice run
+-- (app/kid/[childId]/vocab/practice, which pulls tricky words from every
+-- learnt chapter into one session) rather than a single chapter's picker.
+-- The per-chapter Progress page's "recent tests" query filters on a real
+-- chapter_number, so a cross-chapter row simply never appears there — it
+-- isn't chapter-specific, so that's correct, not an oversight.
 create table revision_attempts(
   id uuid primary key default gen_random_uuid(),
   child_id uuid not null references children(id) on delete cascade,
-  chapter_number int not null,
+  chapter_number int,
   skill text not null check(skill in('read','write')),
   test_level int not null check(test_level in(1,2)),
   score int not null,
@@ -29,6 +37,11 @@ create table revision_attempts(
   taken_at timestamptz not null default now()
 );
 create index on revision_attempts(child_id, chapter_number, taken_at desc);
+
+-- Run this by hand if revision_attempts already exists from an earlier
+-- apply of this file (the create table above won't touch an existing
+-- table's columns):
+-- alter table revision_attempts alter column chapter_number drop not null;
 
 alter table revision_attempts enable row level security;
 
@@ -42,6 +55,15 @@ create policy "p_revision_attempts" on revision_attempts
 -- RPC
 -- ============================================================
 
+-- chapter_number has no SQL-level default: every call site (attemptActions.ts)
+-- always passes it explicitly via named RPC args, as either a real chapter
+-- number or JS `null` for a cross-chapter practice run — a plain `int`
+-- parameter already accepts an explicit NULL argument with no default
+-- needed. Keeping the parameter order identical to the original signature
+-- matters here: `create or replace function` only replaces in place when
+-- the parameter type list is unchanged (name+types is a function's
+-- identity in Postgres) — reordering chapter_number would instead create a
+-- second, overloaded function alongside the old one.
 create or replace function record_revision_test_attempt(
   child_id uuid,
   chapter_number int,

@@ -180,6 +180,22 @@ export function skillProgress(
   return { mastered, total: eligible.length };
 }
 
+/** True once a chapter has been touched at all (any mastery row exists for
+ * any of its words, on either track) — as opposed to a chapter the child
+ * hasn't reached yet, where every word would otherwise satisfy isTricky's
+ * "hasn't reached its ceiling" clause and read as false-positive "tricky"
+ * simply for being unstarted. Used to scope cross-chapter tricky-word
+ * aggregation (the vocab hub's practice banner) to chapters actually in
+ * progress. */
+export function isChapterLearnt(
+  words: RevisionVocab[],
+  masteryByKey: Map<MasteryKey, RevisionMastery>
+): boolean {
+  return words.some(
+    (w) => masteryByKey.has(masteryKey(w.id, "read")) || masteryByKey.has(masteryKey(w.id, "write"))
+  );
+}
+
 /** Same traffic-light convention as TingXie's parent-facing ChildFocusCard
  * (green/orange/none, see LIGHT_COLOR there) applied to a skill's mastered
  * count for a chapter: green once every eligible word has hit its ceiling,

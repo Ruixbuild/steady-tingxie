@@ -4,11 +4,13 @@ import { notFound, redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { RevisionChildRow, RevisionMastery, RevisionVocab } from "@/lib/revision/types";
 import {
+  isChapterLearnt,
   masteryMapFromRows,
   skillFocusLight,
   skillProgress,
   weeklyReviewedCount,
 } from "@/lib/revision/mastery";
+import { buildTrickyLegs } from "@/lib/revision/testScoring";
 import ChapterSelector from "./ChapterSelector";
 import PrimaryLevelSelector from "./PrimaryLevelSelector";
 import RevisionRefresher from "./RevisionRefresher";
@@ -108,6 +110,16 @@ export default async function VocabRevisionPage({
     chapters[0] ??
     null;
 
+  // Cross-chapter tricky words, scoped to chapters actually started (see
+  // isChapterLearnt's own doc comment for why an untouched chapter would
+  // otherwise flood this with false-positive "tricky" words). Drives the
+  // hero banner below — replaces what used to just repeat the active
+  // chapter's name/a "continue" link, which was redundant with the
+  // highlighted card in "My chapters" right underneath it.
+  const learntChapterWords = chapters.filter((c) => isChapterLearnt(c.words, masteryByKey)).flatMap((c) => c.words);
+  const trickyLegs = buildTrickyLegs(learntChapterWords, masteryByKey);
+  const trickyWordCount = new Set(trickyLegs.flatMap((leg) => leg.words.map((w) => w.id))).size;
+
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <RevisionRefresher />
@@ -172,7 +184,7 @@ export default async function VocabRevisionPage({
           )}
         </div>
 
-        {activeChapter && (
+        {trickyWordCount > 0 ? (
           <div className="mt-8">
             <div
               className="rounded-[26px] p-6 text-white flex flex-col gap-3"
@@ -182,13 +194,36 @@ export default async function VocabRevisionPage({
               }}
             >
               <p className="text-sm opacity-90">
-                {activeChapter.title} · Chapter {String(activeChapter.number).padStart(2, "0")}
+                {trickyWordCount} tricky word{trickyWordCount === 1 ? "" : "s"} across{" "}
+                {new Set(learntChapterWords.map((w) => w.chapter_number)).size} chapter
+                {new Set(learntChapterWords.map((w) => w.chapter_number)).size === 1 ? "" : "s"}
               </p>
-              <Link href={`/kid/${childId}/vocab/${activeChapter.number}`} className="btn btn-primary self-start">
-                ▶ Continue to chapter
+              <Link href={`/kid/${childId}/vocab/practice`} className="btn btn-primary self-start">
+                ▶ Practice tricky words
               </Link>
             </div>
           </div>
+        ) : (
+          activeChapter && (
+            <div className="mt-8">
+              <div
+                className="rounded-[26px] p-6 text-white flex flex-col gap-3"
+                style={{
+                  background: "linear-gradient(135deg,#2C82C9,#5AA7DC)",
+                  boxShadow: "0 8px 24px rgba(44,130,201,.18)",
+                }}
+              >
+                <p className="text-sm opacity-90">
+                  {learntChapterWords.length > 0
+                    ? "No tricky words right now — nice work!"
+                    : `${activeChapter.title} · Chapter ${String(activeChapter.number).padStart(2, "0")}`}
+                </p>
+                <Link href={`/kid/${childId}/vocab/${activeChapter.number}`} className="btn btn-primary self-start">
+                  ▶ Continue to chapter
+                </Link>
+              </div>
+            </div>
+          )
         )}
 
         <h2 className="text-lg font-semibold mb-3 mt-8">My chapters</h2>

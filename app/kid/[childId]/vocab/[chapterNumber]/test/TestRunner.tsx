@@ -40,11 +40,15 @@ export default function TestRunner({
   chapterWords,
   learntWords,
   modeLabel,
+  onLegComplete,
 }: {
   childId: string;
   /** For persisting the finished run as one revision_attempts row — see
-   * the completion effect below. */
-  chapterNumber: number;
+   * the completion effect below. Null for a cross-chapter practice leg
+   * (app/kid/[childId]/vocab/practice), whose words span multiple
+   * chapters — revision_attempts.chapter_number is nullable specifically
+   * for that case. */
+  chapterNumber: number | null;
   /** Real navigation target for the results screen's "Back to chapter" —
    * a genuinely different URL, so an ordinary Link is fine there. */
   chapterHref: string;
@@ -63,6 +67,14 @@ export default function TestRunner({
   /** Overrides the default skill+level title (e.g. "tricky words only"
    * mode) — falls back to TITLE below when omitted. */
   modeLabel?: string;
+  /** Cross-chapter practice mode: when set, this run is one "leg" of a
+   * multi-leg session (app/kid/[childId]/vocab/practice's
+   * CrossChapterTestHost chains several skill+level legs back to back).
+   * Firing this instead of rendering ResultsScreen hands control back to
+   * that parent, which owns showing a leg transition / the final combined
+   * summary — a single skill+level ResultsScreen mid-chain would read as
+   * the whole session ending after just one leg. */
+  onLegComplete?: (results: WordResult[], failedCount: number, lastError: string | null) => void;
 }) {
   const router = useRouter();
 
@@ -247,12 +259,16 @@ export default function TestRunner({
       Promise.allSettled(pendingWritesRef.current).then(() => {
         recordTestAttempt(childId, chapterNumber, skill, level, results).catch(() => {});
         router.refresh();
-        setFailedCount(failedWritesRef.current);
-        setLastError(lastErrorRef.current);
-        setFinished(true);
+        if (onLegComplete) {
+          onLegComplete(results, failedWritesRef.current, lastErrorRef.current);
+        } else {
+          setFailedCount(failedWritesRef.current);
+          setLastError(lastErrorRef.current);
+          setFinished(true);
+        }
       });
     }
-  }, [results, queue.length, childId, chapterNumber, skill, level, router]);
+  }, [results, queue.length, childId, chapterNumber, skill, level, router, onLegComplete]);
 
   // 识写 Level 2's pairing split around the target word, so its writing
   // boxes can render embedded at that position in the sentence instead of
@@ -292,6 +308,11 @@ export default function TestRunner({
   }
 
   if (index >= queue.length) {
+    // In leg mode, finished never flips true (onLegComplete fires instead
+    // of setFinished) — the parent swaps this TestRunner out for the next
+    // leg (or its own summary screen) almost immediately, so this stays on
+    // "Grading…" for the brief gap rather than ever showing its own
+    // per-leg ResultsScreen mid-chain.
     if (!finished) {
       return (
         <div className="card p-8 text-center" style={{ color: "var(--mut)" }}>
