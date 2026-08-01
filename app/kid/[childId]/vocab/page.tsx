@@ -119,6 +119,9 @@ export default async function VocabRevisionPage({
   const learntChapterWords = chapters.filter((c) => isChapterLearnt(c.words, masteryByKey)).flatMap((c) => c.words);
   const trickyLegs = buildTrickyLegs(learntChapterWords, masteryByKey);
   const trickyWordCount = new Set(trickyLegs.flatMap((leg) => leg.words.map((w) => w.id))).size;
+  const trickyChapterNumbers = Array.from(
+    new Set(trickyLegs.flatMap((leg) => leg.words.map((w) => w.chapter_number)))
+  ).sort((a, b) => a - b);
 
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
@@ -194,9 +197,8 @@ export default async function VocabRevisionPage({
               }}
             >
               <p className="text-sm opacity-90">
-                {trickyWordCount} tricky word{trickyWordCount === 1 ? "" : "s"} across{" "}
-                {new Set(learntChapterWords.map((w) => w.chapter_number)).size} chapter
-                {new Set(learntChapterWords.map((w) => w.chapter_number)).size === 1 ? "" : "s"}
+                {trickyWordCount} tricky word{trickyWordCount === 1 ? "" : "s"} across Chapter{" "}
+                {trickyChapterNumbers.join(", ")}
               </p>
               <Link href={`/kid/${childId}/vocab/practice`} className="btn btn-primary self-start">
                 ▶ Practice tricky words
