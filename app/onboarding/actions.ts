@@ -10,6 +10,7 @@ export async function addChild(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const level = String(formData.get("level") ?? "");
   const emoji = String(formData.get("emoji") ?? "🙂");
+  const higherChinese = formData.get("higherChinese") === "true";
 
   if (!name || !LEVELS.includes(level as Level)) {
     return { error: "Please enter a name and pick a level." };
@@ -29,6 +30,7 @@ export async function addChild(formData: FormData) {
     name,
     level: level as Level,
     emoji,
+    higher_chinese: higherChinese,
   });
 
   if (error) {

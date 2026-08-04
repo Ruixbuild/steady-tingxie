@@ -19,11 +19,13 @@ export default function OnboardingForm() {
   );
   const [level, setLevel] = useState<Level>("P1");
   const [emoji, setEmoji] = useState(EMOJIS[0]);
+  const [higherChinese, setHigherChinese] = useState(false);
 
   return (
     <form action={action} className="flex flex-col gap-6">
       <input type="hidden" name="level" value={level} />
       <input type="hidden" name="emoji" value={emoji} />
+      <input type="hidden" name="higherChinese" value={higherChinese ? "true" : "false"} />
 
       <div>
         <label className="block mb-2 font-semibold" htmlFor="name">
@@ -79,6 +81,25 @@ export default function OnboardingForm() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div>
+        <span className="block mb-2 font-semibold">Higher Chinese (HCI)</span>
+        <p className="text-sm mb-2" style={{ color: "var(--mut)" }}>
+          Adds the extra Higher Chinese word set to Vocabulary Revision for this child.
+        </p>
+        <button
+          type="button"
+          onClick={() => setHigherChinese((v) => !v)}
+          className="btn btn-sm"
+          style={{
+            background: higherChinese ? "var(--accent)" : "#fff",
+            color: higherChinese ? "#fff" : "var(--accent)",
+            border: `1px solid ${higherChinese ? "var(--accent)" : "var(--line)"}`,
+          }}
+        >
+          {higherChinese ? "On" : "Off"}
+        </button>
       </div>
 
       {state?.error && (
