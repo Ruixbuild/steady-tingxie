@@ -119,9 +119,9 @@ export default async function VocabChapterHubPage({
             className="rounded-[18px] p-5 flex flex-col gap-1"
             style={{ background: "var(--ok-soft)", color: "#3E7A4E" }}
           >
-            <span className="text-3xl">🐓</span>
+            <span className="text-3xl">🦁</span>
             <span className="font-semibold text-lg">Progress</span>
-            <span className="text-sm opacity-80">my vocabulary farm</span>
+            <span className="text-sm opacity-80">my vocabulary zoo</span>
           </Link>
         </div>
 

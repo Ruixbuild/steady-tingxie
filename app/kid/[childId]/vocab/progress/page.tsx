@@ -84,7 +84,7 @@ export default async function VocabAllChaptersProgressPage({
           ← Back
         </Link>
         <div>
-          <h1 className="text-2xl font-semibold mb-1">{child.name}&apos;s vocabulary farm</h1>
+          <h1 className="text-2xl font-semibold mb-1">{child.name}&apos;s vocabulary zoo</h1>
           <p style={{ color: "var(--mut)" }}>A trophy shelf — one icon per mastered chapter</p>
         </div>
 

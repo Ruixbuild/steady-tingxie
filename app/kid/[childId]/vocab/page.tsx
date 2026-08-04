@@ -159,9 +159,9 @@ export default async function VocabRevisionPage({
             href={`/kid/${childId}/vocab/progress`}
             className="card flex items-center gap-1.5 px-4 py-2 shrink-0"
           >
-            <span className="text-lg leading-none">🐓</span>
+            <span className="text-lg leading-none">🦁</span>
             <span className="text-sm font-semibold whitespace-nowrap" style={{ color: "var(--accent-d)" }}>
-              Visit Farm
+              Visit Zoo
             </span>
           </Link>
         </div>

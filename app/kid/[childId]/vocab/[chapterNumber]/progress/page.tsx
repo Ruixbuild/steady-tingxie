@@ -79,7 +79,7 @@ export default async function VocabProgressPage({
         </Link>
         <div>
           <h1 className="hanzi text-2xl font-semibold mb-1">{chapterTitle}</h1>
-          <p style={{ color: "var(--mut)" }}>My vocabulary farm</p>
+          <p style={{ color: "var(--mut)" }}>My vocabulary zoo</p>
         </div>
 
         <ZooClient
