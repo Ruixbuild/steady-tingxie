@@ -151,7 +151,8 @@ export default async function VocabRevisionPage({
             <p className="text-lg font-semibold">
               {child.name}
               <span className="text-lg font-normal ml-3" style={{ color: "var(--mut)" }}>
-                {selectedLevel}
+                {child.level}
+                {child.higher_chinese ? " · HCI" : ""}
               </span>
             </p>
           </div>
