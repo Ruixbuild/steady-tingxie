@@ -74,7 +74,14 @@ export default function UploadFlow({
 
   const [childId, setChildId] = useState(() => {
     if (typeof window === "undefined") return childOptions[0]?.id ?? "";
-    return localStorage.getItem("lastUploadChildId") ?? childOptions[0]?.id ?? "";
+    // lastUploadChildId isn't scoped to the signed-in account — a leftover
+    // value from a different account on this browser must not be trusted,
+    // or the RPC call below sends a child_id the current user doesn't own
+    // and Supabase RLS rejects the insert.
+    const cached = localStorage.getItem("lastUploadChildId");
+    return cached && childOptions.some((c) => c.id === cached)
+      ? cached
+      : childOptions[0]?.id ?? "";
   });
   const [testDate, setTestDate] = useState("");
   const [saving, setSaving] = useState(false);
