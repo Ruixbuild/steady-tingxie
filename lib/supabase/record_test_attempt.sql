@@ -49,6 +49,20 @@
 -- once to clear all existing stale flags (safe for both passed and
 -- still-tricky items — the next attempt on a still-tricky item repopulates
 -- whatever's still actually wrong).
+-- A 'words'/'passage' character can now be reported {skipped: true} from
+-- TestCharQuiz's "Skip this one" button — this is a deliberate third,
+-- neutral outcome alongside pass/fail, not a synonym for fail. A child
+-- taps Skip either because they're confident they already know a word (an
+-- efficiency skip) or because they genuinely can't write it — those two
+-- cases are indistinguishable from a click alone, and the old behaviour
+-- (always recording it as a hard failure, same as any other miss) meant a
+-- word the child had genuinely mastered could get knocked back to "weak"
+-- purely because they didn't feel like re-proving it. A skipped character
+-- is excluded from this attempt's scoring entirely and its char_misses
+-- entry, if any, is left exactly as it was — neither cleared (that would
+-- be an unearned reward) nor flagged (that would be the original bug). If
+-- every character in an item was skipped, the whole item is excluded from
+-- this attempt's score and its mastery/level/misses are left untouched.
 drop function if exists record_test_attempt(uuid, uuid, text, boolean, int, int, jsonb);
 
 create or replace function record_test_attempt(
@@ -72,11 +86,10 @@ declare
   v_item_id uuid;
   v_hanzi text;
   v_passed boolean;
-  v_total_chars int;
-  v_missed jsonb;
+  v_attempted_count int;
   v_missed_count int;
   v_char_misses jsonb;
-  v_pos text;
+  v_skipped boolean;
   v_prev_fail boolean;
   v_score int := 0;
   v_total int := 0;
@@ -94,7 +107,6 @@ declare
   v_total_mistakes int;
   v_base int;
   v_threshold int;
-  v_char_passed boolean;
   v_child_level text;
 begin
   select best_pct into v_best_before from lists where id = record_test_attempt.list_id;
@@ -105,46 +117,54 @@ begin
     v_item_id := (v_item->>'item_id')::uuid;
 
     if v_kind = 'passage' then
-      v_total_chars := jsonb_array_length(coalesce(v_item->'chars', '[]'::jsonb));
-      v_missed := '[]'::jsonb;
+      v_attempted_count := 0;
       v_missed_count := 0;
 
+      if not record_test_attempt.supervised then
+        select m.char_misses into v_char_misses from mastery m
+          where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
+        v_char_misses := coalesce(v_char_misses, '{}'::jsonb);
+      end if;
+
       for v_char in select * from jsonb_array_elements(coalesce(v_item->'chars', '[]'::jsonb)) loop
+        -- A skip is neutral, not a third grade: the child asserted either
+        -- "I already know this" (don't penalize) or "I don't know this"
+        -- (don't reward) — either way nothing was actually demonstrated,
+        -- so it's excluded from scoring entirely and its char_misses entry
+        -- (if any) is left exactly as it was rather than cleared or
+        -- flagged, instead of the old behaviour of always recording it as
+        -- a hard failure regardless of which reason the child meant.
+        v_skipped := coalesce((v_char->>'skipped')::boolean, false);
+        if v_skipped then
+          continue;
+        end if;
+
+        v_attempted_count := v_attempted_count + 1;
         v_strokes := coalesce((v_char->>'strokes')::int, 10);
         v_total_mistakes := coalesce((v_char->>'totalMistakes')::int, 999);
         v_base := greatest(2, ceil(v_strokes * 0.4));
         v_threshold := case when record_test_attempt.hard_mode then ceil(v_base * 0.25) else v_base end;
-        v_char_passed := v_total_mistakes <= v_threshold;
-        if not v_char_passed then
-          v_missed := v_missed || to_jsonb((v_char->>'globalIndex')::int);
+        if v_total_mistakes > v_threshold then
           v_missed_count := v_missed_count + 1;
+          if not record_test_attempt.supervised then
+            v_char_misses := jsonb_set(v_char_misses, array[(v_char->>'globalIndex')], to_jsonb(1));
+          end if;
+        elsif not record_test_attempt.supervised then
+          v_char_misses := v_char_misses - (v_char->>'globalIndex');
         end if;
       end loop;
 
-      v_score := v_score + (v_total_chars - v_missed_count);
-      v_total := v_total + v_total_chars;
-      v_passage_score := v_passage_score + (v_total_chars - v_missed_count);
-      v_passage_total := v_passage_total + v_total_chars;
+      v_score := v_score + (v_attempted_count - v_missed_count);
+      v_total := v_total + v_attempted_count;
+      v_passage_score := v_passage_score + (v_attempted_count - v_missed_count);
+      v_passage_total := v_passage_total + v_attempted_count;
 
-      -- char_misses is rebuilt fresh from THIS attempt every time, not
-      -- merged onto history — every character is requizzed on every
-      -- attempt (there's no partial retest), so a full replace is safe.
-      -- Merging/incrementing onto old values (the previous approach) meant
-      -- a word with one persistently-tricky character (e.g. 竹) could go
-      -- months without a fully clean pass, so an *other* character (e.g.
-      -- 山) that had one bad attempt long ago and has been fine ever since
-      -- stayed flagged "weak" forever, since nothing ever cleared it short
-      -- of the whole word passing in one go.
       if not record_test_attempt.supervised then
-        v_char_misses := '{}'::jsonb;
-        for v_pos in select jsonb_array_elements_text(v_missed) loop
-          v_char_misses := jsonb_set(v_char_misses, array[v_pos], to_jsonb(1));
-        end loop;
         update mastery m set char_misses = v_char_misses, last_seen = now()
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
       end if;
 
-      if not record_test_attempt.supervised and v_total_chars > 0 and v_missed_count = 0 then
+      if not record_test_attempt.supervised and v_attempted_count > 0 and v_missed_count = 0 then
         select hanzi into v_hanzi from items where id = v_item_id;
         insert into tree_growths (child_id, item_id, term_key, tree_type)
         values (
@@ -155,43 +175,65 @@ begin
       end if;
 
     elsif v_kind = 'words' then
-      v_passed := true;
-      v_missed := '[]'::jsonb;
+      v_attempted_count := 0;
       v_missed_count := 0;
+
+      if not record_test_attempt.supervised then
+        select m.char_misses into v_char_misses from mastery m
+          where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
+        v_char_misses := coalesce(v_char_misses, '{}'::jsonb);
+      end if;
 
       for v_char_row in
         select value as char_data, ordinality - 1 as pos
         from jsonb_array_elements(coalesce(v_item->'chars', '[]'::jsonb)) with ordinality as t(value, ordinality)
       loop
+        -- See the identical skip-handling comment in the 'passage' branch
+        -- above — same neutral treatment applies to a ci yu's characters.
+        v_skipped := coalesce((v_char_row.char_data->>'skipped')::boolean, false);
+        if v_skipped then
+          continue;
+        end if;
+
+        v_attempted_count := v_attempted_count + 1;
         v_strokes := coalesce((v_char_row.char_data->>'strokes')::int, 10);
         v_total_mistakes := coalesce((v_char_row.char_data->>'totalMistakes')::int, 999);
         v_base := greatest(2, ceil(v_strokes * 0.4));
         v_threshold := case when record_test_attempt.hard_mode then ceil(v_base * 0.25) else v_base end;
         if v_total_mistakes > v_threshold then
-          v_passed := false;
-          v_missed := v_missed || to_jsonb(v_char_row.pos);
           v_missed_count := v_missed_count + 1;
+          if not record_test_attempt.supervised then
+            v_char_misses := jsonb_set(v_char_misses, array[v_char_row.pos::text], to_jsonb(1));
+          end if;
+        elsif not record_test_attempt.supervised then
+          v_char_misses := v_char_misses - v_char_row.pos::text;
         end if;
       end loop;
 
-      v_total := v_total + 1;
-      if v_passed then v_score := v_score + 1; end if;
-      v_words_total := v_words_total + 1;
-      if v_passed then v_words_score := v_words_score + 1; end if;
+      -- Passed iff every ATTEMPTED character passed — a skipped character
+      -- neither blocks nor forces a pass. If every character in the word
+      -- was skipped, v_attempted_count is 0 and the word is excluded from
+      -- scoring and mastery entirely below, rather than defaulting to
+      -- either verdict.
+      v_passed := v_attempted_count > 0 and v_missed_count = 0;
 
-      -- char_misses is rebuilt fresh from THIS attempt every time, not
-      -- merged onto history — see the identical comment in the 'passage'
-      -- branch above for why.
+      if v_attempted_count > 0 then
+        v_total := v_total + 1;
+        if v_passed then v_score := v_score + 1; end if;
+        v_words_total := v_words_total + 1;
+        if v_passed then v_words_score := v_words_score + 1; end if;
+      end if;
+
       if not record_test_attempt.supervised then
-        v_char_misses := '{}'::jsonb;
-        for v_pos in select jsonb_array_elements_text(v_missed) loop
-          v_char_misses := jsonb_set(v_char_misses, array[v_pos], to_jsonb(1));
-        end loop;
         update mastery m set char_misses = v_char_misses
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
       end if;
 
-      if not record_test_attempt.supervised then
+      if v_attempted_count = 0 then
+        -- Whole word skipped this attempt: level/misses/prev_fail are left
+        -- untouched entirely — same neutrality as the per-character case.
+        null;
+      elsif not record_test_attempt.supervised then
         select m.prev_fail into v_prev_fail from mastery m
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
 

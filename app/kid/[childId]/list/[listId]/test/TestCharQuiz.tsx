@@ -5,6 +5,7 @@ import HanziWriter from "hanzi-writer";
 import { charDataLoader, getCharData } from "@/lib/hanziCache";
 import { announceOnEntry, replayChar, replayItem, type ItemKind } from "@/lib/narration";
 import { isPunctuationChar } from "@/lib/hanzi";
+import type { CharMistakes } from "@/lib/testTypes";
 import RiceGrid from "@/components/RiceGrid";
 import FreehandPad from "@/components/FreehandPad";
 
@@ -40,7 +41,7 @@ type Props = {
   hideReplayButton?: boolean;
   hardMode: boolean;
   epochRef: { current: number };
-  onDone: (result: { strokes: number; totalMistakes: number }) => void;
+  onDone: (result: CharMistakes) => void;
 };
 
 // Blind test-mode quiz for one char: no outline, no per-attempt verdict text.
@@ -178,7 +179,9 @@ export default function TestCharQuiz({ char, announceWord, word, kind = "words",
         )}
         <button
           type="button"
-          onClick={() => onDone({ strokes: strokesRef.current ?? 10, totalMistakes: 999 })}
+          onClick={() =>
+            onDone({ strokes: strokesRef.current ?? 10, totalMistakes: 0, skipped: true })
+          }
           className="btn btn-secondary"
         >
           ✋ Skip this one
