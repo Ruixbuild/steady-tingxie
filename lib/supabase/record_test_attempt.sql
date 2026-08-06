@@ -35,14 +35,20 @@
 -- characters strictly in order — is the same indexing passage already uses
 -- (Array.from(hanzi) position), no separate globalIndex needed from the
 -- client for 'words' the way passage sends one explicitly.
--- char_misses is now ALSO cleared on a clean pass, for both 'words' and
--- 'passage' — the same never-reset bug the above misses/level fix already
--- covers, just not extended to char_misses when it was added. Previously a
--- position mistyped once stayed flagged "weak" in Progress/Reports/Focus
--- forever, even after many later perfect passes, since char_misses was only
--- ever incremented. Doesn't retroactively fix rows already stuck this way —
--- run `update mastery set char_misses = '{}'::jsonb where level = 3;` once
--- to clear existing already-mastered items.
+-- char_misses is now rebuilt fresh from EACH attempt (for both 'words' and
+-- 'passage'), instead of merged/incremented onto history forever. A merge-
+-- forever approach meant a word with one persistently-tricky character
+-- (e.g. 竹) could go a long time without a fully clean pass, so any OTHER
+-- character in it that had one bad attempt long ago and has been fine ever
+-- since stayed flagged "weak" in Progress/Reports/Focus indefinitely,
+-- since nothing short of the whole item passing cleanly ever touched
+-- char_misses at all. A full rebuild each attempt is safe because every
+-- character is requizzed every attempt — there's no partial retest.
+-- Doesn't retroactively fix rows already stuck this way — run
+-- `update mastery set char_misses = '{}'::jsonb where char_misses != '{}'::jsonb;`
+-- once to clear all existing stale flags (safe for both passed and
+-- still-tricky items — the next attempt on a still-tricky item repopulates
+-- whatever's still actually wrong).
 drop function if exists record_test_attempt(uuid, uuid, text, boolean, int, int, jsonb);
 
 create or replace function record_test_attempt(
@@ -120,30 +126,25 @@ begin
       v_passage_score := v_passage_score + (v_total_chars - v_missed_count);
       v_passage_total := v_passage_total + v_total_chars;
 
-      if not record_test_attempt.supervised and v_missed_count > 0 then
-        select m.char_misses into v_char_misses from mastery m
-          where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
-        v_char_misses := coalesce(v_char_misses, '{}'::jsonb);
-
+      -- char_misses is rebuilt fresh from THIS attempt every time, not
+      -- merged onto history — every character is requizzed on every
+      -- attempt (there's no partial retest), so a full replace is safe.
+      -- Merging/incrementing onto old values (the previous approach) meant
+      -- a word with one persistently-tricky character (e.g. 竹) could go
+      -- months without a fully clean pass, so an *other* character (e.g.
+      -- 山) that had one bad attempt long ago and has been fine ever since
+      -- stayed flagged "weak" forever, since nothing ever cleared it short
+      -- of the whole word passing in one go.
+      if not record_test_attempt.supervised then
+        v_char_misses := '{}'::jsonb;
         for v_pos in select jsonb_array_elements_text(v_missed) loop
-          v_char_misses := jsonb_set(
-            v_char_misses, array[v_pos],
-            to_jsonb(coalesce((v_char_misses->>v_pos)::int, 0) + 1)
-          );
+          v_char_misses := jsonb_set(v_char_misses, array[v_pos], to_jsonb(1));
         end loop;
-
         update mastery m set char_misses = v_char_misses, last_seen = now()
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
       end if;
 
       if not record_test_attempt.supervised and v_total_chars > 0 and v_missed_count = 0 then
-        -- char_misses tracks THIS item's current weak spots, not a lifetime
-        -- log — a clean full pass clears it, same as misses/level below for
-        -- 'words'. Without this, a character mistyped once weeks ago stays
-        -- flagged "weak" forever even after many perfect passes since.
-        update mastery m set char_misses = '{}'::jsonb
-          where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
-
         select hanzi into v_hanzi from items where id = v_item_id;
         insert into tree_growths (child_id, item_id, term_key, tree_type)
         values (
@@ -178,18 +179,14 @@ begin
       v_words_total := v_words_total + 1;
       if v_passed then v_words_score := v_words_score + 1; end if;
 
-      if not record_test_attempt.supervised and v_missed_count > 0 then
-        select m.char_misses into v_char_misses from mastery m
-          where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
-        v_char_misses := coalesce(v_char_misses, '{}'::jsonb);
-
+      -- char_misses is rebuilt fresh from THIS attempt every time, not
+      -- merged onto history — see the identical comment in the 'passage'
+      -- branch above for why.
+      if not record_test_attempt.supervised then
+        v_char_misses := '{}'::jsonb;
         for v_pos in select jsonb_array_elements_text(v_missed) loop
-          v_char_misses := jsonb_set(
-            v_char_misses, array[v_pos],
-            to_jsonb(coalesce((v_char_misses->>v_pos)::int, 0) + 1)
-          );
+          v_char_misses := jsonb_set(v_char_misses, array[v_pos], to_jsonb(1));
         end loop;
-
         update mastery m set char_misses = v_char_misses
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
       end if;
@@ -199,14 +196,9 @@ begin
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
 
         if v_passed then
-          -- char_misses tracks THIS item's current weak spots, not a
-          -- lifetime log — clear it on a clean pass, same as misses/level
-          -- here. Without this, a character mistyped once weeks ago stays
-          -- flagged "weak" forever even after many perfect passes since.
           update mastery m set
             level = 3,
             misses = 0,
-            char_misses = '{}'::jsonb,
             improved = case when v_prev_fail then true else m.improved end,
             prev_fail = false,
             last_seen = now()
