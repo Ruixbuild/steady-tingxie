@@ -164,7 +164,14 @@ begin
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
       end if;
 
-      if not record_test_attempt.supervised and v_attempted_count > 0 and v_missed_count = 0 then
+      -- Same reasoning as the 'words' branch's level=3 gate below: a tree
+      -- should only grow when the passage is genuinely fully clean, not
+      -- just clean on whichever characters happened to be attempted this
+      -- time — otherwise skipping over a character that's still flagged
+      -- weak (char_misses non-empty) while passing the rest would grow a
+      -- tree for a passage that isn't actually fully mastered.
+      if not record_test_attempt.supervised and v_attempted_count > 0 and v_missed_count = 0
+         and v_char_misses = '{}'::jsonb then
         select hanzi into v_hanzi from items where id = v_item_id;
         insert into tree_growths (child_id, item_id, term_key, tree_type)
         values (
@@ -237,7 +244,19 @@ begin
         select m.prev_fail into v_prev_fail from mastery m
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
 
-        if v_passed then
+        -- Full mastery (level 3) requires BOTH: every character attempted
+        -- THIS time passed, AND char_misses is now fully clean — i.e. no
+        -- OTHER character in the word is still sitting on an old flag from
+        -- being skipped over. Without the second condition, skipping the
+        -- two characters that are actually weak (圆,圆) while correctly
+        -- writing the rest (的山竹) would mark the whole word "mastered"
+        -- even though char_misses still (rightly) flags 圆,圆 as weak —
+        -- Focus/the progress emoji would then contradict the per-character
+        -- view. A clean attempt that still leaves other flags outstanding
+        -- is treated as neutral instead (below): nothing was gotten wrong
+        -- this time, so it doesn't regress, but it also can't claim full
+        -- mastery while known weak spots remain unaddressed.
+        if v_passed and v_char_misses = '{}'::jsonb then
           update mastery m set
             level = 3,
             misses = 0,
@@ -257,6 +276,10 @@ begin
           if v_prev_fail then
             v_flipped := v_flipped || jsonb_build_object('item_id', v_item_id, 'hanzi', v_hanzi);
           end if;
+        elsif v_passed then
+          -- Neutral: nothing attempted was wrong, but other characters are
+          -- still outstanding — leave level/misses/prev_fail untouched.
+          null;
         else
           update mastery m set
             level = greatest(1, m.level - 1),
