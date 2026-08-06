@@ -161,6 +161,22 @@ export default function TestSession({
     submitAttempt(resultsRef.current);
   }
 
+  function handleEndTest() {
+    if (submitting) return;
+    // Only fully-completed items are in resultsRef.current — the item
+    // currently in progress (e.g. 2 of 4 characters written) is
+    // deliberately left out rather than submitted partially, since a
+    // partial word would score as "passed" off however few characters
+    // happen to be done so far, wrongly marking it mastered. Nothing to
+    // save just means nothing was finished yet, so this simply navigates
+    // away instead of writing an empty attempt record.
+    if (resultsRef.current.length > 0) {
+      submitAttempt(resultsRef.current);
+    } else {
+      router.push(`/kid/${childId}/list/${listId}`);
+    }
+  }
+
   function handleKeepGoing() {
     capThresholdRef.current += CAP_MS;
     setShowCapModal(false);
@@ -188,13 +204,21 @@ export default function TestSession({
   return (
     <main className="flex flex-1 flex-col items-center px-6 py-12">
       <div className="w-full max-w-xl flex flex-col gap-6">
-        <Link
-          href={`/kid/${childId}/list/${listId}`}
-          className="inline-block text-base"
-          style={{ color: "var(--accent)", fontWeight: 700 }}
+        <button
+          type="button"
+          onClick={handleEndTest}
+          className="inline-block text-base self-start"
+          style={{
+            color: "var(--accent)",
+            fontWeight: 700,
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+          }}
         >
           ✕ End test
-        </Link>
+        </button>
 
         <span
           className="chip self-center"
