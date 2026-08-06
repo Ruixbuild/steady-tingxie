@@ -125,6 +125,24 @@ h1, h2, h3, h4 {
   font-size: 0.95rem;
 }
 
+/* Parent corner is adult-facing utility UI, not one of Ting Xie's
+   child-facing screens (Learn/Test/etc.) — the 44px min-tap-target
+   guideline .btn-sm otherwise enforces isn't necessary here, so buttons
+   run smaller. Scoped to .parent-corner (see app/parent/layout.tsx) so
+   the base .btn/.btn-sm rules above, used throughout the child-facing
+   app, are untouched. */
+.parent-corner .btn {
+  min-height: 40px;
+  padding: 0 20px;
+  font-size: 0.875rem;
+}
+
+.parent-corner .btn-sm {
+  min-height: 32px;
+  padding: 0 14px;
+  font-size: 0.8125rem;
+}
+
 /* Locked/disabled — explicit lock icon + muted look, not just opacity
    (opacity-only disabled reads as "still loading" to young kids).
    Markup: <button disabled>🔒 Next →</button> */
