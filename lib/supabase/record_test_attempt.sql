@@ -35,6 +35,14 @@
 -- characters strictly in order — is the same indexing passage already uses
 -- (Array.from(hanzi) position), no separate globalIndex needed from the
 -- client for 'words' the way passage sends one explicitly.
+-- char_misses is now ALSO cleared on a clean pass, for both 'words' and
+-- 'passage' — the same never-reset bug the above misses/level fix already
+-- covers, just not extended to char_misses when it was added. Previously a
+-- position mistyped once stayed flagged "weak" in Progress/Reports/Focus
+-- forever, even after many later perfect passes, since char_misses was only
+-- ever incremented. Doesn't retroactively fix rows already stuck this way —
+-- run `update mastery set char_misses = '{}'::jsonb where level = 3;` once
+-- to clear existing already-mastered items.
 drop function if exists record_test_attempt(uuid, uuid, text, boolean, int, int, jsonb);
 
 create or replace function record_test_attempt(
@@ -129,6 +137,13 @@ begin
       end if;
 
       if not record_test_attempt.supervised and v_total_chars > 0 and v_missed_count = 0 then
+        -- char_misses tracks THIS item's current weak spots, not a lifetime
+        -- log — a clean full pass clears it, same as misses/level below for
+        -- 'words'. Without this, a character mistyped once weeks ago stays
+        -- flagged "weak" forever even after many perfect passes since.
+        update mastery m set char_misses = '{}'::jsonb
+          where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
+
         select hanzi into v_hanzi from items where id = v_item_id;
         insert into tree_growths (child_id, item_id, term_key, tree_type)
         values (
@@ -184,9 +199,14 @@ begin
           where m.child_id = record_test_attempt.child_id and m.item_id = v_item_id;
 
         if v_passed then
+          -- char_misses tracks THIS item's current weak spots, not a
+          -- lifetime log — clear it on a clean pass, same as misses/level
+          -- here. Without this, a character mistyped once weeks ago stays
+          -- flagged "weak" forever even after many perfect passes since.
           update mastery m set
             level = 3,
             misses = 0,
+            char_misses = '{}'::jsonb,
             improved = case when v_prev_fail then true else m.improved end,
             prev_fail = false,
             last_seen = now()
